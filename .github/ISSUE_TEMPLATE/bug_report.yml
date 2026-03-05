@@ -1,56 +1,56 @@
-name: 🐛 Bug 报告
-description: 报告一个 Bug
+name: 🐛 Bug Report
+description: Report a bug
 labels: ["bug"]
 body:
   - type: markdown
     attributes:
       value: |
-        感谢你报告 Bug！请尽量填写完整信息，帮助我们快速定位问题。
+        Thanks for reporting a bug! Please fill in as much detail as possible.
   - type: textarea
     id: summary
     attributes:
-      label: 问题描述
-      description: 简要描述遇到的问题
-      placeholder: 搜索弹窗「聊天」标签下显示的是联系人列表
+      label: Description
+      description: Briefly describe the issue
+      placeholder: The "Chat" tab in the search modal shows contacts instead of chat messages
     validations:
       required: true
   - type: textarea
     id: steps
     attributes:
-      label: 复现步骤
-      description: 按顺序列出复现步骤
+      label: Steps to Reproduce
+      description: List the steps to reproduce the issue
       placeholder: |
-        1. 打开 DMWork Web 客户端
-        2. 点击搜索图标
-        3. 输入关键词
-        4. 观察「聊天」标签下的内容
+        1. Open DMWork Web client
+        2. Click the search icon
+        3. Enter a keyword
+        4. Observe the "Chat" tab content
     validations:
       required: true
   - type: textarea
     id: expected
     attributes:
-      label: 期望行为
-      placeholder: 「聊天」标签下应显示聊天记录搜索结果
+      label: Expected Behavior
+      placeholder: The "Chat" tab should show chat message search results
     validations:
       required: true
   - type: textarea
     id: actual
     attributes:
-      label: 实际行为
-      placeholder: 「聊天」标签下显示了联系人和群组列表
+      label: Actual Behavior
+      placeholder: The "Chat" tab shows contacts and group lists instead
     validations:
       required: true
   - type: input
     id: version
     attributes:
-      label: 客户端版本
+      label: Client Version
       placeholder: "Web v1.0.6"
     validations:
       required: true
   - type: dropdown
     id: platform
     attributes:
-      label: 平台
+      label: Platform
       options:
         - Web
         - Electron (macOS)
@@ -62,50 +62,50 @@ body:
   - type: dropdown
     id: component
     attributes:
-      label: 影响组件
+      label: Affected Component
       options:
-        - 会话/聊天 (Conversation)
-        - 消息列表 (MessageList)
-        - 消息输入 (MessageInput)
-        - 全局搜索 (GlobalSearch)
-        - 联系人 (Contacts)
-        - 群设置 (ChannelSetting)
-        - 登录/注册 (Login)
-        - 其他
+        - Conversation / Chat
+        - Message List
+        - Message Input
+        - Global Search
+        - Contacts
+        - Channel Settings
+        - Login / Registration
+        - Other
     validations:
       required: true
   - type: dropdown
     id: severity
     attributes:
-      label: 严重程度
+      label: Severity
       options:
-        - P0 - 页面崩溃 / 无法使用
-        - P1 - 核心功能异常
-        - P2 - 非核心功能异常
-        - P3 - 体验问题
+        - P0 - Page crash / Unusable
+        - P1 - Core feature broken
+        - P2 - Non-core feature broken
+        - P3 - UX issue
     validations:
       required: true
   - type: checkboxes
     id: reproducible
     attributes:
-      label: 可复现性
+      label: Reproducibility
       options:
-        - label: 可稳定复现
+        - label: Consistently reproducible
   - type: textarea
     id: environment
     attributes:
-      label: 环境信息
-      description: 浏览器、OS、屏幕分辨率等
+      label: Environment
+      description: Browser, OS, screen resolution, etc.
       placeholder: |
-        - 浏览器: Chrome 133
+        - Browser: Chrome 133
         - OS: macOS 15.3
-        - 分辨率: 1920x1080
+        - Resolution: 1920x1080
     validations:
       required: false
   - type: textarea
     id: logs
     attributes:
-      label: 日志 / 截图
-      description: 浏览器控制台错误、截图或录屏（敏感信息请脱敏）
+      label: Logs / Screenshots
+      description: Browser console errors, screenshots, or screen recordings (redact sensitive info)
     validations:
       required: false
