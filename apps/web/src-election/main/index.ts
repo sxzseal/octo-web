@@ -128,10 +128,14 @@ let mainMenu: (Electron.MenuItemConstructorOptions | Electron.MenuItem)[] = [
       {
         type: "separator",
       },
-      {
-        role: "toggleDevTools",
-        label: "切换开发者工具",
-      },
+      ...(isDevelopment
+        ? [
+            {
+              role: "toggleDevTools" as const,
+              label: "切换开发者工具",
+            },
+          ]
+        : []),
       {
         role: "togglefullscreen",
         label: "切换全屏",
@@ -299,11 +303,13 @@ function regShortcut() {
   });
 
 
-  // 打开所有窗口控制台
-  globalShortcut.register("ctrl+shift+i", () => {
-    let windows = BrowserWindow.getAllWindows();
-    windows.forEach((win: any) => win.openDevTools());
-  });
+  // 打开所有窗口控制台 (开发环境)
+  if (isDevelopment) {
+    globalShortcut.register("ctrl+shift+i", () => {
+      let windows = BrowserWindow.getAllWindows();
+      windows.forEach((win: any) => win.openDevTools());
+    });
+  }
 }
 
 // 创建新窗口的通用配置
@@ -326,6 +332,7 @@ const getWindowConfig = () => {
       preload: join(__dirname, "..", "preload/index"),
       nodeIntegration: false,
       contextIsolation: true,
+      devTools: isDevelopment,
     },
     // frame: !isWin,
   };
