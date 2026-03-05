@@ -3,8 +3,6 @@ import axios, { Canceler } from "axios";
 import { MediaMessageContent } from "wukongimjssdk";
 import {  MessageTask, TaskStatus } from "wukongimjssdk";
 
-
-
 export class MediaMessageUploadTask extends MessageTask {
     private _progress?:number
     private canceler: Canceler | undefined
@@ -27,12 +25,10 @@ export class MediaMessageUploadTask extends MessageTask {
                 this.uploadFile(mediaContent.file,uploadURL)
 
             }else{
-                console.log('获取上传地址失败！')
                 this.status = TaskStatus.fail
                 this.update()
             }
         }else {
-            console.log('多媒体消息不存在附件！');
             if (mediaContent.remoteUrl && mediaContent.remoteUrl !== "") {
                 this.status = TaskStatus.success
                 this.update()
@@ -57,7 +53,6 @@ export class MediaMessageUploadTask extends MessageTask {
                 this.update()
             }
         }).catch(error => {
-            console.log('文件上传失败！->', error);
             this.status = TaskStatus.fail
             this.update()
         })

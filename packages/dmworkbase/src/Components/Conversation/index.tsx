@@ -24,8 +24,6 @@ export interface ConversationProps {
     onContext?: (ctx: ConversationContext) => void
 }
 
-
-
 export class Conversation extends Component<ConversationProps> implements ConversationContext {
     vm!: ConversationVM
     contextMenusContext!: ContextMenusContext
@@ -40,7 +38,6 @@ export class Conversation extends Component<ConversationProps> implements Conver
         this.state = {
         }
     }
-
 
     async sendMessage(content: MessageContent, channel?: Channel): Promise<Message> {
         // const { channel } = this.props
@@ -172,7 +169,6 @@ export class Conversation extends Component<ConversationProps> implements Conver
         return this._messageInputContext
     }
 
-
     componentDidMount() {
 
         const { channel, onContext } = this.props
@@ -185,7 +181,6 @@ export class Conversation extends Component<ConversationProps> implements Conver
         }
 
         window.onbeforeunload = () => { // 浏览器关闭
-            console.log("浏览器关闭--->")
             this.dealloc()
         }
 
@@ -199,7 +194,6 @@ export class Conversation extends Component<ConversationProps> implements Conver
 
     }
 
-
     componentWillUnmount() {
         this.dealloc()
     }
@@ -209,8 +203,6 @@ export class Conversation extends Component<ConversationProps> implements Conver
         WKApp.shared.openChannel = undefined
         WKSDK.shared().conversationManager.openConversation = undefined
     }
-
-
 
     markConversationExtra() {
         let draft = this.messageInputContext().text()
@@ -809,7 +801,6 @@ class ConversationPositionView extends Component<ConversationPositionViewProps, 
     }
 }
 
-
 interface ReplyViewProps {
     message: Message
     vm: ConversationVM
@@ -856,7 +847,6 @@ class ReplyView extends Component<ReplyViewProps> {
         </div>
     }
 }
-
 
 interface MultiplePanelProps {
     onClose?: () => void

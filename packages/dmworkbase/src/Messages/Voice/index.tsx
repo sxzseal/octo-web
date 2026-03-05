@@ -11,7 +11,6 @@ import { MessageContentTypeConst } from "../../Service/Const"
 import { MessageWrap } from "../../Service/Model"
 var BenzAMRRecorder = require('benz-amr-recorder');
 
-
 export class VoiceContent extends MediaMessageContent {
     url!:string // 语音文件下载地址
     timeTrad!:number // 语音秒长
@@ -56,7 +55,6 @@ export class VoiceCell extends MessageCell<any,VoiceCellState> {
     waveform!:Uint8Array
     timeFormat!:string
     timer?:NodeJS.Timeout
-
 
     constructor(props:any) {
         super(props)
@@ -149,7 +147,6 @@ export class VoiceCell extends MessageCell<any,VoiceCellState> {
             })
         }
 
-
         voicePlayer.onPlay(() => {
             this.setState({
                 playStatus: playStatusPlaying,
@@ -172,7 +169,6 @@ export class VoiceCell extends MessageCell<any,VoiceCellState> {
         });
 
         voicePlayer.onEnded(() => {
-            console.log("播放结束");
             if(this.timer) {
                 clearInterval(this.timer)
                 this.timer = undefined

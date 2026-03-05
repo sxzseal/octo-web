@@ -110,11 +110,8 @@ export default class MessageBase extends Component<MessageBaseProps, any> {
             newBubbleStyle = {}
         }
         newBubbleStyle.borderRadius = this.getBubbleRadius(hasContinue, message)
-        console.log(newBubbleStyle)
         return newBubbleStyle
     }
-
- 
 
     onMessageRevoke() {
         const { message } = this.props
@@ -129,7 +126,6 @@ export default class MessageBase extends Component<MessageBaseProps, any> {
         const { context, message } = this.props
         context.deleteMessages([message.message])
     }
-
 
     getBubbleBoxClassName() {
         const { message, hiddeBubble } = this.props
@@ -240,7 +236,6 @@ export default class MessageBase extends Component<MessageBaseProps, any> {
 
                         </div>
                     </div>
-
 
                     {
                         //TODO:  wk-message-error-reason 谨用这个 这个会引起ui跳动

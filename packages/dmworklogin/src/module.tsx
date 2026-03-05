@@ -9,7 +9,6 @@ export default  class LoginModule implements IModule {
         return "LoginModule"
     }
     init(): void {
-        console.log("【LoginModule】初始化")
         WKApp.route.register("/login",(param:any):JSX.Element =>{
             return <Login />
         })

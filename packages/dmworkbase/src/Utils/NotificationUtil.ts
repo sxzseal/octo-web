@@ -93,7 +93,6 @@ export class NotificationUtil {
     }
 
     // Try to use Electron native notifications first
-    console.log("createNotification.....1")
     if (this.isElectronNativeNotificationAvailable()) {
       try {
         const electronOptions = {
@@ -109,7 +108,6 @@ export class NotificationUtil {
         };
 
         const success = await window.electronNotification!.show(electronOptions);
-        console.log("options.onClick--->",options.onClick,success)
         if (success) {
           // Set up click handler for Electron notifications
           
@@ -138,7 +136,6 @@ export class NotificationUtil {
         console.warn('Failed to create Electron native notification, falling back to Web API:', error);
       }
     }
-    console.log("createNotification.....2")
     // Fallback to Web Notification API
     const notification = new window.Notification(options.title, {
       body: options.body,
@@ -231,16 +228,13 @@ export class NotificationUtil {
       tag: "message",
       icon: this.getNotificationIcon(message.channel),
       onClick: () => {
-        console.log("点击通知");
         this.messageNotification?.close();
         window.focus();
         WKApp.endpoints.showConversation(message.channel);
       },
       onShow: () => {
-        console.log("显示通知");
       },
       onClose: () => {
-        console.log("通知关闭");
       },
       timeout: 5000, // 5 seconds auto-close
     });
@@ -275,7 +269,6 @@ export class NotificationUtil {
         WKApp.endpoints.showConversation(channel);
       },
       onClose: () => {
-        console.log("通知关闭");
       },
     });
 

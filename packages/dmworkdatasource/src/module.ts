@@ -11,7 +11,6 @@ export default class DataSourceModule implements IModule {
         return "DataSource"
     }
     init(): void {
-        console.log("【DataSourceModule】初始化")
 
         WKApp.conversationProvider = new ConversationProvider()
 
@@ -83,9 +82,6 @@ export default class DataSourceModule implements IModule {
                 channelInfo.orgData.identityIcon = "./identity_icon/robot.png"
                 channelInfo.orgData.identitySize = { width: "18px", height: "18px" }
             }
-
-
-
 
             return channelInfo
         }
@@ -184,7 +180,6 @@ export default class DataSourceModule implements IModule {
                 }
             }
             return WKApp.apiClient.post("message/readed", { "channel_id": channel.channelID, "channel_type": channel.channelType, "message_ids": messageIDs }).catch((err) => {
-                console.log("消息已读未读上报失败！", err)
             })
         }
     }

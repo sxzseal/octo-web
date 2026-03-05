@@ -78,7 +78,6 @@ export class NewFriendVM extends ProviderListener {
   }
 
   public async friendRequestCMDListener(message: Message) {
-    console.log("收到CMD->", message);
     const cmdContent = message.content as CMDContent;
     if (cmdContent.cmd === "friendRequest") {
       this.friendApplys = await this.getFriendApply();

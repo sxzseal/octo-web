@@ -268,13 +268,10 @@ export default class WKApp extends ProviderListener {
     // 是否是PC端
     if ((window as any)?.__POWERED_ELECTRON__ || (window as any).__TAURI_IPC__) {
       this.isPC = true;
-      console.log("PC端")
     }
     this.deviceId = this.getDeviceIdFromStorage();
     this.deviceName = this.getOSAndVersion();
     this.deviceModel = this.getBrandsFromUserAgent();
-
-    console.log("设备信息--->", this.deviceId, this.deviceName, this.deviceModel);
 
     const themeMode = StorageService.shared.getItem("theme-mode");
     if (themeMode === "1") {
@@ -304,7 +301,6 @@ export default class WKApp extends ProviderListener {
     WKSDK.shared().connectManager.addConnectStatusListener(
       (status: ConnectStatus, reasonCode?: number) => {
         if (status === ConnectStatus.ConnectKick) {
-          console.log("被踢--->", reasonCode);
           WKApp.shared.logout();
         } else if (reasonCode == 2) {
           // 认证失败！
@@ -315,7 +311,6 @@ export default class WKApp extends ProviderListener {
             this.wsaddrs.splice(0, 1);
             this.wsaddrs.push(oldwsAddr);
             this.addrUsed = false;
-            console.log("连接失败！切换地址->", this.wsaddrs);
           }
         }
       }
@@ -332,7 +327,6 @@ export default class WKApp extends ProviderListener {
     }
 
     WKApp.remoteConfig.startRequestConfig();
-
 
   }
 
@@ -422,8 +416,6 @@ export default class WKApp extends ProviderListener {
     this.content = content;
     this.notifyListener();
   }
-
-
 
   // 是否登录
   isLogined() {

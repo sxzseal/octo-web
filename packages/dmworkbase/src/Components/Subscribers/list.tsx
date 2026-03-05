@@ -43,7 +43,6 @@ export class SubscriberList extends Component<
       target.scrollTop + target.clientHeight + offset >=
       target.scrollHeight
     ) {
-      console.log("到底了");
       vm.loadMoreSubscribersIfNeed();
     }
   };

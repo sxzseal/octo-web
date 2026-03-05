@@ -141,7 +141,6 @@ export default class ConversationVM extends ProviderListener {
         }
     }
 
-
     // 选中消息
     checkedMessage(message: Message, checked: boolean): void {
         let messageWrap = this.findMessageWithClientMsgNo(message.clientMsgNo)
@@ -252,7 +251,6 @@ export default class ConversationVM extends ProviderListener {
         }
     }
 
-
     // 取消所有消息的选中
     unCheckAllMessages() {
         let hasChange = false
@@ -274,7 +272,6 @@ export default class ConversationVM extends ProviderListener {
                 return
             }
             if (action == ConversationAction.update) {
-                console.log("update-2--->", conversation.unread)
                 this.unreadCount = conversation.unread
             }
         }
@@ -406,7 +403,6 @@ export default class ConversationVM extends ProviderListener {
             this.unreadCount = unread
             this.currentConversation = conversation
 
-
             this.shouldShowHistorySplit = unread > 0
             if (unread > 0) {
                 if (conversation.lastMessage && conversation.lastMessage.messageSeq > 0) {
@@ -429,7 +425,6 @@ export default class ConversationVM extends ProviderListener {
                 this.onFirstMessagesLoaded()
             }
         })
-
 
     }
     didUnMount(): void {
@@ -466,7 +461,6 @@ export default class ConversationVM extends ProviderListener {
         } else {
             WKSDK.shared().channelManager.syncSubscribes(this.channel)
         }
-
 
     }
 
@@ -805,7 +799,6 @@ export default class ConversationVM extends ProviderListener {
 
     }
 
-
     // 是否有草稿
     hasDraft() {
         if (this.currentConversation) {
@@ -960,8 +953,6 @@ export default class ConversationVM extends ProviderListener {
         }
         this.messages = this.genMessageLinkedData(newMessages)
 
-
-
         this.notifyListener(() => {
             if (callback) {
                 callback()
@@ -979,7 +970,6 @@ export default class ConversationVM extends ProviderListener {
         if (minMessage == null || minMessage.messageSeq <= 0) { // 没有消息直接return
             return
         }
-        console.log("pulldownMessages--->")
 
         this.loading = true
         const opts = new SyncMessageOptions()
@@ -1011,10 +1001,8 @@ export default class ConversationVM extends ProviderListener {
         this.loading = true
         const maxMessage = this.getMessageMax()
         if (maxMessage == null || maxMessage.messageSeq <= 0) { // 没有消息直接return
-            console.log("没有maxMessage")
             return
         }
-        console.log("pullupMessages--->")
 
         const opts = new SyncMessageOptions()
         opts.limit = WKApp.config.pageSizeOfMessage
@@ -1032,17 +1020,14 @@ export default class ConversationVM extends ProviderListener {
         }
         if (remoteMessages.length < opts.limit) {
             this.pullupHasMore = false
-            console.log("没有更多消息了")
         } else {
             this.pullupHasMore = true
-            console.log("还有更多消息")
         }
         this.messagesOfOrigin = [...this.messagesOfOrigin, ...this.toMessageWraps(newMessages)]
         this.refreshAndLocateMessages(this.messagesOfOrigin, undefined, false, () => {
             this.loading = false
         })
     }
-
 
     // 获取当前消息列表的最小序列号的消息
     getMessageMin(): MessageWrap | undefined {

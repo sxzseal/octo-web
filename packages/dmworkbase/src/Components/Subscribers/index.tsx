@@ -66,7 +66,6 @@ export class Subscribers extends Component<SubscribersProps> {
                       className="wk-subscribers-item"
                       onClick={() => {
                         if (onAdd) {
-                          console.log(channel);
                           onAdd();
                         }
                       }}

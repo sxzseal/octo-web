@@ -9,19 +9,16 @@ import { relaunch } from '@tauri-apps/api/process'
 import { os } from "@tauri-apps/api";
 import { getSid } from "@octo/base/src/Utils/search";
 
-
 export default class AppLayout extends Component {
     onLogin!: () => void
     componentDidMount() {
         this.onLogin = () => {
-            console.log("登录成功！")
             const sid = getSid()
             window.location.href = `./index.html?sid=${sid}`
 
             Notification.requestPermission() // 请求通知权限
         }
         WKApp.endpoints.addOnLogin(this.onLogin)
-
 
         this.tauriCheckUpdate()
 
@@ -37,15 +34,12 @@ export default class AppLayout extends Component {
         }
 
         listen('tauri://update-status', function (res) {
-            console.log('New status: ', res)
         })
-
 
         try {
             const { shouldUpdate, manifest } = await checkUpdate()
             if (shouldUpdate) {
                 // display dialog
-                console.log(`Installing update ${manifest.version}, ${manifest?.date}, ${manifest.body}`);
                 if(await os.platform() === "darwin") { // mac 自动下载更新
                     await installUpdate()
                 }
@@ -53,7 +47,6 @@ export default class AppLayout extends Component {
 
             }
         } catch (error) {
-            console.log(error)
         }
     }
 

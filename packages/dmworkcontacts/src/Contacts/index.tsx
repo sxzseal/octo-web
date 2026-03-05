@@ -11,9 +11,6 @@ import { ContactsListManager } from "../Service/ContactsListManager";
 import { Card } from "@octo/base/src/Messages/Card";
 import WKAvatar from "@octo/base/src/Components/WKAvatar";
 
-
-
-
 export class ContactsState {
     indexList: string[] = []
     indexItemMap: Map<string, Contacts[]> = new Map()
@@ -76,9 +73,7 @@ export default class ContactsList extends Component<any, ContactsState> {
         WKSDK.shared().channelManager.removeListener(this.channelInfoListener)
     }
 
-
     rebuildIndex() {
-        console.log("rebuildIndex---->")
         this.buildIndex(this.contactsList())
     }
 
@@ -104,7 +99,6 @@ export default class ContactsList extends Component<any, ContactsState> {
             return v.name.indexOf(keyword) !== -1
         })
     }
-
 
     buildIndex(contacts: Contacts[]) {
         const indexItemMap = new Map<string, Contacts[]>()

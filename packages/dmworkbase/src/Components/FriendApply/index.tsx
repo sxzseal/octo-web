@@ -13,7 +13,6 @@ export default class FriendApplyUI extends Component<FriendApplyUIProps> {
 
     render(): ReactNode {
         const { onMessage,placeholder } = this.props
-        console.log("placeholder----->",placeholder)
         return <div className="wk-friendapply">
             <div className="wk-friendapply-content">
                 <div className="wk-friendapply-content-tip">

@@ -37,7 +37,6 @@ export class TabNormalScreen extends Component<TabNormalScreenProps> {
                   vm.showMeInfo = true;
                 })
                 .catch((err) => {
-                  console.log(err);
                 });
             }}
           >

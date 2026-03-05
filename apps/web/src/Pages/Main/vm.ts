@@ -83,11 +83,9 @@ export default class MainVM extends ProviderListener {
   appUpdateInit() {
     // 监听升级失败事件
     (window as any).ipc.on("update-error", (event, message) => {
-      console.log("[update-error]", message);
     });
     // 发现可用更新事件
     (window as any).ipc.on("update-available", (event, message) => {
-      console.log("[update-available]", message);
       (window as any).ipc.send("update-app");
       this.lastVersionInfo = {
         appVersion: message.version,
@@ -98,7 +96,6 @@ export default class MainVM extends ProviderListener {
     });
     // 没有可用更新事件
     (window as any).ipc.on("update-not-available", (event, message) => {
-      console.log("[update-not-available]", message);
       this.showAppUpdate = false;
       this.showAppUpdateOperation = false;
       this.showAppUpdateOperation = false;
@@ -106,7 +103,6 @@ export default class MainVM extends ProviderListener {
     });
     // 更新下载进度事件
     (window as any).ipc.on("download-progress", (event, message) => {
-      console.log("[download-progress]", message);
       this.showAppUpdate = true;
       this.showAppUpdateOperation = false;
       this.appUpdateProgress = message;
@@ -114,7 +110,6 @@ export default class MainVM extends ProviderListener {
     });
     // 监听下载完成事件
     (window as any).ipc.on("update-downloaded", (event, message) => {
-      console.log("[update-downloaded]", message);
       this.lastVersionInfo = {
         appVersion: message.version,
         updateDesc: message.releaseNotes,

@@ -19,7 +19,6 @@ export default class ContactsModule implements IModule {
     return "ContactsModule";
   }
   init(): void {
-    console.log("【ContactsModule】初始化");
 
     WKApp.endpointManager.setMethod(
       "contacts.friendapply.change",

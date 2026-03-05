@@ -100,7 +100,6 @@ export default class GlobalSearchVM extends ProviderListener {
     public handleInputChange = (value: string) => {
         if (!this.isComposing) {
             this.keyword = value;
-            console.log(this.keyword);
             this.initLoad()
             this.requestSearch();
         }
@@ -124,15 +123,11 @@ export default class GlobalSearchVM extends ProviderListener {
             content_type: this.contentTypes
         }
 
-
         if (this.channel) {
             param.channel_id = this.channel.channelID
             param.channel_type = this.channel.channelType
             param.only_message = 1
         }
-
-        console.log("requestSearch", param);
-
 
         APIClient.shared.post("/search/global", param).then(res => {
 
@@ -214,6 +209,5 @@ export default class GlobalSearchVM extends ProviderListener {
         this.loadMoreing = true
         this.page++
         this.requestSearch()
-        console.log("加载更多");
     }
 }

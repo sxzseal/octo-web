@@ -25,7 +25,6 @@ export class ChatVM extends ProviderListener {
     private conversationListID = "wk-conversationlist"
     private _showGlobalSearch = false // 是否显示全局搜索
 
-
     set showAddPopover(v: boolean) {
         this._showAddPopover = v
         this.notifyListener()
@@ -97,14 +96,12 @@ export class ChatVM extends ProviderListener {
                 WKSDK.shared().channelManager.fetchChannelInfo(conversation.channel)
             }
             if (action === ConversationAction.add) {
-                console.log("ConversationAction-----add")
                 if (conversation.lastMessage?.content && conversation.lastMessage?.contentType === MessageContentType.text) {
                     conversation.lastMessage.content.text = ProhibitwordsService.shared.filter(conversation.lastMessage?.content.text)
                 }
                 this.conversations = [new ConversationWrap(conversation), ...this.conversations]
                 this.notifyListener()
             } else if (action === ConversationAction.update) {
-                console.log("ConversationAction-----update")
                 const existConversation = this.findConversation(conversation.channel)
                 if (existConversation) {
                     existConversation.conversation = conversation
@@ -115,7 +112,6 @@ export class ChatVM extends ProviderListener {
 
                 this.sortConversations()
                 const conversationY = this.currentConversationListY()
-                console.log("conversationY----->", conversationY)
                 this.notifyListener(() => {
                     if (conversationY) {
                         this.keepPosition(conversationY)
@@ -147,7 +143,6 @@ export class ChatVM extends ProviderListener {
             }
         }
         WKApp.shared.addMessageDeleteListener(this.messageDeleteListener)
-
 
     }
     didUnMount(): void {
@@ -207,7 +202,6 @@ export class ChatVM extends ProviderListener {
         this.sortConversations()
         this.notifyListener()
     }
-
 
     setConnectTitleWithConnectStatus(connectStatus: ConnectStatus) {
         if (connectStatus === ConnectStatus.Connected) {
@@ -280,7 +274,6 @@ export class ChatVM extends ProviderListener {
         WKApp.menus.refresh()
     }
 }
-
 
 // 处理搜索内容点击事件
 export function handleGlobalSearchClick(item: any, type: string,hideModal?:()=>void) {

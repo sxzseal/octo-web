@@ -4,7 +4,6 @@ import { Conversation, Message, Channel, MessageExtra } from "wukongimjssdk";
 
 export class ConversationProvider implements IConversationProvider {
 
-
     async deleteConversation(channel: Channel): Promise<void> {
         return axios.delete(`conversations/${channel.channelID}/${channel.channelType}`)
     }
@@ -32,10 +31,8 @@ export class ConversationProvider implements IConversationProvider {
         return WKApp.apiClient.post(`message/revoke?channel_id=${message.channel.channelID}&channel_type=${message.channel.channelType}&message_id=${message.messageID}&client_msg_no=${message.clientMsgNo}`)
     }
 
-
     markConversationUnread(channel: Channel, unread: number): Promise<void> {
         return WKApp.apiClient.put('coversation/clearUnread', { "channel_id": channel.channelID, "channel_type": channel.channelType, "unread": unread > 0 ? unread : 0 }).catch(function (error) {
-            console.log(error);
             return error;
         });
 

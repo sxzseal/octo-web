@@ -25,7 +25,6 @@ export class ChannelAvatar extends Component<ChannelAvatarProps>{
         return axios.post(`groups/${channel.channelID}/avatar`, param, {
             headers: { "Content-Type": "multipart/form-data", "token": WKApp.loginInfo.token || "" },
         }).catch(error => {
-            console.log('文件上传失败！->', error);
         })
     }
     onFileChange() {

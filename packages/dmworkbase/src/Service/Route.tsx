@@ -4,17 +4,13 @@ import { EndpointCategory, EndpointID } from "./Const";
 import { EndpointManager } from "./Module";
 import { getSid } from "../Utils/search";
 
-
 export default class RouteManager {
   private constructor() {
-    console.log("RouteManager init")
     window.onpopstate = function (e:any) {
-      console.log("onpopstate---->",e)
       RouteManager.shared.push(window.location.pathname)
 
     };
     window.onpageshow = function () {
-      console.log("onpageshow---->",window.location.pathname)
       RouteManager.shared.push(window.location.pathname)
     };
     this.currentPath = "/"
@@ -50,7 +46,6 @@ export class ContextRouteManager {
   setReplaceToRoot!:(view:JSX.Element)=>void
   setPop!:()=>void
   setPopToRoot!:()=>void
-
 
   push(view:JSX.Element) {
     this.setPush(view)

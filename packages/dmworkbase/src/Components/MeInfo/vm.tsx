@@ -44,7 +44,6 @@ export class MeInfoVM extends ProviderListener {
         return axios.post(`users/${WKApp.loginInfo.uid}/avatar`, param, {
             headers: { "Content-Type": "multipart/form-data", "token": WKApp.loginInfo.token || "" },
         }).catch(error => {
-            console.log('文件上传失败！->', error);
         })
     }
 

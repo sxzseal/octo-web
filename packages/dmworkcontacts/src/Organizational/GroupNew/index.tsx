@@ -307,7 +307,6 @@ export class OrganizationalGroupNew extends Component<
 
   async getFriendData() {
 
-
     let subscribers = new Array<Subscriber>();
 
     // 群聊
@@ -466,8 +465,6 @@ export class OrganizationalGroupNew extends Component<
     this.onCancel();
   }
 
-
-
   onChangeSearch(value: string) {
     const { friendSearchData, isFriend } = this.state;
 
@@ -483,7 +480,6 @@ export class OrganizationalGroupNew extends Component<
       this.setState({
         searchVaule: value,
       });
-      console.log(this.treeRef);
       this.treeRef && this.treeRef.current.search(value);
     }
   }
