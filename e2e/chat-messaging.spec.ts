@@ -1,9 +1,5 @@
 import { test, expect, Page } from '@playwright/test';
-
-const BASE_URL = process.env.DMWORK_URL || 'http://localhost:82';
-const API_URL = process.env.DMWORK_API || 'http://localhost:8090';
-const USER_A = { username: 'test_user_a', password: 'testpass123', name: '测试用户A' };
-const USER_B = { username: 'test_user_b', password: 'testpass123', name: '测试用户B' };
+import { BASE_URL, API_URL, USER_A, USER_B } from './test-config';
 
 async function ensureUser(user: typeof USER_A) {
   try {

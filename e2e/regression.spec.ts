@@ -1,8 +1,5 @@
 import { test, expect, Page } from '@playwright/test';
-
-const BASE_URL = 'https://im-test.xming.ai';
-const TEST_USER = { username: 'test_user_a', password: 'testpass123' };
-const DEMO_USER = { username: 'demo_user', password: 'demo123456' };
+import { BASE_URL, USER_A as TEST_USER, DEMO_USER } from './test-config';
 
 // --- Helpers ---
 

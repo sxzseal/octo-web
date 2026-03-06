@@ -1,8 +1,8 @@
 import { test, expect } from '@playwright/test';
+import { BASE_URL, USER_A } from './test-config';
 
-const BASE_URL = process.env.DMWORK_URL || 'http://localhost:82';
-const TEST_USER = 'e2etest_user01';
-const TEST_PASS = 'testpass123';
+const TEST_USER = USER_A.username;
+const TEST_PASS = USER_A.password;
 
 test.describe('DMWork Web 验收测试', () => {
 
