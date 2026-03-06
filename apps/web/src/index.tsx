@@ -8,7 +8,7 @@ import  { LoginModule } from '@octo/login';
 import  { DataSourceModule } from '@octo/datasource';
 import {ContactsModule} from '@octo/contacts';
 
-const apiURL = "https://api.example.com/v1/"
+const apiURL = process.env.REACT_APP_API_URL || "https://api.example.com/v1/"
 
 if((window as any).__TAURI_IPC__) { // tauri环境
   WKApp.apiClient.config.apiURL = apiURL
