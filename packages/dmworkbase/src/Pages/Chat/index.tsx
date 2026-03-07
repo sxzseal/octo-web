@@ -3,7 +3,7 @@ import { Conversation } from "../../Components/Conversation";
 import ConversationList from "../../Components/ConversationList";
 import Provider from "../../Service/Provider";
 
-import { Spin, Modal, Popover } from "@douyinfe/semi-ui";
+import { Spin, Modal, Popover, Toast } from "@douyinfe/semi-ui";
 import { IconPlus, IconSearch } from "@douyinfe/semi-icons";
 import { ChatVM, handleGlobalSearchClick } from "./vm";
 import "./index.css";
@@ -248,7 +248,20 @@ export default class ChatPage extends Component<any, ChatPageState> {
                                   {space.name.charAt(0)}
                                 </span>
                                 <span style={{ flex: 1 }}>{space.name}</span>
-                                {isSelected && <span style={{ color: 'var(--wk-color-theme, #6366F1)' }}>✓</span>}
+                                <span className="wk-chat-space-invite-btn" title="复制邀请链接" onClick={async (e) => {
+                                  e.stopPropagation();
+                                  try {
+                                    const detail = await WKApp.apiClient.get(`/space/${space.space_id}`);
+                                    if (detail.invite_code) {
+                                      const link = `${window.location.origin}${window.location.pathname}?invite=${detail.invite_code}`;
+                                      await navigator.clipboard.writeText(link);
+                                      Toast.success("邀请链接已复制");
+                                    } else {
+                                      Toast.warning("该 Space 暂无邀请码");
+                                    }
+                                  } catch { Toast.error("获取邀请码失败"); }
+                                }}>🔗</span>
+                                {isSelected && <span style={{ color: 'var(--wk-color-theme, #6366F1)', marginLeft: 4 }}>✓</span>}
                               </div>
                             );
                           })}
