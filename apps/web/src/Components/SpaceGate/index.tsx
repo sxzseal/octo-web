@@ -25,14 +25,11 @@ export default class SpaceGate extends Component<{}, SpaceGateState> {
     checkSpaces = async () => {
         try {
             const spaces = await SpaceService.shared.getMySpaces();
-            if (spaces.length === 1) {
-                // 只有一个 Space，直接进入
+            if (spaces.length >= 1) {
+                // 有 Space → 直接进入第一个（多 Space 切换在侧边栏）
                 WKApp.shared.currentSpaceId = spaces[0].space_id;
                 WKApp.shared.spaceChecked = true;
                 WKApp.shared.notifyListener();
-            } else if (spaces.length > 1) {
-                // 多个 Space，显示选择器
-                this.setState({ spaces, loading: false });
             } else {
                 // 没有 Space，显示加入页面
                 this.setState({ loading: false });
@@ -72,20 +69,6 @@ export default class SpaceGate extends Component<{}, SpaceGateState> {
             return (
                 <div style={{ display: "flex", justifyContent: "center", alignItems: "center", height: "100vh" }}>
                     <Spin size="large" />
-                </div>
-            );
-        }
-
-        // 多 Space 选择器
-        if (spaces.length > 1) {
-            return (
-                <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", height: "100vh", gap: "16px" }}>
-                    <h2>选择 Space</h2>
-                    {spaces.map((s) => (
-                        <Button key={s.space_id} theme="solid" size="large" style={{ width: 240 }} onClick={() => this.selectSpace(s)}>
-                            {s.name} ({s.member_count}人)
-                        </Button>
-                    ))}
                 </div>
             );
         }
