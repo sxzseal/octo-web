@@ -10,6 +10,7 @@ import "./index.css"
 import InputStyle from "./defaultStyle";
 import {IconSend} from '@douyinfe/semi-icons';
 import { Notification, Button } from '@douyinfe/semi-ui';
+import SlashCommandMenu, { BotCommand } from "../SlashCommandMenu";
 
 
 const MAX_MESSAGE_LENGTH = 5000;
@@ -27,12 +28,16 @@ interface MessageInputProps extends HTMLProps<any>{
     toolbar?: JSX.Element
     onContext?: (ctx: MessageInputContext) => void
     topView?: JSX.Element
+    botCommands?: BotCommand[]
 }
 
 interface MessageInputState {
     value: string | undefined
     mentionCache: any
     quickReplySelectIndex: number
+    slashMenuVisible: boolean
+    slashFilter: string
+    slashActiveIndex: number
 }
 
 export class MentionModel {
@@ -65,6 +70,9 @@ export default class MessageInput extends Component<MessageInputProps, MessageIn
             value: "",
             mentionCache: {},
             quickReplySelectIndex: 0,
+            slashMenuVisible: false,
+            slashFilter: "",
+            slashActiveIndex: 0,
         }
         if (props.onAddMention) {
             props.onAddMention(this.addMention.bind(this))
@@ -120,11 +128,39 @@ export default class MessageInput extends Component<MessageInputProps, MessageIn
 
     }
 
+    handleKeyDown(e: React.KeyboardEvent) {
+        const { slashMenuVisible } = this.state
+        if (!slashMenuVisible) return
+        const filtered = this.getFilteredSlashCommands()
+        if (filtered.length === 0) return
+
+        if (e.key === 'ArrowDown') {
+            e.preventDefault()
+            this.setState((prev) => ({
+                slashActiveIndex: (prev.slashActiveIndex + 1) % filtered.length,
+            }))
+        } else if (e.key === 'ArrowUp') {
+            e.preventDefault()
+            this.setState((prev) => ({
+                slashActiveIndex: (prev.slashActiveIndex - 1 + filtered.length) % filtered.length,
+            }))
+        } else if (e.key === 'Enter') {
+            e.preventDefault()
+            this.handleSlashSelect(filtered[this.state.slashActiveIndex])
+        } else if (e.key === 'Escape') {
+            e.preventDefault()
+            this.setState({ slashMenuVisible: false })
+        }
+    }
+
     handleKeyPressed(e: any) {
         if (e.charCode !== 13) { //非回车
             return;
         }
         if (e.charCode === 13 && e.ctrlKey) { // ctrl+Enter不处理
+            return;
+        }
+        if (this.state.slashMenuVisible) {
             return;
         }
         e.preventDefault();
@@ -201,9 +237,48 @@ export default class MessageInput extends Component<MessageInputProps, MessageIn
 
     handleChange(event: { target: { value: string } }) {
         const value = event.target.value
+        const { botCommands } = this.props
+        if (botCommands && botCommands.length > 0 && value.startsWith('/')) {
+            const filter = value.slice(1)
+            this.setState({
+                value: value,
+                slashMenuVisible: true,
+                slashFilter: filter,
+                slashActiveIndex: 0,
+            })
+        } else {
+            this.setState({
+                value: value,
+                slashMenuVisible: false,
+                slashFilter: "",
+                slashActiveIndex: 0,
+            })
+        }
+    }
+
+    getFilteredSlashCommands(): BotCommand[] {
+        const { botCommands } = this.props
+        const { slashFilter } = this.state
+        if (!botCommands) return []
+        if (!slashFilter) return botCommands
+        const lower = slashFilter.toLowerCase()
+        return botCommands.filter(
+            (cmd) =>
+                cmd.command.toLowerCase().includes(lower) ||
+                cmd.description.toLowerCase().includes(lower)
+        )
+    }
+
+    handleSlashSelect(cmd: BotCommand) {
         this.setState({
-            value: value,
+            value: `/${cmd.command} `,
+            slashMenuVisible: false,
+            slashFilter: "",
+            slashActiveIndex: 0,
         })
+        if (this.inputRef) {
+            this.inputRef.focus()
+        }
     }
 
 
@@ -231,8 +306,8 @@ export default class MessageInput extends Component<MessageInputProps, MessageIn
     }
 
     render() {
-        const { members, onInputRef, topView, toolbar } = this.props
-        const { value, mentionCache } = this.state
+        const { members, onInputRef, topView, toolbar, botCommands } = this.props
+        const { value, mentionCache, slashMenuVisible, slashFilter, slashActiveIndex } = this.state
         const hasValue = value && value.length > 0
         let selectedItems = new Array<MemberSuggestionDataItem>();
         if (members && members.length > 0) {
@@ -308,11 +383,21 @@ export default class MessageInput extends Component<MessageInputProps, MessageIn
                         </div>
                     </div>
                 </div>
-                <div className="wk-messageinput-inputbox" >
+                <div className="wk-messageinput-inputbox" style={{ position: 'relative' }}>
+                    {botCommands && botCommands.length > 0 && (
+                        <SlashCommandMenu
+                            commands={botCommands}
+                            filter={slashFilter}
+                            visible={slashMenuVisible}
+                            activeIndex={slashActiveIndex}
+                            onSelect={this.handleSlashSelect.bind(this)}
+                        />
+                    )}
                     <MentionsInput
                         style={InputStyle.getStyle()}
                         value={value}
                         onKeyPress={e => this.handleKeyPressed.bind(this)(e)}
+                        onKeyDown={e => this.handleKeyDown(e)}
                         onChange={this.handleChange.bind(this)}
                         className="wk-messageinput-input"
                         placeholder={`按 Ctrl + Enter 换行，按 Enter 发送`}

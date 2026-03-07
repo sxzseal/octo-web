@@ -9,6 +9,7 @@ import { RevokeCell } from "../../Messages/Revoke";
 import { MessageContentTypeConst } from "../../Service/Const";
 import ConversationContext from "./context";
 import MessageInput, { MentionModel, MessageInputContext } from "../MessageInput";
+import { BotCommand } from "../SlashCommandMenu";
 import ContextMenus, { ContextMenusContext } from "../ContextMenus";
 import classNames from "classnames";
 import WKAvatar from "../WKAvatar";
@@ -504,6 +505,20 @@ export class Conversation extends Component<ConversationProps> implements Conver
 
         const channelInfo = WKSDK.shared().channelManager.getChannelInfo(channel)
 
+        let botCommands: BotCommand[] | undefined
+        if (channel.channelType === ChannelTypePerson && channelInfo?.orgData?.robot === 1 && channelInfo.orgData.bot_commands) {
+            try {
+                const raw = typeof channelInfo.orgData.bot_commands === 'string'
+                    ? JSON.parse(channelInfo.orgData.bot_commands)
+                    : channelInfo.orgData.bot_commands
+                if (Array.isArray(raw)) {
+                    botCommands = raw as BotCommand[]
+                }
+            } catch (e) {
+                // ignore invalid bot_commands JSON
+            }
+        }
+
         return <Provider create={() => {
             this.vm = new ConversationVM(channel, initLocateMessageSeq)
             return this.vm
@@ -614,7 +629,7 @@ export class Conversation extends Component<ConversationProps> implements Conver
                     <div className="wk-conversation-footer">
                         <div className="wk-conversation-footer-content">
 
-                            <MessageInput members={this.vm.subscribers.filter((s) => s.uid !== WKApp.loginInfo.uid)} onContext={(ctx) => {
+                            <MessageInput botCommands={botCommands} members={this.vm.subscribers.filter((s) => s.uid !== WKApp.loginInfo.uid)} onContext={(ctx) => {
                                 this._messageInputContext = ctx
                             }} toolbar={this.chatToolbarUI()} context={this} onSend={async (text: string, mention?: MentionModel) => {
                                 const content = new MessageText(text)
