@@ -56,23 +56,25 @@ export class ChannelAvatar extends Component<ChannelAvatarProps>{
                     let canvas = this.avatarEdit?.getImageScaledToCanvas()
                     if(canvas) {
                         canvas.toBlob( async (bob: Blob | null)  => {
-                            if (bob) {
-                                const file = new File([bob], `channelAvatarPicture.png`, {
-                                    type: "image/png"
-                                });
-                                if(onFileUpload) {
-                                    finishButtonContext.loading(true)
-                                    await onFileUpload(file)
-                                    finishButtonContext.loading(false)
-                                    context.pop()
-                                }else{
-                                    finishButtonContext.loading(true)
-                                    await this.uploadAvatar(file)
-                                    WKApp.shared.changeChannelAvatarTag(channel)
-                                    finishButtonContext.loading(false)
-                                    context.pop()
-                                    this.setState({})
-                                }
+                            if (!bob) {
+                                Toast.error('图片处理失败，请重试');
+                                return;
+                            }
+                            const file = new File([bob], `channelAvatarPicture.png`, {
+                                type: "image/png"
+                            });
+                            if(onFileUpload) {
+                                finishButtonContext.loading(true)
+                                await onFileUpload(file)
+                                finishButtonContext.loading(false)
+                                context.pop()
+                            }else{
+                                finishButtonContext.loading(true)
+                                await this.uploadAvatar(file)
+                                WKApp.shared.changeChannelAvatarTag(channel)
+                                finishButtonContext.loading(false)
+                                context.pop()
+                                this.setState({})
                             }
                         })
                     }

@@ -1,5 +1,6 @@
 import React, { useRef } from "react";
 import { Component, ReactNode } from "react";
+import { Toast } from "@douyinfe/semi-ui";
 import { ListItemProps } from "../ListItem";
 import RouteContext, { FinishButtonContext, RouteContextConfig } from "../../Service/Context";
 import { WKAvatarEditor } from "../WKAvatarEditor";
@@ -39,18 +40,19 @@ export class ListItemAvatar extends Component<ListItemAvatarProps>{
                     let canvas = this.avatarEdit?.getImageScaledToCanvas()
                     if(canvas) {
                         canvas.toBlob( async (bob: Blob | null)  => {
-                            if (bob) {
-                                const file = new File([bob], `profilePicture.png`, {
-                                    type: "image/png"
-                                });
-                                if(onFileUpload) {
-                                    finishButtonContext.loading(true)
-                                    await onFileUpload(file)
-                                    finishButtonContext.loading(false)
-                                    context.pop()
-                                }
+                            if (!bob) {
+                                Toast.error('图片处理失败，请重试');
+                                return;
                             }
-    
+                            const file = new File([bob], `profilePicture.png`, {
+                                type: "image/png"
+                            });
+                            if(onFileUpload) {
+                                finishButtonContext.loading(true)
+                                await onFileUpload(file)
+                                finishButtonContext.loading(false)
+                                context.pop()
+                            }
                         })
                     }
                 }
