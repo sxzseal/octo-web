@@ -220,7 +220,7 @@ export default class ChatPage extends Component<any, ChatPageState> {
                         const statusIcon = vm.connectStatus === 1 ? '🟢' : vm.connectStatus === 2 ? '🟡' : '🔴';
                         return currentSpace ? (
                           <>
-                            <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 22, height: 22, borderRadius: 5, backgroundColor: colors[currentSpace.name.charCodeAt(0) % colors.length], color: 'white', fontSize: 12, fontWeight: 600, marginRight: 6 }}>
+                            <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 28, height: 28, borderRadius: 6, backgroundColor: colors[currentSpace.name.charCodeAt(0) % colors.length], color: 'white', fontSize: 14, fontWeight: 600, marginRight: 8 }}>
                               {currentSpace.name.charAt(0)}
                             </span>
                             {currentSpace.name}
@@ -258,7 +258,7 @@ export default class ChatPage extends Component<any, ChatPageState> {
                             this.setState({ showSpaceDropdown: false });
                           }}>
                             <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 24, height: 24, borderRadius: 6, backgroundColor: '#e0e0e0', color: '#666', fontSize: 16, fontWeight: 600, marginRight: 8 }}>+</span>
-                            <span style={{ flex: 1, color: '#666' }}>加入 / 创建 Space</span>
+                            <span style={{ flex: 1, color: '#5b6abf' }}>加入 / 创建 Space</span>
                           </div>
                         </div>
                       )}
