@@ -142,18 +142,12 @@ export default class InviteLanding extends Component<InviteLandingProps, InviteL
             });
             const regData = await regResp.json();
             if (!regResp.ok) { Toast.error(regData.msg || "注册失败"); this.safeSetState({ regLoading: false }); return; }
-            // Auto login after register
-            const loginResp = await fetch(`${WKApp.apiClient.config.apiURL}user/login`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ username: regUsername, password: regPassword, flag: 1 }),
-            });
-            const loginData = await loginResp.json();
-            if (!loginResp.ok) { Toast.error("注册成功但登录失败"); this.safeSetState({ regLoading: false }); return; }
-            WKApp.loginInfo.uid = loginData.uid;
-            WKApp.loginInfo.token = loginData.token;
-            WKApp.loginInfo.name = loginData.name;
-            WKApp.loginInfo.shortNo = loginData.short_no;
+            // 注册响应已包含 token，直接使用，不要再调 login（避免 token 竞态）
+            const userData = regData.data || regData;
+            WKApp.loginInfo.uid = userData.uid;
+            WKApp.loginInfo.token = userData.token;
+            WKApp.loginInfo.name = userData.name;
+            WKApp.loginInfo.shortNo = userData.short_no;
             WKApp.loginInfo.save();
             Toast.success("注册成功");
             await this.joinAfterAuth();
