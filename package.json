@@ -38,6 +38,7 @@
   },
   "dependencies": {
     "@babel/plugin-proposal-private-property-in-object": "^7.21.11",
+    "lucide-react": "^0.577.0",
     "zxcvbn": "^4.4.2"
   }
 }
