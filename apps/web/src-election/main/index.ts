@@ -615,6 +615,11 @@ app.on("activate", () => {
 app.on("before-quit", () => {
   forceQuit = true;
 
+  if (flashTimer) {
+    clearInterval(flashTimer);
+    flashTimer = null;
+  }
+
   if (!tray) return;
 
   tray.destroy();
