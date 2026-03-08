@@ -127,6 +127,7 @@ export class ChatVM extends ProviderListener {
         this.spaceChangedHandler = (_space: any) => {
             WKSDK.shared().conversationManager.conversations = []
             this.selectedConversation = undefined // 清空右侧聊天窗口
+            WKApp.shared.openChannel = undefined // 清空全局打开的频道
             this.requestConversationList()
         }
         WKApp.mittBus.on('space-changed', this.spaceChangedHandler)

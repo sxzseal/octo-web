@@ -79,8 +79,12 @@ export default class ContactsList extends Component<any, ContactsState> {
         this.spaceChangedHandler = (space: any) => {
             const sp = space as Space | undefined
             if (sp) {
-                this.setState({ currentSpace: sp }, () => {
+                this.setState({ currentSpace: sp, myGroups: [] }, () => {
                     this.loadSpaceMembers(sp.space_id)
+                    // 如果群组已展开，重新加载
+                    if (this.state.expandedSection === 'groups') {
+                        this.loadMyGroups()
+                    }
                 })
             } else {
                 this.setState({ currentSpace: undefined, spaceMembers: [] }, () => {
