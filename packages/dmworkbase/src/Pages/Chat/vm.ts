@@ -11,6 +11,7 @@ import { ProhibitwordsService } from "../../Service/ProhibitwordsService";
 import { EndpointID } from "../../Service/Const";
 import { ShowConversationOptions } from "../../EndpointCommon";
 import { Space, SpaceService } from "../../Service/SpaceService";
+import { isSafeUrl } from "../../Utils/security";
 
 
 const TOP_CONVERSATION_SCORE_BOOST = 1000000000000;
@@ -350,6 +351,9 @@ export function handleGlobalSearchClick(item: any, type: string,hideModal?:()=>v
         } else {
             downloadURL += "?filename=" + encodeURIComponent(payload.name)
         }
-        window.open(`${downloadURL}`, 'top');
+        // Validate URL protocol to prevent XSS attacks (fixes #347)
+        if (isSafeUrl(downloadURL)) {
+            window.open(`${downloadURL}`, 'top');
+        }
     }
 }
