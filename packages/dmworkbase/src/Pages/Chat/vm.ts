@@ -132,6 +132,10 @@ export class ChatVM extends ProviderListener {
     didMount(): void {
         // 监听 Space 切换（来自全局顶栏 SpaceList）
         this.spaceChangedHandler = (_space: any) => {
+            // 确保 currentSpaceId 已更新（防止事件时序问题）
+            if (_space?.space_id) {
+                WKApp.shared.currentSpaceId = _space.space_id
+            }
             WKSDK.shared().conversationManager.conversations = []
             this.selectedConversation = undefined // 清空右侧聊天窗口
             WKApp.shared.openChannel = undefined // 清空全局打开的频道
