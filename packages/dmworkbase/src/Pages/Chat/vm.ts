@@ -120,7 +120,16 @@ export class ChatVM extends ProviderListener {
         this.notifyListener()
     }
 
+    private spaceChangedHandler?: (space: any) => void
+
     didMount(): void {
+        // 监听 Space 切换（来自全局顶栏 SpaceList）
+        this.spaceChangedHandler = (_space: any) => {
+            WKSDK.shared().conversationManager.conversations = []
+            this.requestConversationList()
+        }
+        WKApp.mittBus.on('space-changed', this.spaceChangedHandler)
+
         // 根据连接状态设置标题
         this.setConnectTitleWithConnectStatus(WKSDK.shared().connectManager.status)
 
@@ -218,6 +227,9 @@ export class ChatVM extends ProviderListener {
         WKSDK.shared().conversationManager.removeConversationListener(this.conversationListener)
         WKSDK.shared().channelManager.removeListener(this.channelListener)
         WKApp.shared.removeMessageDeleteListener(this.messageDeleteListener)
+        if (this.spaceChangedHandler) {
+            WKApp.mittBus.off('space-changed', this.spaceChangedHandler)
+        }
     }
 
     findConversation(channel: Channel) {

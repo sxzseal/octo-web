@@ -35,6 +35,14 @@ export class MainContentLeft extends Component<MainContentLeftProps, MainContent
     componentDidMount() {
         SpaceService.shared.getMySpaces().then(spaces => {
             this.setState({ allSpaces: spaces });
+            // 恢复上次选中的 Space，或默认第一个
+            const savedSpaceId = localStorage.getItem("currentSpaceId")
+            if (savedSpaceId && spaces.find(s => s.space_id === savedSpaceId)) {
+                WKApp.shared.currentSpaceId = savedSpaceId
+            } else if (spaces.length > 0 && !WKApp.shared.currentSpaceId) {
+                WKApp.shared.currentSpaceId = spaces[0].space_id
+                localStorage.setItem("currentSpaceId", spaces[0].space_id)
+            }
         }).catch(() => {});
     }
 
