@@ -1,4 +1,4 @@
-import { Channel, WKSDK, Message } from "wukongimjssdk";
+import { Channel, ChannelTypePerson, WKSDK, Message } from "wukongimjssdk";
 import WKApp from "./App";
 import React, { Component, ReactNode } from "react";
 import { ChatContentPage } from "./Pages/Chat";
@@ -38,6 +38,16 @@ export class EndpointCommon {
   }
 
   showConversation(channel: Channel, opts?: ShowConversationOptions) {
+    // Space 模式：DM (channelType=1) 自动加 Space 前缀
+    // channel_id 格式: s{spaceId}_{uid}，让每个 Space 有独立的 DM 会话
+    const spaceId = WKApp.shared.currentSpaceId
+    if (spaceId && channel.channelType === ChannelTypePerson) {
+      const cid = channel.channelID
+      // 只给裸 UID 加前缀，已有前缀的跳过
+      if (!cid.startsWith("s")) {
+        channel = new Channel(`s${spaceId}_${cid}`, channel.channelType)
+      }
+    }
     WKApp.shared.openChannel = channel;
     EndpointManager.shared.invoke(EndpointID.showConversation, {
       channel: channel,
