@@ -8,7 +8,7 @@ export interface PasswordStrengthResult {
     feedback: string[];
 }
 
-const MIN_PASSWORD_LENGTH = 8;
+const MIN_PASSWORD_LENGTH = 6;
 
 /**
  * Evaluate password strength using zxcvbn library.
@@ -86,8 +86,8 @@ export function evaluatePasswordStrength(password: string): PasswordStrengthResu
     const labels = ['非常弱', '弱', '一般', '强', '非常强'];
     const colors = ['#ff4d4f', '#ff7a45', '#faad14', '#52c41a', '#389e0d'];
 
-    // Password is valid if score >= 2 (fair) and meets minimum length
-    const isValid = score >= 2 && password.length >= MIN_PASSWORD_LENGTH;
+    // Password is valid if meets minimum length (strength indicator is advisory only)
+    const isValid = password.length >= MIN_PASSWORD_LENGTH;
 
     return {
         score,

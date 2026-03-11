@@ -326,6 +326,24 @@ export class LoginVM extends ProviderListener {
         loginInfo.sex = data.sex ?? 0
         loginInfo.save()
 
+        // 登录/注册成功后，检查是否有待处理的邀请码（来自邀请链接）
+        const pendingInvite = localStorage.getItem("pendingInviteCode");
+        if (pendingInvite && /^[a-zA-Z0-9_-]+$/.test(pendingInvite)) {
+            const apiUrl = WKApp.apiClient.config.apiURL?.replace(/\/+$/, '');
+            fetch(`${apiUrl}/space/join`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'token': data.token },
+                body: JSON.stringify({ invite_code: pendingInvite }),
+            }).then(resp => resp.json()).then(result => {
+                localStorage.removeItem("pendingInviteCode");
+                if (result?.space_id) {
+                    localStorage.setItem('currentSpaceId', result.space_id);
+                }
+            }).catch(() => {
+                localStorage.removeItem("pendingInviteCode");
+            });
+        }
+
         try {
             WKApp.endpoints.callOnLogin()
         } catch (e) {
