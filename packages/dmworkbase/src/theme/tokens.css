@@ -14,7 +14,7 @@
   --wk-brand-primary-hover: #6B4FD8;
   --wk-brand-secondary:     #00D4AA;
   --wk-brand-gradient:      linear-gradient(135deg, #7C5CFC, #00D4AA);
-  --wk-brand-gradient-hover:linear-gradient(135deg, #6B4FD8, #00BF99);
+  --wk-brand-gradient-hover: linear-gradient(135deg, #6B4FD8, #00BF99);
   --wk-brand-gradient-subtle: linear-gradient(135deg, rgba(124,92,252,0.12), rgba(0,212,170,0.08));
   --wk-brand-glow:          rgba(124, 92, 252, 0.3);
 
