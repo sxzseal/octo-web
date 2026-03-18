@@ -25,12 +25,7 @@
 .wk-layout-content-left {
     width: var( --wk-width-layout-content-left);
     height: 100%;
-    border-right: 1px solid var(--semi-color-border);
     flex-shrink: 0;
-}
-
-body[theme-mode=dark] .wk-layout-content-left {
-    border-right-color: rgba(255, 255, 255, 0.07);
 }
 
 .wk-layout-content-right {
