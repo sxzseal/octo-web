@@ -1,7 +1,8 @@
-import { Channel, ChannelTypePerson,WKSDK } from "wukongimjssdk";
+import { Channel, ChannelTypePerson, ChannelTypeGroup, WKSDK } from "wukongimjssdk";
 import React from "react";
 import { Component } from "react";
 import { BubblePosition, MessageWrap } from "../../Service/Model";
+import AiBadge from "../../Components/AiBadge";
 
 const titleColors = ["#8C8DFF", "#7983C2", "#6D8DDE", "#5979F0", "#6695DF", "#8F7AC5",
     "#9D77A5", "#8A64D0", "#AA66C3", "#A75C96", "#C8697D", "#B74D62",
@@ -49,10 +50,13 @@ export default class MessageHead extends Component<MessageHeadProps> {
     render() {
         const { message } = this.props
         const channelInfo = WKSDK.shared().channelManager.getChannelInfo(new Channel(message.fromUID, ChannelTypePerson))
+        const isGroupMsg = message.channel.channelType === ChannelTypeGroup
+        const isBot = channelInfo?.orgData?.robot === 1
         return <>
            {
-                this.needTitle()?( <div className="textTitle" style={{color:getTitleColor(channelInfo?.orgData.displayName)}}>
-                {channelInfo?.orgData.displayName}
+                this.needTitle()?( <div className="textTitle" style={{color:getTitleColor(channelInfo?.orgData?.displayName), display:'flex', alignItems:'center', gap: 4}}>
+                <span>{channelInfo?.orgData?.displayName}</span>
+                {isGroupMsg && isBot && <AiBadge size="small" />}
             </div>):null
            }
         </>
