@@ -155,13 +155,13 @@ export default class BotStore extends Component<{}, BotStoreState> {
                         className={`wk-bot-tab ${activeTab === "my" ? "active" : ""}`}
                         onClick={() => this.setState({ activeTab: "my" })}
                     >
-                        我的 Bot ({myBots.length})
+                        我的 AI ({myBots.length})
                     </div>
                     <div
                         className={`wk-bot-tab ${activeTab === "store" ? "active" : ""}`}
                         onClick={() => this.setState({ activeTab: "store" })}
                     >
-                        Bot 广场 ({spaceBots.length})
+                        AI 广场 ({spaceBots.length})
                     </div>
                 </div>
 
@@ -169,10 +169,10 @@ export default class BotStore extends Component<{}, BotStoreState> {
                 <div className="wk-bot-list">
                     {loading && <div className="wk-bot-loading">加载中...</div>}
                     {!loading && activeTab === "my" && myBots.length === 0 && (
-                        <div className="wk-bot-empty">还没有添加任何 Bot<br/>去 Bot 广场看看吧</div>
+                        <div className="wk-bot-empty">还没有添加任何 AI<br/>去 AI 广场看看吧</div>
                     )}
                     {!loading && activeTab === "store" && spaceBots.length === 0 && (
-                        <div className="wk-bot-empty">当前 Space 暂无可用 Bot</div>
+                        <div className="wk-bot-empty">当前 Space 暂无可用 AI</div>
                     )}
                     {!loading && activeTab === "my" && myBots.map(bot => this.renderBotCard(bot, false))}
                     {!loading && activeTab === "store" && spaceBots.map(bot => this.renderBotCard(bot, true))}

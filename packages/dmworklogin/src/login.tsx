@@ -104,7 +104,7 @@ class Login extends Component<any, LoginState> {
                                 <div className="wk-login-brand-feature-icon">
                                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.9)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><path d="M12 8v4l3 3" /></svg>
                                 </div>
-                                <div className="wk-login-brand-feature-text">内置 AI Bot，智能回复与自动化</div>
+                                <div className="wk-login-brand-feature-text">内置 AI，智能回复与自动化</div>
                             </div>
                             <div className="wk-login-brand-feature">
                                 <div className="wk-login-brand-feature-icon">
@@ -129,7 +129,7 @@ class Login extends Component<any, LoginState> {
                                 <svg width="16" height="16" viewBox="0 0 24 24" fill="white"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 14.5v-9l6 4.5-6 4.5z" /></svg>
                             </div>
                             <div className="wk-login-brand-chat-content">
-                                <div className="wk-login-brand-chat-name">DMWork Bot</div>
+                                <div className="wk-login-brand-chat-name">DMWork AI</div>
                                 <div className="wk-login-brand-chat-text">你好！我可以帮你整理今天的会议纪要 📝</div>
                             </div>
                         </div>
@@ -143,7 +143,7 @@ class Login extends Component<any, LoginState> {
                                 <svg width="16" height="16" viewBox="0 0 24 24" fill="white"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 14.5v-9l6 4.5-6 4.5z" /></svg>
                             </div>
                             <div className="wk-login-brand-chat-content">
-                                <div className="wk-login-brand-chat-name">DMWork Bot</div>
+                                <div className="wk-login-brand-chat-name">DMWork AI</div>
                                 <div className="wk-login-brand-chat-text">收到，正在生成摘要，稍等片刻 ⚡</div>
                             </div>
                         </div>

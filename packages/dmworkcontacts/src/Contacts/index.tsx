@@ -184,8 +184,8 @@ export default class ContactsList extends Component<any, ContactsState> {
         const indexList: string[] = []
 
         if (bots.length > 0) {
-            indexItemMap.set('🤖 Bot', bots)
-            indexList.push('🤖 Bot')
+            indexItemMap.set('🤖 AI', bots)
+            indexList.push('🤖 AI')
         }
 
         // 成员按字母分组
@@ -204,13 +204,13 @@ export default class ContactsList extends Component<any, ContactsState> {
         }
 
         // 字母排序（Bot 分组已在最前）
-        const botIdx = indexList.indexOf('🤖 Bot')
-        const rest = indexList.filter(i => i !== '🤖 Bot').sort((a, b) => {
+        const botIdx = indexList.indexOf('🤖 AI')
+        const rest = indexList.filter(i => i !== '🤖 AI').sort((a, b) => {
             if (a === "#") return 1
             if (b === "#") return -1
             return a.localeCompare(b)
         })
-        const sorted = botIdx >= 0 ? ['🤖 Bot', ...rest] : rest
+        const sorted = botIdx >= 0 ? ['🤖 AI', ...rest] : rest
 
         this.setState({ indexList: sorted, indexItemMap })
     }
@@ -292,14 +292,14 @@ export default class ContactsList extends Component<any, ContactsState> {
         const { indexItemMap, botGroupCollapsed } = this.state
         const { canSelect } = this.props
         const items = indexItemMap.get(indexName)
-        const isBotGroup = indexName === '🤖 Bot'
+        const isBotGroup = indexName === '🤖 AI'
 
         return <div key={indexName} className="wk-contacts-section">
             {isBotGroup && (
                 <div className="wk-contacts-accordion-header" onClick={() => this.setState({ botGroupCollapsed: !botGroupCollapsed })}>
                     <span className="wk-contacts-accordion-arrow">{botGroupCollapsed ? <ChevronRight size={16} /> : <ChevronDown size={16} />}</span>
                     <span className="wk-contacts-accordion-icon"><Bot size={16} /></span>
-                    <span className="wk-contacts-accordion-label">Bot</span>
+                    <span className="wk-contacts-accordion-label">AI</span>
                     {items && items.length > 0 && <span className="wk-contacts-accordion-count">({items.length})</span>}
                 </div>
             )}
@@ -529,7 +529,7 @@ export default class ContactsList extends Component<any, ContactsState> {
                 {/* 标题由全局顶栏提供 */}
                 <div className="wk-contacts-content">
                     {this.renderAccordionSection('members', <Users size={16} />, '组织内联系人')}
-                    {this.renderAccordionSection('bots', <Bot size={16} />, 'Bot')}
+                    {this.renderAccordionSection('bots', <Bot size={16} />, 'AI')}
                     {this.renderAccordionSection('groups', <UsersRound size={16} />, '我的群组')}
                 </div>
                 <ContextMenus onContext={(context: ContextMenusContext) => {

@@ -67,7 +67,7 @@ async function registerMenus() {
   }, 4000)
 
   WKApp.menus.register("bots", (_param) => {
-    return new Menus("bots", "/bots", "Bot",
+    return new Menus("bots", "/bots", "AI",
       <Bot size={24} strokeWidth={1.5} color='#999' />,
       <Bot size={24} strokeWidth={2} color='#5b6abf' fill='#5b6abf' />)
   }, 3000)
