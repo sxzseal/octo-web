@@ -56,7 +56,7 @@
     flex: 1;
     min-width: 0;
     border: none;
-    color: var(--text-primary);
+    color: var(--wk-text-primary, var(--text-primary));
     font-size: 14px;
     overflow-y: scroll;
     display: inline-block;
@@ -68,6 +68,8 @@
 .wk-messageinput-input textarea {
     outline: none;
     border: none;
+    color: var(--wk-text-primary, var(--text-primary));
+    background: transparent;
 }
 
 .wk-messageinput-input:empty:before {
