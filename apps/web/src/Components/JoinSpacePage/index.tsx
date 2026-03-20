@@ -21,6 +21,10 @@ interface JoinSpacePageProps {
 
 const ACCENT = "var(--wk-color-primary, #5b6abf)";
 
+const setCurrentSpace = (spaceId: string) => {
+    if (spaceId) localStorage.setItem("currentSpaceId", spaceId);
+};
+
 export default function JoinSpacePage({ onSuccess }: JoinSpacePageProps) {
     const [view, setView] = useState<View>("home");
 
@@ -62,8 +66,7 @@ export default function JoinSpacePage({ onSuccess }: JoinSpacePageProps) {
         setJoinLoading(true);
         try {
             const result: any = await SpaceService.shared.joinSpace(inviteInfo.invite_code);
-            const spaceId = result?.space_id || inviteInfo.space_id;
-            if (spaceId) localStorage.setItem("currentSpaceId", spaceId);
+            setCurrentSpace(result?.space_id || inviteInfo.space_id);
             Toast.success("已加入 " + inviteInfo.space_name);
             onSuccess();
         } catch (e: any) {
@@ -72,8 +75,7 @@ export default function JoinSpacePage({ onSuccess }: JoinSpacePageProps) {
                 Toast.error("空间已满，无法加入");
             } else if (msg.includes("已是成员") || msg.includes("already")) {
                 // 已是成员也算成功，直接进入
-                const spaceId = inviteInfo.space_id;
-                if (spaceId) localStorage.setItem("currentSpaceId", spaceId);
+                setCurrentSpace(inviteInfo.space_id);
                 onSuccess();
             } else {
                 Toast.error(msg || "加入失败，请重试");
@@ -91,7 +93,7 @@ export default function JoinSpacePage({ onSuccess }: JoinSpacePageProps) {
         setCreateLoading(true);
         try {
             const result = await SpaceService.shared.createSpace(name, "");
-            if (result?.space_id) localStorage.setItem("currentSpaceId", result.space_id);
+            setCurrentSpace(result?.space_id);
             Toast.success("Space 创建成功！");
             onSuccess();
         } catch (e: any) {
