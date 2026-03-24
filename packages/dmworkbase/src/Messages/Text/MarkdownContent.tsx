@@ -14,8 +14,10 @@ interface MarkdownContentProps {
 
 /**
  * 在 GitHub 默认白名单基础上，追加 highlight.js 需要的 class 属性。
- * rehype-sanitize 默认会剥掉所有 class，但 rehype-highlight 靠 class 着色，
- * 所以需要显式放行 code/span 上的 class（只允许 hljs- 前缀或 language- 前缀）。
+ * 执行顺序：rehypeHighlight 先着色（加 hljs-* className），
+ * rehypeSanitize 最后兜底清洗——白名单里的 hljs-* / language-* 才真正生效。
+ * 注意：react-markdown 的输入是 Markdown 字符串，remark 直接解析成安全 AST，
+ * 不存在注入 HTML 的机会（未开启 allowDangerousHtml），所以 highlight 先跑不会引入风险。
  */
 const sanitizeSchema = {
     ...defaultSchema,
@@ -58,9 +60,9 @@ const MarkdownContent: React.FC<MarkdownContentProps> = ({ content, isSend, isSt
             <ReactMarkdown
                 remarkPlugins={[remarkGfm]}
                 rehypePlugins={[
-                    // ⚠️ 顺序关键：sanitize 先清洗，highlight 再着色
-                    [rehypeSanitize, sanitizeSchema],
+                    // highlight 先着色，sanitize 最后兜底——白名单 hljs-* class 才真正有效
                     rehypeHighlight,
+                    [rehypeSanitize, sanitizeSchema],
                 ]}
                 components={{
                     a: ({ href, children, ...props }) => (
