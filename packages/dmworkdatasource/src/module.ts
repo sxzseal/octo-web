@@ -1,4 +1,4 @@
-import { Convert, GroupRole, IModule, WKApp } from "@octo/base"
+import { Convert, GroupRole, IModule, WKApp, hasSpacePrefix } from "@octo/base"
 import { Channel, ChannelInfo, ChannelTypeGroup, ChannelTypePerson, Conversation, WKSDK, Message, Subscriber, ConversationExtra, Reminder } from "wukongimjssdk";
 import { MessageTask } from "wukongimjssdk";
 import { ConversationProvider } from "./conversation";
@@ -29,7 +29,7 @@ export default class DataSourceModule implements IModule {
 
     // 从 Space channel_id (s{spaceId}_{uid}) 中提取真实 uid
     static extractUID(channelID: string): string {
-        if (channelID.startsWith('s') && channelID.includes('_')) {
+        if (hasSpacePrefix(channelID)) {
             const idx = channelID.indexOf('_')
             return channelID.substring(idx + 1)
         }

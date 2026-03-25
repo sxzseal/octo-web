@@ -1,5 +1,8 @@
 import WKApp from "../App"
 import { ChannelTypePerson, ChannelTypeGroup, Channel } from "wukongimjssdk"
+import { hasSpacePrefix } from "./SpacePrefix"
+
+export { hasSpacePrefix } from "./SpacePrefix"
 
 /**
  * 判断一个 channel 是否不属于当前 Space，应从展示/计数中跳过。
@@ -17,7 +20,7 @@ export function shouldSkipChannelForSpace(channel: Channel): boolean {
     const cid = channel.channelID
 
     // 有 Space 前缀的 channel（私聊 s{spaceId}_{uid} 或群聊 s{spaceId}_{groupNo}）
-    if (cid.startsWith("s")) {
+    if (hasSpacePrefix(cid)) {
         return !cid.startsWith(`s${currentSpaceId}_`)
     }
 

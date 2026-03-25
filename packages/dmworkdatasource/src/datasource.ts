@@ -1,4 +1,4 @@
-import { ChannelQrcodeResp, Contacts, IChannelDataSource, ICommonDataSource, WKApp, RequestConfig, GroupRole } from "@octo/base";
+import { ChannelQrcodeResp, Contacts, IChannelDataSource, ICommonDataSource, WKApp, RequestConfig, GroupRole, hasSpacePrefix } from "@octo/base";
 import { Channel, ChannelInfo, ChannelTypeGroup, ChannelTypePerson, WKSDK, Message, MessageContentType,ConversationExtra,Subscriber } from "wukongimjssdk";
 
 const MAX_GROUP_LIST_LIMIT = 100000;
@@ -127,7 +127,7 @@ export class ChannelDataSource implements IChannelDataSource {
             return WKApp.apiClient.put(`groups/${channel.channelID}/setting`, setting)
         } else if (channel.channelType === ChannelTypePerson) { // 个人信息
             let uid = channel.channelID;
-            if (uid.startsWith('s') && uid.includes('_')) uid = uid.substring(uid.indexOf('_') + 1);
+            if (hasSpacePrefix(uid)) uid = uid.substring(uid.indexOf('_') + 1);
             return WKApp.apiClient.put(`users/${uid}/setting`, setting)
         }
     }
