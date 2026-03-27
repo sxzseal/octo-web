@@ -1,10 +1,12 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import tsconfigPaths from 'vite-tsconfig-paths'
-import path from 'path'
+import commonjs from 'vite-plugin-commonjs'
 
 export default defineConfig({
   plugins: [
+    // TODO: remove after all require() calls are migrated to import (chore/migrate-require-to-import)
+    commonjs(),
     react(),
     tsconfigPaths({ root: '../../' }),
   ],

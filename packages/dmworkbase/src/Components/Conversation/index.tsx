@@ -767,9 +767,9 @@ class ConversationPositionView extends Component<ConversationPositionViewProps, 
     getReminderIcon(reminderType: ReminderType) {
         switch (reminderType) {
             case ReminderType.ReminderTypeMentionMe:
-                return "./assets/reminder_mention.png"
+                return new URL("./assets/reminder_mention.png", import.meta.url).href
             case ReminderType.ReminderTypeApplyJoinGroup:
-                return "./assets/reminder_member_invite.png"
+                return new URL("./assets/reminder_member_invite.png", import.meta.url).href
         }
     }
 
@@ -826,7 +826,7 @@ class ConversationPositionView extends Component<ConversationPositionViewProps, 
                             }}>
                                 {
                                     this.getReminderIcon(type) ? (
-                                        loading.get(type) ? <Spin spinning={true}></Spin> : <img src={require(`${this.getReminderIcon(type)}`)}></img>
+                                        loading.get(type) ? <Spin spinning={true}></Spin> : <img src={this.getReminderIcon(type)}></img>
                                     ) : undefined
                                 }
 

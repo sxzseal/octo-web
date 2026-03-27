@@ -58,7 +58,7 @@ export default class WKViewQueueHeader extends Component<WKViewQueueHeaderProps,
                     onBack()
                 }
             }}>
-                <img src={require(`${isDark?"./assets/nav_back_dark.png":"./assets/nav_back.png"}`)}></img>
+                <img src={isDark ? new URL("./assets/nav_back_dark.png", import.meta.url).href : new URL("./assets/nav_back.png", import.meta.url).href}></img>
             </div>
            }
             <div className="wk-viewqueueheader-content">

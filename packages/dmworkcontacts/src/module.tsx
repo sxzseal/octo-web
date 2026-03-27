@@ -77,11 +77,7 @@ export default class ContactsModule implements IModule {
       const isDark = WKApp.config.themeMode === ThemeMode.dark;
       return {
         title: "添加朋友",
-        icon: require(`${
-          isDark
-            ? "./assets/popmenus_friendadd_dark.png"
-            : "./assets/popmenus_friendadd.png"
-        }`),
+        icon: isDark ? new URL("./assets/popmenus_friendadd_dark.png", import.meta.url).href : new URL("./assets/popmenus_friendadd.png", import.meta.url).href,
         onClick: () => {
           WKApp.routeLeft.push(
             <FriendAdd

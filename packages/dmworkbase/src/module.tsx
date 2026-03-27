@@ -539,10 +539,7 @@ export default class BaseModule implements IModule {
       const isDark = WKApp.config.themeMode === ThemeMode.dark;
       return {
         title: "发起群聊",
-        icon: require(`${isDark
-          ? "./assets/popmenus_startchat_dark.png"
-          : "./assets/popmenus_startchat.png"
-          }`),
+        icon: isDark ? new URL("./assets/popmenus_startchat_dark.png", import.meta.url).href : new URL("./assets/popmenus_startchat.png", import.meta.url).href,
         onClick: () => {
           const channel: any = {
             channelID: "",
