@@ -241,11 +241,20 @@ grep -rn "旧class名" packages/ apps/ --include="*.tsx" --include="*.css"
 ### 启动
 
 ```bash
-# 主仓库（pnpm + Vite 8）
-cd apps/web && pnpm storybook  # http://localhost:6006
+# 在项目根目录或 apps/web 目录下执行
+pnpm storybook
 
-# MCP Server（供 Agent 查询组件）
-http://localhost:6006/mcp
+# 启动成功后终端会输出实际地址，例如：
+# Local: http://localhost:6006/
+```
+
+MCP Server 地址 = Storybook 地址 + `/mcp`，例如：`http://localhost:6006/mcp`
+
+**Agent 使用 MCP 前，先确认 Storybook 是否在跑：**
+```bash
+curl -s -o /dev/null -w "%{http_code}" http://localhost:6006
+# 返回 200 = 正在运行，可以用 MCP
+# 连接失败 = 先执行 pnpm storybook 启动
 ```
 
 ### Story 写法
