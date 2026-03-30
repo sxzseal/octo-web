@@ -187,11 +187,13 @@ export default class ContactsList extends Component<any, ContactsState> {
         this.spaceChangedHandler = (space: any) => {
             const sp = space as Space | undefined
             if (sp) {
-                this.setState({ currentSpace: sp, myGroups: [], myBots: [], loading: true }, () => {
+                this.debouncedSearch.cancel()
+                this.setState({ currentSpace: sp, myGroups: [], myBots: [], spaceBots: [], keyword: '', isSearching: false, searchContacts: [], searchGroups: [], filterMode: 'all', loading: true }, () => {
                     this.loadAllData(sp.space_id)
                 })
             } else {
-                this.setState({ currentSpace: undefined, spaceMembers: [], myBots: [], myGroups: [] })
+                this.debouncedSearch.cancel()
+                this.setState({ currentSpace: undefined, spaceMembers: [], myBots: [], spaceBots: [], myGroups: [], keyword: '', isSearching: false, searchContacts: [], searchGroups: [], filterMode: 'all' })
             }
         }
         WKApp.mittBus.on('space-changed', this.spaceChangedHandler)
