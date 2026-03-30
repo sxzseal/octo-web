@@ -20,10 +20,12 @@ export function shouldSkipPersonConversationForSpace(conversation: Conversation)
     if (!currentSpaceId) return false
     if (conversation.channel.channelType !== ChannelTypePerson) return false
 
+    // SYSTEM_BOTS (BotFather) 是全局单例，所有 Space 都应可见
+    // 消息级过滤由 filterPersonMessagesBySpace 处理
+    if (SYSTEM_BOTS.has(conversation.channel.channelID)) return false
+
     const msgSpaceId = conversation.lastMessage?.content?.contentObj?.space_id
     if (msgSpaceId && msgSpaceId !== currentSpaceId) return true
-    // 系统 Bot 无 space_id 时跳过，避免空壳会话（有条目无内容）
-    if (!msgSpaceId && SYSTEM_BOTS.has(conversation.channel.channelID)) return true
     return false
 }
 
