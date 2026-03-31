@@ -557,7 +557,7 @@ export default class ContactsList extends Component<any, ContactsState> {
         const groups = myGroups || []
 
         return (
-            <div className="wk-contacts-accordion">
+            <div className={classnames("wk-contacts-accordion", isExpanded && "wk-contacts-accordion--expanded")}>
                 {this.renderAccordionHeader('groups', <UsersRound size={16} />, '群聊', groups.length)}
                 {isExpanded && (
                     <div className="wk-contacts-accordion-body">
@@ -590,7 +590,7 @@ export default class ContactsList extends Component<any, ContactsState> {
         const bots = myBots || []
 
         return (
-            <div className="wk-contacts-accordion">
+            <div className={classnames("wk-contacts-accordion", isExpanded && "wk-contacts-accordion--expanded")}>
                 {this.renderAccordionHeader('myBots', <Bot size={16} />, '已添加 AI', bots.length)}
                 {isExpanded && (
                     <div className="wk-contacts-accordion-body">
@@ -624,7 +624,7 @@ export default class ContactsList extends Component<any, ContactsState> {
         const totalCount = this.flatItems.length
 
         return (
-            <div className="wk-contacts-accordion">
+            <div className={classnames("wk-contacts-accordion", isExpanded && "wk-contacts-accordion--expanded")}>
                 {this.renderAccordionHeader('allContacts', <Users size={16} />, '全部联系人', totalCount)}
                 {isExpanded && (
                     <>

@@ -192,11 +192,10 @@
     flex-shrink: 0;
 }
 
-.wk-contacts-accordion:last-child {
-    flex: 1;
-    min-height: 0;
+.wk-contacts-accordion--expanded {
     display: flex;
     flex-direction: column;
+    min-height: 0;
 }
 
 .wk-contacts-accordion-header {
@@ -249,9 +248,8 @@
 
 .wk-contacts-accordion-body {
     padding: var(--wk-sp-1) 0;
-    flex: 1;
-    min-height: 0;
     overflow-y: auto;
+    max-height: calc(100vh - 300px);
 }
 
 /* 全部联系人列表 - 固定高度可滚动（虚拟列表需要） */
