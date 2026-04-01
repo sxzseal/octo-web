@@ -57,6 +57,7 @@
         right: 0;
         transform: translate3d(0, 0, 0);
         transition: transform var(--wk-layer-transition);
+        z-index: 20; /* 高于 NavRail(z-index:10)，对话打开时盖住 NavRail */
     }
 
    .wk-layout-content:not(.wk-layout-open) .wk-layout-content-right {
