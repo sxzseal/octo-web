@@ -44,19 +44,29 @@
     position: relative;
     bottom: auto;
     right: auto;
-    width: 20px;
-    height: 20px;
+    width: 16px;
+    height: 16px;
     border: none;
     background: transparent;
     border-radius: var(--wk-r-sm);
     cursor: default;
+    flex-shrink: 0;
+}
+
+.wk-chat-search .wk-navrail__signal svg {
+    width: 14px;
+    height: 14px;
 }
 
 .wk-chat-search .wk-navrail__signal-tooltip {
+    position: absolute;
     top: calc(100% + 6px);
     bottom: auto;
     left: auto;
     right: 0;
+    white-space: nowrap;
+    font-size: 12px;
+    padding: var(--wk-sp-1) var(--wk-sp-2);
 }
 
 /* ── Title Dropdown ── */

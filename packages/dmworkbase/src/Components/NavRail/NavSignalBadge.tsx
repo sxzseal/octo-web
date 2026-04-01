@@ -116,7 +116,7 @@ export default class NavSignalBadge extends Component<{}, NavSignalBadgeState> {
                     <rect x="11" y="3" width="3" height="13" rx="0.5" fill={bars >= 3 ? color : "#d1d5db"} />
                 </svg>
                 {showTooltip && (
-                    <div className="wk-navrail__signal-tooltip">
+                    <div className="wk-navrail__signal-tooltip" style={{ whiteSpace: 'nowrap' }}>
                         {this.getTooltipText()}
                     </div>
                 )}
