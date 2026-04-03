@@ -21,29 +21,7 @@
     align-items: flex-start;
 }
 
-/* 镜像法自动扩展容器（CSS-Tricks grid trick） */
-.wk-messageinput-input {
-    display: grid !important;
-}
 
-.wk-messageinput-input::after {
-    content: attr(data-value) " ";
-    white-space: pre-wrap;
-    word-break: break-word;
-    visibility: hidden;
-    grid-area: 1 / 1;
-    min-height: calc(2 * 21px);
-    max-height: calc(7 * 21px);
-    padding: 10px;
-    font-size: 14px;
-    line-height: 1.5;
-    box-sizing: border-box;
-}
-
-.wk-messageinput-input textarea {
-    grid-area: 1 / 1;
-    overflow-y: auto;
-}
 
 .wk-messageinput-menu-btn {
     width: 28px;
@@ -93,11 +71,6 @@
     border: none;
     color: var(--wk-text-primary, var(--text-primary));
     background: transparent;
-    resize: none;
-    /* 高度跟随外层容器，超出内容在内部滚动 */
-    width: 100%;
-    height: 100%;
-    overflow-y: auto;
 }
 
 .wk-messageinput-input:empty:before {

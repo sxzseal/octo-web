@@ -7,7 +7,7 @@ import WKSDK, { Channel, ChannelTypePerson, Subscriber } from "wukongimjssdk";
 import hotkeys from 'hotkeys-js';
 import WKApp from "../../App";
 import "./index.css"
-import InputStyle, { calcInputHeight, INPUT_MIN_ROWS, INPUT_DEFAULT_ROWS } from "./defaultStyle";
+import InputStyle, { calcInputHeight, INPUT_MIN_ROWS, INPUT_DEFAULT_ROWS, INPUT_MAX_ROWS, INPUT_LINE_HEIGHT } from "./defaultStyle";
 import {IconSend} from '@douyinfe/semi-icons';
 import { Notification, Button } from '@douyinfe/semi-ui';
 import SlashCommandMenu, { BotCommand } from "../SlashCommandMenu";
@@ -50,6 +50,7 @@ interface MessageInputState {
     slashMenuVisible: boolean
     slashFilter: string
     slashActiveIndex: number
+    inputHeight: number // 输入框高度（px），由换行符计算
     expanded: boolean  // 输入框是否展开（撑满消息列表区域）
 }
 
@@ -134,7 +135,6 @@ export interface MessageInputContext {
 export default class MessageInput extends Component<MessageInputProps, MessageInputState> implements MessageInputContext {
     toolbars: Array<ElementType>
     inputRef: any
-    private _mentionsDiv: HTMLDivElement | null = null
     eventListener: any
     private previousScope: string = 'all'
     constructor(props: MessageInputProps) {
@@ -146,6 +146,7 @@ export default class MessageInput extends Component<MessageInputProps, MessageIn
             slashMenuVisible: false,
             slashFilter: "",
             slashActiveIndex: 0,
+            inputHeight: calcInputHeight(INPUT_DEFAULT_ROWS),
             expanded: false,
         }
         if (props.onAddMention) {
@@ -158,13 +159,6 @@ export default class MessageInput extends Component<MessageInputProps, MessageIn
     }
 
     componentDidMount() {
-        // 找到 wk-messageinput-input div，用于 CSS grid trick 的 data-value 同步
-        if (this.inputRef) {
-            const el = this.inputRef as HTMLElement
-            const mentionsDiv = el.closest?.('.wk-messageinput-input') as HTMLDivElement | null
-            if (mentionsDiv) this._mentionsDiv = mentionsDiv
-        }
-
         const self = this;
         const scope = "messageInput"
         // Save the previous scope to restore on unmount (fix for scope pollution)
@@ -282,14 +276,13 @@ export default class MessageInput extends Component<MessageInputProps, MessageIn
             const { content, mention } = formatMentionTextV2(value || "");
             this.props.onSend(content, mention);
         }
+        const defaultRows = this.props.hasPendingAttachments ? INPUT_MIN_ROWS : INPUT_DEFAULT_ROWS
         this.setState({
             value: '',
             quickReplySelectIndex: 0,
+            inputHeight: calcInputHeight(defaultRows),
             expanded: false,
         });
-        if (this._mentionsDiv) {
-            this._mentionsDiv.dataset.value = ''
-        }
         // 发送后收起展开状态
         if (this.state.expanded) {
             this.props.onExpandChange?.(false)
@@ -300,10 +293,8 @@ export default class MessageInput extends Component<MessageInputProps, MessageIn
         const value = stripInvisibleChars(event.target.value)
         const { botCommands } = this.props
 
-        // 同步 data-value 到镜像 div，驱动 CSS grid trick 自动扩展高度
-        if (this._mentionsDiv) {
-            this._mentionsDiv.dataset.value = value
-        }
+        // 根据换行符计算高度（纯计算，无 DOM 操作，无闪烁）
+        const inputHeight = this.calcInputHeight(value)
 
         // 只在输入 / 前缀且没有空格时弹出斜杠命令菜单（避免粘贴完整命令时弹出）
         if (botCommands && botCommands.length > 0 && value.startsWith('/') && !value.includes(' ') && !value.includes('\n')) {
@@ -313,6 +304,7 @@ export default class MessageInput extends Component<MessageInputProps, MessageIn
                 slashMenuVisible: true,
                 slashFilter: filter,
                 slashActiveIndex: 0,
+                inputHeight,
             })
         } else {
             this.setState({
@@ -320,6 +312,7 @@ export default class MessageInput extends Component<MessageInputProps, MessageIn
                 slashMenuVisible: false,
                 slashFilter: "",
                 slashActiveIndex: 0,
+                inputHeight,
             })
         }
     }
@@ -328,6 +321,15 @@ export default class MessageInput extends Component<MessageInputProps, MessageIn
      * 根据内容计算输入框高度
      * 有附件时默认 1 行，无附件默认 2 行，最大 MAX_ROWS 行
      */
+    calcInputHeight(value?: string): number {
+        const { hasPendingAttachments } = this.props
+        const defaultRows = hasPendingAttachments ? INPUT_MIN_ROWS : INPUT_DEFAULT_ROWS
+        if (!value || value.trim() === '') return calcInputHeight(defaultRows)
+        const lines = (value.match(/\n/g) || []).length + 1
+        const rows = Math.min(Math.max(defaultRows, lines), INPUT_MAX_ROWS)
+        return calcInputHeight(rows)
+    }
+
     toggleExpand = () => {
         const next = !this.state.expanded
         this.setState({ expanded: next })
@@ -392,7 +394,7 @@ export default class MessageInput extends Component<MessageInputProps, MessageIn
 
     render() {
         const { members, onInputRef, topView, toolbar, botCommands } = this.props
-        const { value, slashMenuVisible, slashFilter, slashActiveIndex, expanded } = this.state
+        const { value, slashMenuVisible, slashFilter, slashActiveIndex, inputHeight, expanded } = this.state
         const hasValue = (value && value.length > 0) || this.props.hasPendingAttachments
         let selectedItems = new Array<MemberSuggestionDataItem>();
         if (members && members.length > 0) {
@@ -487,7 +489,7 @@ export default class MessageInput extends Component<MessageInputProps, MessageIn
 
                     </div>
                 </div>
-                <div className="wk-messageinput-inputbox" style={{ position: 'relative', ...(expanded ? { flex: 1 } : {}) }}>
+                <div className="wk-messageinput-inputbox" style={{ position: 'relative', ...(expanded ? { flex: 1 } : { height: inputHeight + 15 }) }}>
                     {botCommands && botCommands.length > 0 && (
                         <SlashCommandMenu
                             commands={botCommands}
@@ -507,7 +509,7 @@ export default class MessageInput extends Component<MessageInputProps, MessageIn
                         </div>
                     )}
                     <MentionsInput
-                        style={InputStyle.getStyle(undefined, expanded)}
+                        style={InputStyle.getStyle(expanded ? undefined : inputHeight, expanded)}
                         value={value}
                         onKeyPress={this.handleKeyPressed}
                         onKeyDown={this.handleKeyDown}
