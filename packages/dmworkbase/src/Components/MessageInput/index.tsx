@@ -40,6 +40,7 @@ interface MessageInputProps extends HTMLProps<any>{
     topView?: JSX.Element
     botCommands?: BotCommand[]
     getChatContext?: () => string | undefined
+    hasPendingAttachments?: boolean // 有待发送附件时，允许空文字也触发 onSend
 }
 
 interface MessageInputState {
@@ -261,8 +262,9 @@ export default class MessageInput extends Component<MessageInputProps, MessageIn
             })
             return
         }
-        if (this.props.onSend && value && value.trim() !== "") {
-            const { content, mention } = formatMentionTextV2(value);
+        const hasText = value && value.trim() !== ""
+        if (this.props.onSend && (hasText || this.props.hasPendingAttachments)) {
+            const { content, mention } = formatMentionTextV2(value || "");
             this.props.onSend(content, mention);
         }
         this.setState({
@@ -348,7 +350,7 @@ export default class MessageInput extends Component<MessageInputProps, MessageIn
     render() {
         const { members, onInputRef, topView, toolbar, botCommands } = this.props
         const { value, slashMenuVisible, slashFilter, slashActiveIndex } = this.state
-        const hasValue = value && value.length > 0
+        const hasValue = (value && value.length > 0) || this.props.hasPendingAttachments
         let selectedItems = new Array<MemberSuggestionDataItem>();
         if (members && members.length > 0) {
             selectedItems = members.map<MemberSuggestionDataItem>((member) => {

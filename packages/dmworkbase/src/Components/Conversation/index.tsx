@@ -1082,7 +1082,7 @@ export class Conversation extends Component<ConversationProps> implements Conver
                         )}
                         <div className="wk-conversation-footer-content">
 
-                            <MessageInput botCommands={botCommands} members={this.vm.subscribers.filter((s) => s.uid !== WKApp.loginInfo.uid)} onContext={(ctx) => {
+                            <MessageInput botCommands={botCommands} hasPendingAttachments={vm.pendingAttachments.length > 0} members={this.vm.subscribers.filter((s) => s.uid !== WKApp.loginInfo.uid)} onContext={(ctx) => {
                                 this._messageInputContext = ctx
                             }} toolbar={this.chatToolbarUI()} context={this} getChatContext={() => {
                                 const messages = this.vm.messagesOfOrigin
