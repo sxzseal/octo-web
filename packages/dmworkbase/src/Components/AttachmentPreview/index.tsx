@@ -7,27 +7,16 @@ interface AttachmentPreviewProps {
     files: File[]
 }
 
-// 文件类型语义色：使用 CSS 变量（在 index.css 中定义）
-const FILE_TYPE_COLORS: Record<string, string> = {
-    img: "var(--wk-file-color-img, #6366F1)",
-    pdf: "var(--wk-file-color-pdf, #EF4444)",
-    doc: "var(--wk-file-color-doc, #3B82F6)",
-    xls: "var(--wk-file-color-xls, #22C55E)",
-    ppt: "var(--wk-file-color-ppt, #F97316)",
-    zip: "var(--wk-file-color-zip, #EAB308)",
-    file: "var(--wk-file-color-default, #9CA3AF)",
-}
-
 function getFileIconInfo(file: File): { color: string; label: string } {
     const ext = (file.name.substring(file.name.lastIndexOf('.') + 1) || "").toLowerCase()
-    if (file.type.startsWith('image/')) return { color: FILE_TYPE_COLORS.img, label: "IMG" }
+    if (file.type.startsWith('image/')) return { color: "#6366F1", label: "IMG" }
     switch (ext) {
-        case "pdf": return { color: FILE_TYPE_COLORS.pdf, label: "PDF" }
-        case "doc": case "docx": return { color: FILE_TYPE_COLORS.doc, label: "DOC" }
-        case "xls": case "xlsx": return { color: FILE_TYPE_COLORS.xls, label: "XLS" }
-        case "ppt": case "pptx": return { color: FILE_TYPE_COLORS.ppt, label: "PPT" }
-        case "zip": case "rar": case "7z": return { color: FILE_TYPE_COLORS.zip, label: "ZIP" }
-        default: return { color: FILE_TYPE_COLORS.file, label: "FILE" }
+        case "pdf": return { color: "#EF4444", label: "PDF" }
+        case "doc": case "docx": return { color: "#3B82F6", label: "DOC" }
+        case "xls": case "xlsx": return { color: "#22C55E", label: "XLS" }
+        case "ppt": case "pptx": return { color: "#F97316", label: "PPT" }
+        case "zip": case "rar": case "7z": return { color: "#EAB308", label: "ZIP" }
+        default: return { color: "#9CA3AF", label: "FILE" }
     }
 }
 
@@ -47,9 +36,8 @@ export default class AttachmentPreview extends Component<AttachmentPreviewProps>
                 <div className="wk-attachment-preview-list">
                     {files.map((file, index) => {
                         const iconInfo = getFileIconInfo(file)
-                        const fileKey = `${file.name}-${file.size}-${file.lastModified}`
                         return (
-                            <div key={fileKey} className="wk-attachment-preview-item">
+                            <div key={index} className="wk-attachment-preview-item">
                                 <div className="wk-attachment-preview-icon" style={{ backgroundColor: iconInfo.color }}>
                                     <span className="wk-attachment-preview-icon-label">{iconInfo.label}</span>
                                 </div>
