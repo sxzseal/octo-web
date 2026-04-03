@@ -5,6 +5,7 @@ import Provider from "../../Service/Provider";
 import { ErrorBoundary } from "../../Components/ErrorBoundary";
 
 import { Spin, Modal, Popover } from "@douyinfe/semi-ui";
+import WKButton from "../../Components/WKButton";
 import { Search, Plus } from "lucide-react";
 import { ChatVM, handleGlobalSearchClick } from "./vm";
 import "./index.css";
@@ -181,6 +182,7 @@ export class ChatContentPage extends Component<
 interface ChatPageState {
   filter: ConvFilter
   dropdownOpen: boolean
+  pendingConfirm: null | { onOk: () => void }  // 附件切换确认弹窗
 }
 
 const FILTER_OPTIONS: { key: ConvFilter; label: string; icon: ReactNode }[] = [
@@ -207,7 +209,7 @@ export default class ChatPage extends Component<any, ChatPageState> {
   spaceListRef: SpaceList | null = null;
   constructor(props: any) {
     super(props);
-    this.state = { filter: 'all', dropdownOpen: false }
+    this.state = { filter: 'all', dropdownOpen: false, pendingConfirm: null }
   }
 
   componentDidMount() {
@@ -345,13 +347,7 @@ export default class ChatPage extends Component<any, ChatPageState> {
                             // 附件发送守卫：有未发送附件时弹确认
                             const guard = WKApp.shared.pendingAttachmentGuard
                             if (guard && !guard()) {
-                              Modal.confirm({
-                                title: '有未发送的附件',
-                                content: '切换会话后附件将被丢弃，是否继续？',
-                                okText: '继续切换',
-                                cancelText: '取消',
-                                onOk: doSwitch,
-                              })
+                              this.setState({ pendingConfirm: { onOk: doSwitch } })
                               return
                             }
                             doSwitch()
@@ -389,6 +385,38 @@ export default class ChatPage extends Component<any, ChatPageState> {
                     }}/>
                   </ErrorBoundary>
                 </div>
+              </Modal>
+
+              {/* 附件未发送切换会话确认弹窗 */}
+              <Modal
+                visible={!!this.state.pendingConfirm}
+                title="有未发送的附件"
+                footer={
+                  <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 'var(--wk-sp-2)' }}>
+                    <WKButton
+                      variant="secondary"
+                      onClick={() => this.setState({ pendingConfirm: null })}
+                    >
+                      取消
+                    </WKButton>
+                    <WKButton
+                      variant="primary"
+                      onClick={() => {
+                        this.state.pendingConfirm?.onOk()
+                        this.setState({ pendingConfirm: null })
+                      }}
+                    >
+                      继续切换
+                    </WKButton>
+                  </div>
+                }
+                onCancel={() => this.setState({ pendingConfirm: null })}
+                closable={false}
+                centered
+              >
+                <p style={{ margin: 0, color: 'var(--wk-text-secondary)', fontSize: 'var(--wk-text-size-md)' }}>
+                  切换会话后，未发送的附件将被丢弃，是否继续？
+                </p>
               </Modal>
             </div>
           );
