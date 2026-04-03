@@ -55,23 +55,25 @@ export default class InputStyle {
         control: {
           fontFamily: 'monospace',
           border: '0px solid silver',
-          height: expanded ? '100%' : (inputHeight ?? calcInputHeight(INPUT_DEFAULT_ROWS)),
+          height: expanded ? '100%' : 'auto',
+          minHeight: expanded ? undefined : calcInputHeight(INPUT_DEFAULT_ROWS),
+          maxHeight: expanded ? undefined : calcInputHeight(INPUT_MAX_ROWS),
+          overflowY: expanded ? undefined : 'auto',
         },
     
         highlighter: {
           padding: 9,
-          height: expanded ? '100%' : (inputHeight ?? calcInputHeight(INPUT_DEFAULT_ROWS)),
+          minHeight: calcInputHeight(INPUT_DEFAULT_ROWS),
           overflow: 'hidden',
-          boxSizing: 'border-box',
         },
     
         input: {
           padding: 10,
-          height: expanded ? '100%' : (inputHeight ?? calcInputHeight(INPUT_DEFAULT_ROWS)),
+          minHeight: calcInputHeight(INPUT_DEFAULT_ROWS),
           outline: 0,
           border: 0,
           overflowY: 'auto',
-          boxSizing: 'border-box',
+          height: 'auto',
         },
       },
     

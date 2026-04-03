@@ -324,7 +324,21 @@ export default class MessageInput extends Component<MessageInputProps, MessageIn
     calcInputHeight(value?: string): number {
         const { hasPendingAttachments } = this.props
         const defaultRows = hasPendingAttachments ? INPUT_MIN_ROWS : INPUT_DEFAULT_ROWS
-        if (!value || value.trim() === '') return calcInputHeight(defaultRows)
+        const defaultH = calcInputHeight(defaultRows)
+        const maxH = calcInputHeight(INPUT_MAX_ROWS)
+
+        if (!value || value.trim() === '') return defaultH
+
+        // 读 textarea 的 scrollHeight（不改 style，不触发重排闪烁）
+        if (this.inputRef) {
+            const el = this.inputRef as HTMLTextAreaElement
+            const scrollH = el.scrollHeight
+            if (scrollH > 0) {
+                return Math.min(Math.max(defaultH, scrollH), maxH)
+            }
+        }
+
+        // fallback：换行符估算
         const lines = (value.match(/\n/g) || []).length + 1
         const rows = Math.min(Math.max(defaultRows, lines), INPUT_MAX_ROWS)
         return calcInputHeight(rows)
@@ -489,7 +503,7 @@ export default class MessageInput extends Component<MessageInputProps, MessageIn
 
                     </div>
                 </div>
-                <div className="wk-messageinput-inputbox" style={{ position: 'relative', ...(expanded ? { flex: 1 } : { height: inputHeight + 15 }) }}>
+                <div className="wk-messageinput-inputbox" style={{ position: 'relative', ...(expanded ? { flex: 1 } : {}) }}>
                     {botCommands && botCommands.length > 0 && (
                         <SlashCommandMenu
                             commands={botCommands}
