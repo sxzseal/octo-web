@@ -28,8 +28,7 @@ export default class InputStyle {
       },
     
       input: {
-        // 高度由 CSS field-sizing: content 接管
-        overflow: expanded ? 'auto' : undefined,
+        overflow: 'auto',
         height: expanded ? '100%' : undefined,
       },
     
@@ -68,6 +67,7 @@ export default class InputStyle {
           minHeight: 63,
           outline: 0,
           border: 0,
+          overflowY: 'auto', // 超出 max rows 后内部滚动
         },
       },
     
