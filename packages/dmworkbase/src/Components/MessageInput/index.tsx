@@ -161,12 +161,6 @@ export default class MessageInput extends Component<MessageInputProps, MessageIn
         hotkeys.filter = function (event) {
             return true;
         }
-        hotkeys('ctrl+enter', scope, function (event, handler) {
-            const { value } = self.state;
-            self.setState({
-                value: value + '\n',
-            });
-        });
         hotkeys.setScope(scope);
 
         const { onInsertText } = this.props
@@ -187,7 +181,6 @@ export default class MessageInput extends Component<MessageInputProps, MessageIn
     // }
     componentWillUnmount() {
         const scope = "messageInput"
-        hotkeys.unbind('ctrl+enter', scope);
         // Restore the previous scope to prevent scope pollution
         hotkeys.setScope(this.previousScope);
 
@@ -209,8 +202,8 @@ export default class MessageInput extends Component<MessageInputProps, MessageIn
         }
 
         if (filtered.length === 0) {
-            // 没有匹配的命令，Enter 正常发送
-            if (e.key === 'Enter' && !e.ctrlKey) {
+            // 没有匹配的命令，Enter 正常发送（仅纯 Enter，排除所有修饰键）
+            if (e.key === 'Enter' && !e.shiftKey && !e.ctrlKey && !e.altKey && !e.metaKey) {
                 e.preventDefault()
                 this.setState({ slashMenuVisible: false })
                 this.send()
@@ -235,10 +228,11 @@ export default class MessageInput extends Component<MessageInputProps, MessageIn
     }
 
     handleKeyPressed = (e: any) => {
-        if (e.charCode !== 13) { //非回车
+        if (e.key !== 'Enter') { // 非回车
             return;
         }
-        if (e.charCode === 13 && e.ctrlKey) { // ctrl+Enter不处理
+        // Shift+Enter 换行，其他修饰键（Ctrl/Alt/Meta）一律不处理
+        if (e.shiftKey || e.ctrlKey || e.altKey || e.metaKey) {
             return;
         }
         if (this.state.slashMenuVisible) {
@@ -465,7 +459,7 @@ export default class MessageInput extends Component<MessageInputProps, MessageIn
                         onKeyDown={this.handleKeyDown}
                         onChange={this.handleChange}
                         className="wk-messageinput-input"
-                        placeholder={`按 Ctrl + Enter 换行，按 Enter 发送`}
+                        placeholder={`按 Shift + Enter 换行，按 Enter 发送`}
                         allowSuggestionsAboveCursor={true}
                         inputRef={(ref: any) => {
                             this.inputRef = ref
