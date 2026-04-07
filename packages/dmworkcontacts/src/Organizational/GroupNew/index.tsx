@@ -706,7 +706,7 @@ export class OrganizationalGroupNew extends Component<
                     <div key={item.uid} className="opt-personnel-item">
                       <div className="user-info">
                         <WKAvatar
-                          src={WKApp.shared.avatarUser(item.uid as string)}
+                          src={item.avatar || WKApp.shared.avatarUser(item.uid as string)}
                           style={{
                             width: "24px",
                             height: "24px",
