@@ -127,16 +127,21 @@ function extractMentionsFromEditor(editor: any): string {
             const uid = node.attrs.id
             const label = node.attrs.label
             result += `@[${uid}:${label}]`
+        } else if (node.type === 'hardBreak') {
+            result += '\n'
         } else if (node.content) {
             node.content.forEach(traverse)
         }
     }
 
     if (json.content) {
-        json.content.forEach(traverse)
+        json.content.forEach((block: any, i: number) => {
+            if (i > 0) result += '\n'
+            traverse(block)
+        })
     }
 
-    return result
+    return stripInvisibleChars(result)
 }
 
 const MessageInput: React.FC<MessageInputProps> = (props) => {
@@ -221,7 +226,7 @@ const MessageInput: React.FC<MessageInputProps> = (props) => {
             },
         },
         onUpdate: ({ editor }) => {
-            const text = editor.getText()
+            const text = stripInvisibleChars(editor.getText())
 
             // 检查 slash 命令
             if (props.botCommands && text.startsWith('/') && !text.includes(' ') && !text.includes('\n')) {
@@ -314,7 +319,7 @@ const MessageInput: React.FC<MessageInputProps> = (props) => {
             setExpanded(false)
             props.onExpandChange?.(false)
         }
-    }, [editor, expanded, props])
+    }, [editor, expanded, props.onSend, props.hasPendingAttachments, props.onExpandChange])
 
     // 更新 sendRef
     useEffect(() => {
