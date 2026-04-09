@@ -11,9 +11,6 @@
   --semi-color-bg-1: var(--wk-bg-base);
   --semi-font-size-header-2: var(--wk-text-size-xl);
   --semi-color-text-0: var(--wk-text-primary);
-
-  /* 遮罩 */
-  --semi-color-overlay-bg: rgba(0, 0, 0, 0.45);
 }
 
 /* footer 按钮行 */
