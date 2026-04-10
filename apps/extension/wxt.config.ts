@@ -29,19 +29,7 @@ export default defineConfig({
     side_panel: {
       default_path: "entrypoints/sidepanel/index.html",
     },
-    permissions: [
-      "scripting",
-      "tabs",
-      "storage",
-      "debugger",
-      "downloads",
-      "downloads.open",
-      "webNavigation",
-      "offscreen",
-      "cookies",
-      "declarativeNetRequest",
-      "alarms",
-    ],
+    permissions: [],
     host_permissions: ["<all_urls>"],
     web_accessible_resources: [
       {
