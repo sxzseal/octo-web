@@ -110,6 +110,11 @@ const ConversationListWithCategory: React.FC<ConversationListWithCategoryProps> 
             {viewMode === "grouped" && !isLoading && !error && (
                 <div className="wk-conv-with-category__footer">
                     <AddCategoryButton onClick={onCreateCategory ?? (() => {})} />
+                    {onManageCategories && (
+                        <button className="wk-conv-with-category__manage-btn" onClick={onManageCategories}>
+                            管理分组
+                        </button>
+                    )}
                 </div>
             )}
         </div>

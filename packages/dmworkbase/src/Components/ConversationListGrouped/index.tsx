@@ -63,32 +63,15 @@ const ConversationListGrouped: React.FC<ConversationListGroupedProps> = ({
         try { localStorage.setItem(VIEW_MODE_KEY, mode) } catch {}
     }
 
-    // 按分组组织会话列表
+    // 只过滤群聊
     const groupConversations = conversations.filter(
         c => c.channel.channelType === ChannelTypeGroup
     )
 
-    // 构建每个分组的会话渲染
-    const categoriesWithConvs = categories.map(cat => {
-        const catGroupNos = new Set((cat.groups || []).map(g => g.group_no))
-        const catConvs = groupConversations.filter(c => catGroupNos.has(c.channel.channelID))
-        return {
-            id: cat.category_id!,
-            name: cat.name,
-            conversations: (
-                <ConversationList
-                    conversations={catConvs}
-                    select={select}
-                    filter="group"
-                    onClick={onConversationClick}
-                    onClearMessages={onClearMessages}
-                    onThreadOverflowClick={onThreadOverflowClick}
-                />
-            ),
-        }
-    })
+    // 预建 groupNo → ConversationWrap 的 Map，避免重复遍历
+    const groupConvMap = new Map(groupConversations.map(c => [c.channel.channelID, c]))
 
-    // 未分组的群聊
+    // 未分组的 groupNo 集合
     const categorizedGroupNos = new Set(
         categories.flatMap(cat => (cat.groups || []).map(g => g.group_no))
     )
@@ -121,20 +104,24 @@ const ConversationListGrouped: React.FC<ConversationListGroupedProps> = ({
         />
     )
 
+    // 一次性构建分组数据（含会话渲染），无重复计算
+    const categoriesForView = categories.map(cat => {
+        const catConvs = (cat.groups || [])
+            .map(g => groupConvMap.get(g.group_no))
+            .filter((c): c is ConversationWrap => c !== undefined)
+        return {
+            id: cat.category_id!,
+            name: cat.name,
+            conversations: ConvListWithMenu(catConvs),
+        }
+    })
+
     return (
         <>
             <ConversationListWithCategory
                 viewMode={viewMode}
                 onViewModeChange={handleViewModeChange}
-                categories={categoriesWithConvs.map(cat => ({
-                    ...cat,
-                    conversations: ConvListWithMenu(
-                        groupConversations.filter(c =>
-                            categories.find(cc => cc.category_id === cat.id)
-                                ?.groups?.some(g => g.group_no === c.channel.channelID)
-                        )
-                    ),
-                }))}
+                categories={categoriesForView}
                 isLoading={isLoading}
                 error={error}
                 onRetry={reload}

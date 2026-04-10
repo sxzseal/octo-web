@@ -19,6 +19,30 @@
 .wk-conv-with-category__footer {
     padding: 8px;
     flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.wk-conv-with-category__manage-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 28px;
+    border: none;
+    background: transparent;
+    color: var(--wk-text-tertiary);
+    font-size: var(--wk-text-size-xs);
+    font-family: var(--wk-font-sans);
+    cursor: pointer;
+    border-radius: var(--wk-r-sm);
+    transition: background 0.1s ease, color 0.1s ease;
+}
+
+.wk-conv-with-category__manage-btn:hover {
+    background: var(--wk-bg-hover);
+    color: var(--wk-text-secondary);
 }
 
 /* 加载中 */

@@ -15,7 +15,7 @@ export interface CategoryManagePanelProps {
     onClose: () => void
     onRename: (id: string, newName: string) => Promise<void> | void
     onDelete: (id: string) => void
-    onReorder: (ids: string[]) => void
+    onReorder: (ids: string[]) => Promise<void> | void
 }
 
 const CategoryManagePanel: React.FC<CategoryManagePanelProps> = ({
@@ -76,8 +76,13 @@ const CategoryManagePanel: React.FC<CategoryManagePanelProps> = ({
         next.splice(to, 0, moved)
         setItems(next)
     }
-    const handleDragEnd = () => {
-        onReorder(items.map(i => i.id))
+    const handleDragEnd = async () => {
+        try {
+            await onReorder(items.map(i => i.id))
+        } catch {
+            // 排序失败时重置到服务端顺序
+            setItems(categories)
+        }
         dragRef.current = null
     }
 
