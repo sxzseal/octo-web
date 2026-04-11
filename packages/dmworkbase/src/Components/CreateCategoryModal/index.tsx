@@ -61,6 +61,7 @@ const CreateCategoryModal: React.FC<CreateCategoryModalProps> = ({
             title="新建分组"
             visible={visible}
             onCancel={onCancel}
+            zIndex={9999}
             footer={
                 <div style={{ display: "flex", justifyContent: "flex-end", gap: 8 }}>
                     <Button type="tertiary" onClick={onCancel}>取消</Button>

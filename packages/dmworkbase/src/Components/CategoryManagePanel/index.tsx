@@ -1,4 +1,4 @@
-import React, { useState, useRef } from "react"
+import React, { useState, useRef, useEffect } from "react"
 import DeleteCategoryModal from "../DeleteCategoryModal"
 import "./index.css"
 
@@ -51,9 +51,20 @@ const CategoryManagePanel: React.FC<CategoryManagePanelProps> = ({
     const [deleteTarget, setDeleteTarget] = useState<CategoryItem | null>(null)
     const dragRef = useRef<string | null>(null)
 
-    React.useEffect(() => {
+    useEffect(() => {
         setItems(categories)
     }, [categories])
+
+    // 关闭时重置所有临时状态，避免下次打开时有残留
+    useEffect(() => {
+        if (!visible) {
+            setRenamingId(null)
+            setRenameValue("")
+            setRenameError(null)
+            setDeleteTarget(null)
+            dragRef.current = null
+        }
+    }, [visible])
 
     if (!visible) return null
 

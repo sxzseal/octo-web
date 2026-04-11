@@ -32,6 +32,7 @@ const DeleteCategoryModal: React.FC<DeleteCategoryModalProps> = ({
             title={`删除分组「${categoryName}」？`}
             visible={visible}
             onCancel={onCancel}
+            zIndex={9999}
             footer={
                 <div style={{ display: "flex", justifyContent: "flex-end", gap: 8 }}>
                     <Button onClick={onCancel}>取消</Button>
