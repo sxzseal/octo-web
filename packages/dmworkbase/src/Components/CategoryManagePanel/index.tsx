@@ -125,12 +125,15 @@ const CategoryManagePanel: React.FC<CategoryManagePanelProps> = ({
                                 <div
                                     key={item.id}
                                     className={`wk-category-manage-panel__item${isEditing ? " wk-category-manage-panel__item--editing" : ""}${isDragging ? " wk-category-manage-panel__item--dragging" : ""}`}
-                                    draggable={!isEditing}
-                                    onDragStart={() => handleDragStart(item.id)}
                                     onDragOver={e => handleDragOver(e, item.id)}
-                                    onDragEnd={handleDragEnd}
                                 >
-                                    <span className="wk-category-manage-panel__handle">⠿</span>
+                                    {/* 只有手柄可以拖拽，整行不 draggable */}
+                                    <span
+                                        className="wk-category-manage-panel__handle"
+                                        draggable={!isEditing}
+                                        onDragStart={() => handleDragStart(item.id)}
+                                        onDragEnd={handleDragEnd}
+                                    >⠿</span>
 
                                     {isEditing ? (
                                         <div className="wk-category-manage-panel__rename-wrap">
@@ -166,9 +169,10 @@ const CategoryManagePanel: React.FC<CategoryManagePanelProps> = ({
                                         <>
                                             <span className="wk-category-manage-panel__name">{item.name}</span>
                                             <span className="wk-category-manage-panel__count">{item.groupCount} 个群聊</span>
-                                            <div className="wk-category-manage-panel__actions">
+                                            <div className="wk-category-manage-panel__actions" draggable={false}>
                                                 <button
                                                     className="wk-category-manage-panel__action-btn"
+                                                    draggable={false}
                                                     onMouseDown={e => e.stopPropagation()}
                                                     onClick={() => startRename(item)}
                                                     title="重命名"
@@ -177,6 +181,7 @@ const CategoryManagePanel: React.FC<CategoryManagePanelProps> = ({
                                                 </button>
                                                 <button
                                                     className="wk-category-manage-panel__action-btn"
+                                                    draggable={false}
                                                     onMouseDown={e => e.stopPropagation()}
                                                     onClick={() => setDeleteTarget(item)}
                                                     title="删除"
