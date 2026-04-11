@@ -703,6 +703,8 @@ export default class ChatPage extends Component<any, ChatPageState> {
                                   return
                                 }
                               }
+                              // 普通会话：关闭子区面板
+                              window.dispatchEvent(new CustomEvent('wk:close-thread-panel', {}))
                               vm.selectedConversation = conversation;
                               WKApp.endpoints.showConversation(conversation.channel);
                               vm.notifyListener();
