@@ -508,12 +508,13 @@ export default class ConversationList extends Component<ConversationListProps, C
                     title: "关闭聊天窗口",
                     icon: "M18 6 6 18 M6 6l12 12",
                     onClick: () => {
+                        if (!channel) return
                         Modal.confirm({
                             title: '确认关闭',
                             content: '确定要关闭此聊天窗口吗？',
                             okText: '确定',
                             cancelText: '取消',
-                            onOk: () => { this.onCloseChat(channel!) },
+                            onOk: () => { this.onCloseChat(channel) },
                         })
                     }
                 })
@@ -527,12 +528,13 @@ export default class ConversationList extends Component<ConversationListProps, C
                             title: "清空聊天记录",
                             danger: true,
                             onClick: () => {
+                                if (!channel) return
                                 Modal.confirm({
                                     title: '确认清空',
                                     content: '确定要清空所有聊天记录吗？此操作不可撤销。',
                                     okText: '确定',
                                     cancelText: '取消',
-                                    onOk: () => { this.onClearMessages(channel!) },
+                                    onOk: () => { this.onClearMessages(channel) },
                                 })
                             }
                         },
@@ -540,14 +542,15 @@ export default class ConversationList extends Component<ConversationListProps, C
                             title: "关闭窗口并清空记录",
                             danger: true,
                             onClick: () => {
+                                if (!channel) return
                                 Modal.confirm({
                                     title: '确认关闭并清空',
                                     content: '确定要关闭窗口并清空所有聊天记录吗？此操作不可撤销。',
                                     okText: '确定',
                                     cancelText: '取消',
                                     onOk: () => {
-                                        this.onCloseChat(channel!)
-                                        this.onClearMessages(channel!)
+                                        this.onCloseChat(channel)
+                                        this.onClearMessages(channel)
                                     },
                                 })
                             }
