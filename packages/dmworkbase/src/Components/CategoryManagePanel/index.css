@@ -1,81 +1,32 @@
-.wk-category-manage {
+/* ── 管理面板容器（自定义卡片，不是 Modal） ── */
+.wk-category-manage-panel {
+    width: 300px;
+    background: var(--wk-bg-surface);
+    border-radius: var(--wk-r-lg);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06), 0 4px 12px rgba(0,0,0,0.04);
+    overflow: hidden;
     display: flex;
     flex-direction: column;
-    height: 100%;
 }
 
-.wk-category-manage__list {
-    flex: 1;
-    overflow-y: auto;
-    padding: 8px 0;
-}
-
-.wk-category-manage__item {
+/* ── Header ── */
+.wk-category-manage-panel__header {
+    padding: 16px;
     display: flex;
     align-items: center;
-    height: 48px;
-    padding: 0 16px;
-    gap: 10px;
-    cursor: default;
-    border-radius: var(--wk-r-sm);
-    transition: background 0.1s ease;
-    position: relative;
-}
-
-.wk-category-manage__item:hover,
-.wk-category-manage__item--hover {
-    background: var(--wk-bg-hover);
-}
-
-.wk-category-manage__drag-handle {
-    display: flex;
-    align-items: center;
-    cursor: grab;
-    color: var(--wk-text-tertiary);
-    font-size: 16px;
+    justify-content: space-between;
+    border-bottom: 1px solid var(--wk-border-default);
     flex-shrink: 0;
-    user-select: none;
 }
 
-.wk-category-manage__drag-handle:active {
-    cursor: grabbing;
-}
-
-.wk-category-manage__item--dragging {
-    opacity: 0.5;
-    background: var(--wk-bg-active);
-}
-
-.wk-category-manage__name {
-    flex: 1;
-    font-size: var(--wk-text-size-base);
+.wk-category-manage-panel__title {
+    font-size: 15px;
+    font-weight: 600;
     color: var(--wk-text-primary);
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+    margin: 0;
 }
 
-.wk-category-manage__count {
-    font-size: var(--wk-text-size-sm);
-    color: var(--wk-text-tertiary);
-    flex-shrink: 0;
-}
-
-.wk-category-manage__actions {
-    display: flex;
-    align-items: center;
-    gap: 4px;
-    opacity: 0;
-    transition: opacity 0.1s ease;
-    flex-shrink: 0;
-}
-
-.wk-category-manage__item:hover .wk-category-manage__actions,
-.wk-category-manage__item--hover .wk-category-manage__actions {
-    opacity: 1;
-}
-
-.wk-category-manage__action-btn {
+.wk-category-manage-panel__close {
     display: flex;
     align-items: center;
     justify-content: center;
@@ -86,67 +37,105 @@
     background: transparent;
     color: var(--wk-text-tertiary);
     cursor: pointer;
-    font-size: 14px;
-    transition: background 0.1s ease, color 0.1s ease;
-}
-
-.wk-category-manage__action-btn:hover {
-    background: var(--wk-bg-active);
-    color: var(--wk-text-primary);
-}
-
-.wk-category-manage__action-btn--danger:hover {
-    background: var(--wk-color-error-bg);
-    color: var(--wk-color-error);
-}
-
-/* 行内编辑 */
-.wk-category-manage__rename-wrap {
-    flex: 1;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-}
-
-.wk-category-manage__rename-input {
-    flex: 1;
-    height: 28px;
-    padding: 0 8px;
-    border: 1px solid var(--wk-border-default);
-    border-radius: var(--wk-r-sm);
-    font-size: var(--wk-text-size-base);
-    font-family: var(--wk-font-sans);
-    color: var(--wk-text-primary);
-    background: var(--wk-bg-surface);
-    outline: none;
-}
-
-.wk-category-manage__rename-input:focus {
-    border-color: var(--wk-color-primary, #5B5FC7);
-    box-shadow: 0 0 0 2px var(--wk-border-glow);
-}
-
-.wk-category-manage__rename-input--error {
-    border-color: var(--wk-color-error);
-}
-
-.wk-category-manage__rename-error {
-    font-size: var(--wk-text-size-xs);
-    color: var(--wk-color-error);
-    margin-top: 2px;
-    position: absolute;
-    bottom: 4px;
-    left: 56px;
-}
-
-.wk-category-manage__rename-confirm {
-    display: flex;
-    align-items: center;
-    gap: 2px;
+    transition: background 0.1s ease;
     flex-shrink: 0;
 }
 
-.wk-category-manage__rename-btn {
+.wk-category-manage-panel__close:hover {
+    background: var(--wk-bg-hover);
+    color: var(--wk-text-primary);
+}
+
+.wk-category-manage-panel__close svg {
+    width: 14px;
+    height: 14px;
+    stroke: currentColor;
+    stroke-width: 2;
+    fill: none;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+/* ── 列表区 ── */
+.wk-category-manage-panel__list {
+    padding: 8px;
+    flex: 1;
+    overflow-y: auto;
+}
+
+/* ── 列表项 ── */
+.wk-category-manage-panel__item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 8px;
+    border-radius: var(--wk-r-sm);
+    transition: background 0.1s ease;
+    position: relative;
+}
+
+.wk-category-manage-panel__item:hover,
+.wk-category-manage-panel__item--hover {
+    background: var(--wk-bg-hover);
+}
+
+.wk-category-manage-panel__item--editing {
+    background: rgba(124, 92, 252, 0.04) !important;
+}
+
+.wk-category-manage-panel__item--dragging {
+    opacity: 0.4;
+}
+
+/* ── 拖拽手柄 ── */
+.wk-category-manage-panel__handle {
+    color: var(--wk-text-tertiary);
+    cursor: grab;
+    font-size: 14px;
+    letter-spacing: 2px;
+    flex-shrink: 0;
+    width: 16px;
+    text-align: center;
+    user-select: none;
+}
+
+.wk-category-manage-panel__handle:active {
+    cursor: grabbing;
+}
+
+/* ── 分组名 ── */
+.wk-category-manage-panel__name {
+    flex: 1;
+    font-size: 13.5px;
+    font-weight: 500;
+    color: var(--wk-text-primary);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* ── 群聊数 ── */
+.wk-category-manage-panel__count {
+    font-size: 12px;
+    color: var(--wk-text-tertiary);
+    flex-shrink: 0;
+}
+
+/* ── 操作按钮组 ── */
+.wk-category-manage-panel__actions {
+    display: flex;
+    gap: 2px;
+    flex-shrink: 0;
+    opacity: 0;
+    transition: opacity 0.1s ease;
+}
+
+.wk-category-manage-panel__item:hover .wk-category-manage-panel__actions,
+.wk-category-manage-panel__item--hover .wk-category-manage-panel__actions {
+    opacity: 1;
+}
+
+.wk-category-manage-panel__action-btn {
     display: flex;
     align-items: center;
     justify-content: center;
@@ -155,37 +144,129 @@
     border-radius: var(--wk-r-xs);
     border: none;
     background: transparent;
+    color: var(--wk-text-tertiary);
     cursor: pointer;
-    font-size: 12px;
-    color: var(--wk-text-secondary);
-    transition: background 0.1s ease;
+    transition: background 0.1s ease, color 0.1s ease;
 }
 
-.wk-category-manage__rename-btn:hover {
+.wk-category-manage-panel__action-btn:hover {
     background: var(--wk-bg-active);
+    color: var(--wk-text-primary);
 }
 
-/* 底部新建分组 */
-.wk-category-manage__footer {
-    padding: 12px 16px;
-    border-top: 1px solid var(--wk-border-subtle);
+.wk-category-manage-panel__action-btn svg {
+    width: 13px;
+    height: 13px;
+    stroke: currentColor;
+    stroke-width: 1.8;
+    fill: none;
+    stroke-linecap: round;
+    stroke-linejoin: round;
 }
 
-.wk-category-manage__create-btn {
+/* ── 行内编辑 ── */
+.wk-category-manage-panel__rename-wrap {
+    flex: 1;
     display: flex;
     align-items: center;
     gap: 4px;
-    border: none;
-    background: transparent;
+    min-width: 0;
+}
+
+.wk-category-manage-panel__rename-input {
+    flex: 1;
+    height: 28px;
+    border-radius: var(--wk-r-xs);
+    border: 1px solid var(--wk-brand-primary);
+    padding: 0 8px;
+    font: 500 13.5px var(--wk-font-sans);
+    color: var(--wk-text-primary);
+    background: var(--wk-bg-surface);
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(124, 92, 252, 0.12);
+    min-width: 0;
+}
+
+.wk-category-manage-panel__rename-input--error {
+    border-color: var(--wk-color-error);
+    box-shadow: 0 0 0 2px rgba(229, 64, 94, 0.12);
+}
+
+.wk-category-manage-panel__rename-confirm {
+    display: flex;
+    gap: 2px;
+    flex-shrink: 0;
+}
+
+/* 确认按钮绿色，取消按钮红色 */
+.wk-category-manage-panel__rename-btn--ok {
+    color: #22C55E;
+}
+
+.wk-category-manage-panel__rename-btn--ok:hover {
+    background: rgba(34, 197, 94, 0.1) !important;
+    color: #16A34A !important;
+}
+
+.wk-category-manage-panel__rename-btn--cancel {
+    color: var(--wk-color-error);
+}
+
+.wk-category-manage-panel__rename-btn--cancel:hover {
+    background: rgba(229, 64, 94, 0.1) !important;
+    color: var(--wk-color-error) !important;
+}
+
+.wk-category-manage-panel__rename-error {
+    position: absolute;
+    bottom: 2px;
+    left: 44px;
+    font-size: 11px;
+    color: var(--wk-color-error);
+}
+
+/* ── Footer ── */
+.wk-category-manage-panel__footer {
+    padding: 8px 16px 12px;
+    border-top: 1px solid var(--wk-border-default);
+    flex-shrink: 0;
+}
+
+.wk-category-manage-panel__add-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 0;
     color: var(--wk-brand-primary);
-    font-size: var(--wk-text-size-base);
-    font-weight: var(--wk-font-medium);
-    font-family: var(--wk-font-sans);
+    font: 500 13px var(--wk-font-sans);
     cursor: pointer;
-    padding: 0;
+    border: none;
+    background: none;
     transition: opacity 0.15s ease;
 }
 
-.wk-category-manage__create-btn:hover {
+.wk-category-manage-panel__add-btn:hover {
     opacity: 0.8;
+}
+
+.wk-category-manage-panel__add-btn svg {
+    width: 14px;
+    height: 14px;
+    stroke: currentColor;
+    stroke-width: 2;
+    fill: none;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    flex-shrink: 0;
+}
+
+/* ── Overlay（半透明遮罩，点击关闭） ── */
+.wk-category-manage-panel-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 98;
+    background: rgba(0, 0, 0, 0.15);
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
