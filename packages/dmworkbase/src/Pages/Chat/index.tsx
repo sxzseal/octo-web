@@ -103,17 +103,6 @@ export class ChatContentPage extends Component<
       WKApp.shared.pendingThreadPanel = undefined;
     }
 
-    // 检查是否需要打开具体某个子区
-    const pt = WKApp.shared.pendingThread
-    if (pt && pt.groupNo === channel.channelID) {
-      WKApp.shared.pendingThread = undefined
-      this.setState({
-        showThreadPanel: true,
-        showChannelSetting: false,
-        activeThread: buildThreadStub(pt.shortId, pt.groupNo, pt.channelId, pt.name),
-      })
-    }
-
     // 子区：预先获取父群组信息
     if (channel.channelType === ChannelTypeCommunityTopic) {
       const channelInfo = WKSDK.shared().channelManager.getChannelInfo(channel);
@@ -130,19 +119,8 @@ export class ChatContentPage extends Component<
   componentDidUpdate(prevProps: ChatContentPageProps) {
     const { channel } = this.props;
 
-    // 切换频道时消费 pendingThread / pendingThreadPanel
+    // 切换频道时消费 pendingThreadPanel
     if (channel.channelID !== prevProps.channel.channelID) {
-      // 导航到特定子区
-      const pt = WKApp.shared.pendingThread
-      if (pt && pt.groupNo === channel.channelID) {
-        WKApp.shared.pendingThread = undefined
-        this.setState({
-          showThreadPanel: true,
-          showChannelSetting: false,
-          activeThread: buildThreadStub(pt.shortId, pt.groupNo, pt.channelId, pt.name),
-        })
-        return
-      }
       // 打开全部子区列表
       if (WKApp.shared.pendingThreadPanel === channel.channelID) {
         WKApp.shared.pendingThreadPanel = undefined
