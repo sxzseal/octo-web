@@ -520,3 +520,50 @@ body[theme-mode=dark] .wk-conversationlist:hover::-webkit-scrollbar-thumb {
     box-shadow: 0 4px 12px rgba(0,0,0,0.12);
     opacity: 0.9;
 }
+
+/* 折叠箭头（有子区的群聊 compact item 右侧） */
+.wk-conv-compact-thread-toggle {
+    flex-shrink: 0;
+    width: 16px;
+    height: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--wk-text-tertiary, #9498A8);
+    cursor: pointer;
+    transition: transform 200ms;
+    transform: rotate(-90deg);
+}
+
+.wk-conv-compact-thread-toggle--open {
+    transform: rotate(0deg);
+}
+
+/* compact 模式子区 L连接线 */
+.wk-conv-compact-item--thread {
+    position: relative;
+}
+
+/* L连接线（└── 样式，复用旧版逻辑） */
+.wk-conv-compact-item--thread::after {
+    content: '';
+    position: absolute;
+    left: 16px;
+    top: 0;
+    height: 50%;
+    width: 10px;
+    border-left: 2px solid var(--wk-border-default, rgba(0,0,0,0.1));
+    border-bottom: 2px solid var(--wk-border-default, rgba(0,0,0,0.1));
+    border-bottom-left-radius: 3px;
+}
+
+/* 非最后一个子区：延伸竖线 */
+.wk-conv-compact-item--thread:has(+ .wk-conv-compact-item--thread)::before {
+    content: '';
+    position: absolute;
+    left: 16px;
+    top: 50%;
+    bottom: 0;
+    width: 2px;
+    background: var(--wk-border-default, rgba(0,0,0,0.1));
+}
