@@ -1,8 +1,8 @@
 {
-  "name": "Octo Extension",
-  "description": "Octo Extension",
+  "name": "Octo 仅供演示",
+  "description": "仅供演示",
   "private": true,
-  "version": "0.0.0.3",
+  "version": "0.0.0.1",
   "type": "module",
   "scripts": {
     "dev": "wxt --port 5678",

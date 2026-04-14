@@ -10,7 +10,7 @@ export default defineConfig({
     disabled: true,
   },
   autoIcons: {
-    developmentIndicator: "overlay",
+    developmentIndicator: false,
   },
   vite: () => ({
     plugins: [commonjs(), tsconfigPaths({ root: "../../" })],
@@ -29,7 +29,7 @@ export default defineConfig({
     side_panel: {
       default_path: "entrypoints/sidepanel/index.html",
     },
-    permissions: [],
+    permissions: ["notifications", "storage", "offscreen", "sidePanel"],
     host_permissions: ["<all_urls>"],
     web_accessible_resources: [
       {
