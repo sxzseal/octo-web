@@ -8,6 +8,8 @@ import { Modal } from "@douyinfe/semi-ui";
 import { ConversationWrap, MessageWrap } from "../../Service/Model";
 import { getTimeStringAutoShort2 } from '../../Utils/time'
 import classNames from "classnames";
+import { useDraggable } from "@dnd-kit/core";
+import { CSS } from "@dnd-kit/utilities";
 
 import "./index.css"
 import { Badge, Toast } from "@douyinfe/semi-ui";
@@ -25,6 +27,87 @@ import WKAvatar from "../WKAvatar";
 import AiBadge from "../AiBadge";
 import ConversationVM from "../Conversation/vm";
 export type ConvFilter = 'all' | 'human' | 'ai' | 'group' | 'dm'
+
+// ── CompactGroupItem：群聊 Tab 紧凑 item，支持拖拽 ──────────────────────
+interface CompactGroupItemProps {
+    conversationWrap: ConversationWrap
+    selected: boolean
+    onClick: () => void
+    onContextMenu: (e: React.MouseEvent) => void
+}
+
+const CompactGroupItem: React.FC<CompactGroupItemProps> = ({
+    conversationWrap, selected, onClick, onContextMenu,
+}) => {
+    const channelInfo = conversationWrap.channelInfo
+    const isThread = conversationWrap.channel.channelType === ChannelTypeCommunityTopic
+
+    const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
+        id: `grp::${conversationWrap.channel.channelID}`,
+        data: {
+            type: 'group',
+            groupNo: conversationWrap.channel.channelID,
+        },
+        // 子区不参与跨分组拖拽
+        disabled: isThread,
+    })
+
+    const style: React.CSSProperties = {
+        transform: CSS.Translate.toString(transform),
+        opacity: isDragging ? 0.4 : undefined,
+    }
+
+    return (
+        <div
+            ref={setNodeRef}
+            style={style}
+            key={conversationWrap.channel.getChannelKey()}
+            className={classNames(
+                "wk-conv-compact-item",
+                selected ? "wk-conv-compact-item--selected" : undefined,
+                conversationWrap.unread > 0 ? "wk-conv-compact-item--unread" : undefined,
+                isThread ? "wk-conv-compact-item--thread" : undefined,
+                isDragging ? "wk-conv-compact-item--dragging" : undefined,
+            )}
+            onClick={onClick}
+            onContextMenu={onContextMenu}
+        >
+            {/* 拖拽 handle（非子区才显示） */}
+            {!isThread && (
+                <span
+                    className="wk-conv-compact-drag-handle"
+                    {...attributes}
+                    {...listeners}
+                    onClick={e => e.stopPropagation()}
+                >
+                    <svg width="10" height="14" viewBox="0 0 10 14" fill="none">
+                        <circle cx="3" cy="3" r="1.2" fill="currentColor" />
+                        <circle cx="7" cy="3" r="1.2" fill="currentColor" />
+                        <circle cx="3" cy="7" r="1.2" fill="currentColor" />
+                        <circle cx="7" cy="7" r="1.2" fill="currentColor" />
+                        <circle cx="3" cy="11" r="1.2" fill="currentColor" />
+                        <circle cx="7" cy="11" r="1.2" fill="currentColor" />
+                    </svg>
+                </span>
+            )}
+            <span className="wk-conv-compact-icon">
+                {isThread
+                    ? <ThreadIcon size={13} />
+                    : <Hash size={14} strokeWidth={2} />
+                }
+            </span>
+            <span className="wk-conv-compact-name">
+                {channelInfo?.orgData.displayName ?? conversationWrap.channel.channelID}
+            </span>
+            {conversationWrap.unread > 0 && (
+                <span className="wk-conv-compact-badge">
+                    {conversationWrap.unread > 99 ? '99+' : conversationWrap.unread}
+                </span>
+            )}
+        </div>
+    )
+}
+// ────────────────────────────────────────────────────────────────────────────
 
 export interface ConversationListProps {
     conversations: ConversationWrap[]
@@ -176,37 +259,17 @@ export default class ConversationList extends Component<ConversationListProps, C
 
         const { compact } = this.props
 
-        // ── Compact 模式（群聊 Tab）：# icon + 名称 + 未读角标，无头像/预览/时间戳 ──
+        // ── Compact 模式（群聊 Tab）：用 CompactGroupItem 函数组件（支持拖拽） ──
         if (compact) {
-            const selected = this.props.select && this.props.select.isEqual(conversationWrap.channel)
-            const isThread = conversationWrap.channel.channelType === ChannelTypeCommunityTopic
+            const selected = !!(this.props.select && this.props.select.isEqual(conversationWrap.channel))
             return (
-                <div
+                <CompactGroupItem
                     key={conversationWrap.channel.getChannelKey()}
-                    className={classNames(
-                        "wk-conv-compact-item",
-                        selected ? "wk-conv-compact-item--selected" : undefined,
-                        conversationWrap.unread > 0 ? "wk-conv-compact-item--unread" : undefined,
-                        isThread ? "wk-conv-compact-item--thread" : undefined,
-                    )}
+                    conversationWrap={conversationWrap}
+                    selected={selected}
                     onClick={() => { if (this.props.onClick) this.props.onClick(conversationWrap) }}
                     onContextMenu={(e) => { this._handleContextMenu(conversationWrap, e) }}
-                >
-                    <span className="wk-conv-compact-icon">
-                        {isThread
-                            ? <ThreadIcon size={13} />
-                            : <Hash size={14} strokeWidth={2} />
-                        }
-                    </span>
-                    <span className="wk-conv-compact-name">
-                        {channelInfo?.orgData.displayName ?? conversationWrap.channel.channelID}
-                    </span>
-                    {conversationWrap.unread > 0 && (
-                        <span className="wk-conv-compact-badge">
-                            {conversationWrap.unread > 99 ? '99+' : conversationWrap.unread}
-                        </span>
-                    )}
-                </div>
+                />
             )
         }
 

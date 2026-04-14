@@ -6,8 +6,21 @@ import { CategoryItem } from "../../Service/CategoryService"
 import { ConversationWrap } from "../../Service/Model"
 import ConversationList from "../ConversationList"
 import ConversationListWithCategory from "../ConversationListWithCategory"
-import CategoryManagePanel from "../CategoryManagePanel"
 import ContextMenus, { ContextMenusContext, ContextMenusData } from "../ContextMenus"
+import {
+    DndContext,
+    DragOverlay,
+    PointerSensor,
+    useSensor,
+    useSensors,
+    type DragEndEvent,
+    type DragStartEvent,
+} from "@dnd-kit/core"
+import {
+    SortableContext,
+    verticalListSortingStrategy,
+    arrayMove,
+} from "@dnd-kit/sortable"
 
 
 // category_id 收窄为非 null（useCategoryList 已 filter 掉 null 项）
@@ -50,7 +63,53 @@ const ConversationListGrouped: React.FC<ConversationListGroupedProps> = ({
     onMoveGroupToCategory,
     onOpenCreateCategory,
 }) => {
-    const [managePanelVisible, setManagePanelVisible] = useState(false)
+    // ── DnD 状态 ──────────────────────────────────────────────────────────────
+    const sensors = useSensors(useSensor(PointerSensor, {
+        activationConstraint: { distance: 6 }, // 6px 才触发拖拽，避免误触点击
+    }))
+    const [activeDragId, setActiveDragId] = useState<string | null>(null)
+    const [activeDragData, setActiveDragData] = useState<any>(null)
+
+    const handleDragStart = (event: DragStartEvent) => {
+        setActiveDragId(String(event.active.id))
+        setActiveDragData(event.active.data.current)
+    }
+
+    const handleDragEnd = (event: DragEndEvent) => {
+        setActiveDragId(null)
+        setActiveDragData(null)
+        const { active, over } = event
+        if (!over) return
+
+        const activeType = active.data.current?.type
+        const overId = String(over.id)
+
+        if (activeType === 'category') {
+            // 分组整体排序
+            const oldIndex = categories.findIndex(c => `cat::${c.category_id}` === String(active.id))
+            const newIndex = categories.findIndex(c => `cat::${c.category_id}` === overId)
+            if (oldIndex !== -1 && newIndex !== -1 && oldIndex !== newIndex) {
+                const newOrder = arrayMove(categories, oldIndex, newIndex).map(c => c.category_id)
+                onSortCategories(newOrder)
+            }
+        } else if (activeType === 'group') {
+            const groupNo = active.data.current?.groupNo as string
+            if (!groupNo) return
+
+            if (overId.startsWith('drop::cat::')) {
+                // 拖到某个分组 → 归入该分组
+                const targetCategoryId = overId.replace('drop::cat::', '')
+                if (targetCategoryId) {
+                    onMoveGroupToCategory(groupNo, targetCategoryId)
+                }
+            } else if (overId === 'drop::ungrouped') {
+                // 拖到未分组区 → 移出分组
+                onMoveGroupToCategory(groupNo, '')
+            }
+        }
+    }
+    // ──────────────────────────────────────────────────────────────────────────
+
     const categoryCtxMenuRef = useRef<ContextMenusContext | null>(null)
     const [activeCategoryId, setActiveCategoryId] = useState<string | null>(null)
     const ctxMenuClearRef = useRef<(() => void) | null>(null)
@@ -202,73 +261,88 @@ const ConversationListGrouped: React.FC<ConversationListGroupedProps> = ({
         ]
     }
 
-    return (
-        <>
-            <ConversationListWithCategory
+    const categoryIds = categories.map(c => `cat::${c.category_id}`)
 
-                categories={categoriesForView}
-                isLoading={isLoading}
-                error={error}
-                onRetry={onRetry}
-                allConversations={ConvListWithMenu(conversations)}
-                ungroupedConversations={ConvListWithMenu(ungroupedConvs)}
-                onCreateCategory={onOpenCreateCategory}
-                onManageCategories={() => setManagePanelVisible(true)}
-                activeCategoryId={activeCategoryId}
-                renamingCategoryId={renamingCategoryId}
-                onRenameConfirm={async (id, newName) => {
-                    await onRenameCategory(id, newName)
-                    setRenamingCategoryId(null)
-                }}
-                onRenameCancel={() => setRenamingCategoryId(null)}
-                onCategoryContextMenu={(categoryId, e) => {
-                    e.preventDefault()
-                    const menus = buildCategoryContextMenus(categoryId)
-                    // flushSync 保证 state 同步更新，ContextMenus re-render 后再 show()
-                    flushSync(() => {
-                        setActiveCategoryId(categoryId)
-                        setCategoryMenus(menus)
-                    })
-                    categoryCtxMenuRef.current?.show(e)
-                    // 先移除旧监听器，再注册新的，避免累积
-                    if (ctxMenuClearRef.current) {
-                        document.removeEventListener('mousedown', ctxMenuClearRef.current, true)
-                    }
-                    const clear = () => {
-                        setActiveCategoryId(null)
-                        document.removeEventListener('mousedown', clear, true)
-                        ctxMenuClearRef.current = null
-                    }
-                    ctxMenuClearRef.current = clear
-                    document.addEventListener('mousedown', clear, true)
-                }}
-            />
+    // 找到正在拖拽的 group item（用于 DragOverlay）
+    const activeDragConv = activeDragData?.type === 'group'
+        ? conversations.find(c => c.channel.channelID === activeDragData.groupNo)
+        : null
+
+    return (
+        <DndContext
+            sensors={sensors}
+            onDragStart={handleDragStart}
+            onDragEnd={handleDragEnd}
+        >
+            <SortableContext items={categoryIds} strategy={verticalListSortingStrategy}>
+                <ConversationListWithCategory
+                    categories={categoriesForView}
+                    isLoading={isLoading}
+                    error={error}
+                    onRetry={onRetry}
+                    allConversations={ConvListWithMenu(conversations)}
+                    ungroupedConversations={ConvListWithMenu(ungroupedConvs)}
+                    onCreateCategory={onOpenCreateCategory}
+                    activeCategoryId={activeCategoryId}
+                    renamingCategoryId={renamingCategoryId}
+                    categorySectionDraggable
+                    ungroupedSectionDroppable
+                    onRenameConfirm={async (id, newName) => {
+                        await onRenameCategory(id, newName)
+                        setRenamingCategoryId(null)
+                    }}
+                    onRenameCancel={() => setRenamingCategoryId(null)}
+                    onCategoryContextMenu={(categoryId, e) => {
+                        e.preventDefault()
+                        const menus = buildCategoryContextMenus(categoryId)
+                        flushSync(() => {
+                            setActiveCategoryId(categoryId)
+                            setCategoryMenus(menus)
+                        })
+                        categoryCtxMenuRef.current?.show(e)
+                        if (ctxMenuClearRef.current) {
+                            document.removeEventListener('mousedown', ctxMenuClearRef.current, true)
+                        }
+                        const clear = () => {
+                            setActiveCategoryId(null)
+                            document.removeEventListener('mousedown', clear, true)
+                            ctxMenuClearRef.current = null
+                        }
+                        ctxMenuClearRef.current = clear
+                        document.addEventListener('mousedown', clear, true)
+                    }}
+                />
+            </SortableContext>
 
             <ContextMenus
                 onContext={(ctx) => { categoryCtxMenuRef.current = ctx }}
                 menus={categoryMenus}
             />
 
-            <CategoryManagePanel
-                key={managePanelVisible ? 'panel-open' : 'panel-closed'}
-                visible={managePanelVisible}
-                categories={categories
-                    .filter(c => c.category_id !== null)
-                    .map(c => ({
-                        id: c.category_id,
-                        name: c.name,
-                        groupCount: (c.groups || []).length,
-                    }))
-                }
-                onClose={() => setManagePanelVisible(false)}
-                onRename={onRenameCategory}
-                onDelete={onDeleteCategory}
-                onReorder={onSortCategories}
-                onCreateCategory={() => { setManagePanelVisible(false); onOpenCreateCategory() }}
-            />
-
-
-        </>
+            {/* DragOverlay：ghost 预览 */}
+            <DragOverlay>
+                {activeDragConv ? (
+                    <div className="wk-conv-compact-item wk-conv-compact-item--ghost">
+                        <span className="wk-conv-compact-icon">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <line x1="4" y1="6" x2="20" y2="6" />
+                                <line x1="4" y1="12" x2="20" y2="12" />
+                                <line x1="4" y1="18" x2="12" y2="18" />
+                            </svg>
+                        </span>
+                        <span className="wk-conv-compact-name">
+                            {activeDragConv.channelInfo?.orgData.displayName ?? activeDragConv.channel.channelID}
+                        </span>
+                    </div>
+                ) : activeDragData?.type === 'category' ? (
+                    <div className="wk-category-header wk-category-header--ghost">
+                        <span className="wk-category-header__name">
+                            {categories.find(c => `cat::${c.category_id}` === activeDragId)?.name ?? '分组'}
+                        </span>
+                    </div>
+                ) : null}
+            </DragOverlay>
+        </DndContext>
     )
 }
 

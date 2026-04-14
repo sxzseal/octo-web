@@ -17,3 +17,9 @@
     font-weight: var(--wk-font-semibold);
     color: var(--wk-text-tertiary);
 }
+
+/* drop-over 高亮 */
+.wk-ungrouped-section--drop-over > .wk-ungrouped-section__header {
+    background: rgba(124, 92, 252, 0.08);
+    border-radius: var(--wk-r-sm, 6px);
+}

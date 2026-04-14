@@ -25,8 +25,11 @@ export interface ConversationListWithCategoryProps {
     onRetry?: () => void
     allConversations?: React.ReactNode
     onCreateCategory?: () => void
-    onManageCategories?: () => void
     onCategoryContextMenu?: (categoryId: string, e: React.MouseEvent) => void
+    /** CategorySection 是否启用拖拽（useSortable + useDroppable） */
+    categorySectionDraggable?: boolean
+    /** UngroupedSection 是否启用 droppable */
+    ungroupedSectionDroppable?: boolean
     activeCategoryId?: string | null       // 右键菜单打开时的高亮分组
     renamingCategoryId?: string | null     // 行内重命名中的分组
     onRenameConfirm?: (id: string, newName: string) => void
@@ -43,12 +46,13 @@ const ConversationListWithCategory: React.FC<ConversationListWithCategoryProps> 
     onRetry,
     allConversations,
     onCreateCategory,
-    onManageCategories,
     onCategoryContextMenu,
     activeCategoryId,
     renamingCategoryId,
     onRenameConfirm,
     onRenameCancel,
+    categorySectionDraggable,
+    ungroupedSectionDroppable,
 }) => {
     const [collapsedIds, setCollapsedIds] = useState<Set<string>>(new Set())
 
@@ -102,14 +106,15 @@ const ConversationListWithCategory: React.FC<ConversationListWithCategoryProps> 
                         isEditing={renamingCategoryId === cat.id}
                         onRenameConfirm={onRenameConfirm ? (newName) => onRenameConfirm(cat.id, newName) : undefined}
                         onRenameCancel={onRenameCancel}
+                        draggable={categorySectionDraggable}
                     >
                         {cat.conversations}
                     </CategorySection>
                 ))}
-                {/* 未分组区域：有内容才渲染 */}
-                {ungroupedConversations && (
-                    <UngroupedSection>{ungroupedConversations}</UngroupedSection>
-                )}
+                {/* 未分组区域：始终渲染 */}
+                <UngroupedSection droppable={ungroupedSectionDroppable}>
+                    {ungroupedConversations}
+                </UngroupedSection>
             </>
         )
     }
@@ -123,11 +128,6 @@ const ConversationListWithCategory: React.FC<ConversationListWithCategoryProps> 
             {!isLoading && !error && (
                 <div className="wk-conv-with-category__footer">
                     <AddCategoryButton onClick={onCreateCategory ?? (() => {})} />
-                    {onManageCategories && (
-                        <button className="wk-conv-with-category__manage-btn" onClick={onManageCategories}>
-                            管理分组
-                        </button>
-                    )}
                 </div>
             )}
         </div>

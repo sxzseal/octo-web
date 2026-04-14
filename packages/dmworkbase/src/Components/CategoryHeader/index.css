@@ -154,3 +154,42 @@
     padding: 0 4px;
     flex-shrink: 0;
 }
+
+/* 分组拖拽 handle */
+.wk-category-header__drag-handle {
+    flex-shrink: 0;
+    width: 14px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--wk-text-quaternary, #C4C7D0);
+    cursor: grab;
+    opacity: 0;
+    transition: opacity 150ms;
+    margin-right: 2px;
+}
+
+.wk-category-header:hover .wk-category-header__drag-handle {
+    opacity: 1;
+}
+
+.wk-category-header__drag-handle:active {
+    cursor: grabbing;
+}
+
+/* drop-over 高亮 */
+.wk-category-section--drop-over > .wk-category-header {
+    background: rgba(124, 92, 252, 0.08);
+    border-radius: var(--wk-r-sm, 6px);
+}
+
+/* DragOverlay ghost 样式 */
+.wk-category-header--ghost {
+    background: var(--wk-bg-base, #F7F8FA);
+    border: 1px solid var(--wk-brand-from, #7C5CFC);
+    border-radius: var(--wk-r-sm, 6px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+    opacity: 0.9;
+    padding: 6px var(--wk-sp-2, 8px);
+}
