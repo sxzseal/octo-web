@@ -524,8 +524,7 @@ body[theme-mode=dark] .wk-conversationlist:hover::-webkit-scrollbar-thumb {
 /* compact 模式子区 L连接线 */
 .wk-conv-compact-item--thread {
     position: relative;
-    /* 子区缩进：在父群聊 icon 右侧，体现父子层级关系 */
-    padding-left: 36px;
+    padding-left: 28px;
 }
 
 /* L连接线：竖线从 left: 17px（父群聊 icon 中心）向右弯折连接子区 */
@@ -554,7 +553,10 @@ body[theme-mode=dark] .wk-conversationlist:hover::-webkit-scrollbar-thumb {
 
 /* compact 模式「+N 个子区」/ 「收起」 overflow 控件 */
 .wk-conv-compact-thread-overflow {
-    padding: 3px 8px 3px 36px;  /* 对齐子区缩进 */
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3px 8px 3px 28px;
     font-size: 11px;
     color: var(--wk-text-tertiary, #9498A8);
     cursor: pointer;
@@ -563,6 +565,7 @@ body[theme-mode=dark] .wk-conversationlist:hover::-webkit-scrollbar-thumb {
     position: relative;
 }
 
+/* L连接线（对齐子区） */
 .wk-conv-compact-thread-overflow::after {
     content: '';
     position: absolute;
@@ -577,4 +580,10 @@ body[theme-mode=dark] .wk-conversationlist:hover::-webkit-scrollbar-thumb {
 
 .wk-conv-compact-thread-overflow:hover {
     color: var(--wk-brand-primary, #7C5CFC);
+}
+
+.wk-conv-compact-thread-overflow__arrow {
+    font-size: 12px;
+    line-height: 1;
+    flex-shrink: 0;
 }
