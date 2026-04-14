@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from "react"
 import { Modal } from "@douyinfe/semi-ui"
+import { Modal } from "@douyinfe/semi-ui"
 import { flushSync } from "react-dom"
 import { ChannelTypeGroup, Channel } from "wukongimjssdk"
 import { parseThreadChannelId } from "../../Service/Thread"
