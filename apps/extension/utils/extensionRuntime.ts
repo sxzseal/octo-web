@@ -43,7 +43,7 @@ export interface ConversationTarget {
 
 export interface OffscreenSyncResult {
   type: typeof EXTENSION_MESSAGE_TYPE.offscreenSyncResult;
-  badgeCount: number;
+  hasUnread: boolean;
   hasAuth: boolean;
   polledAt: number;
 }
@@ -77,7 +77,7 @@ export interface OpenConversationMessage {
 
 export interface SidepanelBadgeSyncMessage {
   type: typeof EXTENSION_MESSAGE_TYPE.sidepanelBadgeSync;
-  badgeCount: number;
+  hasUnread: boolean;
 }
 
 export interface SidepanelStateMessage {

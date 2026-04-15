@@ -74,7 +74,7 @@ async function syncExtensionAuthState(): Promise<void> {
   } satisfies ExtensionRuntimeMessage).catch(() => {});
   await browser.runtime.sendMessage({
     type: EXTENSION_MESSAGE_TYPE.sidepanelBadgeSync,
-    badgeCount: 0,
+    hasUnread: false,
   } satisfies ExtensionRuntimeMessage).catch(() => {});
 }
 
@@ -148,7 +148,7 @@ WKApp.shared.logout = () => {
     .then(() =>
       browser.runtime.sendMessage({
         type: EXTENSION_MESSAGE_TYPE.sidepanelBadgeSync,
-        badgeCount: 0,
+        hasUnread: false,
       } satisfies ExtensionRuntimeMessage).catch(() => {}),
     )
     .finally(() => {
@@ -165,9 +165,7 @@ WKApp.shared.registerModule(new ContactsModule());
 WKApp.shared.startup();
 void syncExtensionAuthState();
 
-function getUnreadBadgeCount(): number {
-  let badgeCount = 0;
-
+function hasUnreadConversation(): boolean {
   for (const conversation of WKSDK.shared().conversationManager.conversations) {
     const channelInfo = WKSDK.shared().channelManager.getChannelInfo(conversation.channel);
     if (channelInfo?.mute) {
@@ -188,20 +186,21 @@ function getUnreadBadgeCount(): number {
       conversation.channel.channelType === ChannelTypePerson &&
       conversation.extra?.spaceUnread !== undefined
     ) {
-      badgeCount += Math.max(0, Number(conversation.extra.spaceUnread || 0));
-      continue;
+      if (Math.max(0, Number(conversation.extra.spaceUnread || 0)) > 0) {
+        return true;
+      }
+    } else if (Math.max(0, Number(conversation.unread || 0)) > 0) {
+      return true;
     }
-
-    badgeCount += Math.max(0, Number(conversation.unread || 0));
   }
 
-  return badgeCount;
+  return false;
 }
 
 function syncSidepanelBadge(): void {
   void browser.runtime.sendMessage({
     type: EXTENSION_MESSAGE_TYPE.sidepanelBadgeSync,
-    badgeCount: getUnreadBadgeCount(),
+    hasUnread: hasUnreadConversation(),
   } satisfies ExtensionRuntimeMessage).catch(() => {});
 }
 

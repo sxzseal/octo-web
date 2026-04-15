@@ -75,10 +75,10 @@ function resetSdkCaches(): void {
   sdk.channelManager.channelInfocacheMap = {};
 }
 
-async function sendSyncResult(badgeCount: number, hasAuth: boolean): Promise<void> {
+async function sendSyncResult(hasUnread: boolean, hasAuth: boolean): Promise<void> {
   await browser.runtime.sendMessage({
     type: EXTENSION_MESSAGE_TYPE.offscreenSyncResult,
-    badgeCount,
+    hasUnread,
     hasAuth,
     polledAt: Date.now(),
   } satisfies ExtensionRuntimeMessage);
@@ -308,11 +308,11 @@ function getBadgeUnread(conversation: Conversation): number {
 async function updateBadgeFromConversations(): Promise<void> {
   const auth = currentAuth;
   if (!auth?.loggedIn || !auth.token) {
-    await sendSyncResult(0, false);
+    await sendSyncResult(false, false);
     return;
   }
 
-  let badgeCount = 0;
+  let hasUnread = false;
   for (const conversation of sdk.conversationManager.conversations) {
     if (shouldSkipChannelForSpace(conversation.channel)) {
       continue;
@@ -324,10 +324,13 @@ async function updateBadgeFromConversations(): Promise<void> {
     if (channelInfo?.mute) {
       continue;
     }
-    badgeCount += getBadgeUnread(conversation);
+    if (getBadgeUnread(conversation) > 0) {
+      hasUnread = true;
+      break;
+    }
   }
 
-  await sendSyncResult(badgeCount, true);
+  await sendSyncResult(hasUnread, true);
 }
 
 function getMessageBody(message: Message): string {
@@ -412,12 +415,12 @@ function handleAuthExpired(): void {
   void browser.runtime.sendMessage({
     type: EXTENSION_MESSAGE_TYPE.authCleared,
   } satisfies ExtensionRuntimeMessage);
-  void sendSyncResult(0, false);
+  void sendSyncResult(false, false);
 }
 
 async function refreshConversations(): Promise<void> {
   if (!currentAuth?.loggedIn || !currentAuth.token) {
-    await sendSyncResult(0, false);
+    await sendSyncResult(false, false);
     return;
   }
 
@@ -521,7 +524,7 @@ async function clearAuth(): Promise<void> {
   currentAuth = null;
   sdk.disconnect();
   resetSdkCaches();
-  await sendSyncResult(0, false);
+  await sendSyncResult(false, false);
 }
 
 browser.runtime.onMessage.addListener((message: ExtensionRuntimeMessage) => {
@@ -551,7 +554,7 @@ async function bootstrap(): Promise<void> {
     console.debug("[Extension] Failed to request auth state from background:", error);
   }
 
-  await sendSyncResult(0, false);
+  await sendSyncResult(false, false);
 }
 
 void bootstrap();

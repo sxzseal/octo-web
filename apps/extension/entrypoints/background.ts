@@ -13,11 +13,14 @@ import {
 } from "../utils/extensionStorage";
 
 const BADGE_BG_COLOR = "#d24747";
+const BADGE_DOT_TEXT = "•";
 const OFFSCREEN_DOCUMENT_PATH = "/offscreen.html";
 const SETTINGS_CONTEXT_MENU_ID = "open-extension-settings";
 const chromeApi = (globalThis as { chrome?: any }).chrome;
 const SIDEPANEL_ACTIVE_TTL_MS = 5000;
+const NEW_MESSAGE_BADGE_GRACE_MS = 3000;
 let lastSidepanelActiveAt = 0;
+let lastNewMessageAt = 0;
 
 function markSidepanelActive(): void {
   lastSidepanelActiveAt = Date.now();
@@ -83,8 +86,8 @@ async function ensureOffscreenDocument(): Promise<void> {
   }
 }
 
-async function updateBadge(badgeCount: number): Promise<void> {
-  const text = badgeCount > 99 ? "99+" : badgeCount > 0 ? String(badgeCount) : "";
+async function updateBadge(hasUnread: boolean): Promise<void> {
+  const text = hasUnread ? BADGE_DOT_TEXT : "";
   await browser.action.setBadgeBackgroundColor({ color: BADGE_BG_COLOR });
   await browser.action.setBadgeText({ text });
 }
@@ -116,7 +119,7 @@ async function applyPreferencesToUi(): Promise<void> {
   const preferences = await getExtensionPreferences();
 
   if (!preferences.notificationsEnabled) {
-    await updateBadge(0);
+    await updateBadge(false);
     await clearAllNotifications();
     return;
   }
@@ -192,7 +195,7 @@ async function handleRuntimeMessage(
 
   if (message.type === EXTENSION_MESSAGE_TYPE.authCleared) {
     void clearPendingConversation();
-    void updateBadge(0);
+    void updateBadge(false);
     void clearAllNotifications();
     void syncAuthStateToOffscreen();
     return;
@@ -205,7 +208,12 @@ async function handleRuntimeMessage(
 
     void getExtensionPreferences().then((preferences) => {
       const shouldShowBadge = preferences.notificationsEnabled && message.hasAuth;
-      void updateBadge(shouldShowBadge ? message.badgeCount : 0);
+      const wantBadge = shouldShowBadge && message.hasUnread;
+      // 刚收到新消息时 SDK 的 unread 计数可能还未更新，跳过清除以防覆盖
+      if (!wantBadge && Date.now() - lastNewMessageAt < NEW_MESSAGE_BADGE_GRACE_MS) {
+        return;
+      }
+      void updateBadge(wantBadge);
     });
     return;
   }
@@ -213,7 +221,7 @@ async function handleRuntimeMessage(
   if (message.type === EXTENSION_MESSAGE_TYPE.sidepanelBadgeSync) {
     markSidepanelActive();
     void getExtensionPreferences().then((preferences) => {
-      void updateBadge(preferences.notificationsEnabled ? message.badgeCount : 0);
+      void updateBadge(preferences.notificationsEnabled && message.hasUnread);
     });
     return;
   }
@@ -229,7 +237,17 @@ async function handleRuntimeMessage(
 
   if (message.type === EXTENSION_MESSAGE_TYPE.offscreenNewMessage) {
     void getExtensionPreferences().then((preferences) => {
-      if (!preferences.notificationsEnabled || !preferences.notificationsVisible) {
+      if (!preferences.notificationsEnabled) {
+        return;
+      }
+
+      // 记录新消息时间，防止后续 offscreenSyncResult(false) 覆盖红点
+      lastNewMessageAt = Date.now();
+      if (!isSidepanelActive()) {
+        void updateBadge(true);
+      }
+
+      if (!preferences.notificationsVisible) {
         return;
       }
 
@@ -275,6 +293,6 @@ export default defineBackground(async () => {
 
   registerSettingsContextMenu();
   await ensureOffscreenDocument();
-  await updateBadge(0);
+  await updateBadge(false);
   await applyPreferencesToUi();
 });
