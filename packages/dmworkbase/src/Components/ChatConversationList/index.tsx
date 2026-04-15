@@ -78,11 +78,11 @@ const ChatConversationList: React.FC<ChatConversationListProps> = ({
 
         // 过滤默认分组（is_default），不在「移到分组」子菜单里显示
         const items: ContextMenusData[] = categories
-            .filter(cat => !cat.is_default)
+            .filter(cat => !cat.is_default && isValidCategoryItem(cat))
             .map(cat => ({
                 title: cat.name,
                 checked: currentCategoryId === cat.category_id,
-                onClick: () => moveGroupToCategory(groupNo, cat.category_id!),
+                onClick: () => moveGroupToCategory(groupNo, cat.category_id),
             }))
         items.push({ separator: true } as ContextMenusData)
         items.push({ title: "+ 新建分组", onClick: () => setCreateModalVisible(true) })
