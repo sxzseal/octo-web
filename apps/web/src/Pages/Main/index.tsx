@@ -176,8 +176,16 @@ export class MainPage extends Component<{}, MainPageState> {
                                     showAppUpdateOperation={vm.showAppUpdateOperation}
                                     lastVersionInfo={vm.lastVersionInfo}
                                     onToggleSetting={() => { vm.settingSelected = !vm.settingSelected; }}
-                                    onSetShowNewVersion={(v) => { vm.showNewVersion = v; }}
-                                    onSetShowAppVersion={(v) => { vm.showAppVersion = v; vm.notifyListener(); }}
+                                    onSetShowNewVersion={(v) => {
+                                        vm.showNewVersion = v;
+                                        if (!v) { vm.markVersionRead(); }
+                                        vm.notifyListener();
+                                    }}
+                                    onSetShowAppVersion={(v) => {
+                                        vm.showAppVersion = v;
+                                        if (!v) { vm.markVersionRead(); }
+                                        vm.notifyListener();
+                                    }}
                                     onInstallUpdate={() => vm.installUpdate()}
                                     onNotifyListener={() => vm.notifyListener()}
                                 />
