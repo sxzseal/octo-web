@@ -101,9 +101,9 @@ export class WKLayout extends Component<WKLayoutProps, WKLayoutState>{
         if (!this.layoutRef.current) return SPLITTER_MAX_WIDTH
         const contentEl = this.layoutRef.current.querySelector('.wk-layout-content') as HTMLElement
         if (!contentEl) return SPLITTER_MAX_WIDTH
-        const available = contentEl.clientWidth  // excludes splitter width implicitly via flex
-        // Reserve MIN_RIGHT_WIDTH for the right panel + 8px for the splitter
-        const dynamicMax = available - MIN_RIGHT_WIDTH - 8
+        const available = contentEl.clientWidth
+        // Reserve MIN_RIGHT_WIDTH for the right panel
+        const dynamicMax = available - MIN_RIGHT_WIDTH
         return Math.min(SPLITTER_MAX_WIDTH, Math.max(SPLITTER_MIN_WIDTH, dynamicMax))
     }
 
@@ -163,13 +163,6 @@ export class WKLayout extends Component<WKLayoutProps, WKLayoutState>{
                     {contentLeft}
                 </WKViewQueue>
             </div>
-            {/* Draggable splitter — hidden on small screens via CSS */}
-            <div
-                className={classNames("wk-layout-splitter", isDragging && "wk-layout-splitter-active")}
-                onMouseDown={this.onDragStart}
-            >
-                <div className="wk-layout-splitter-line" />
-            </div>
             <div className="wk-layout-content-right">
                 <WKViewQueue onContext={(context) => {
                     this.rightContext = context
@@ -179,6 +172,13 @@ export class WKLayout extends Component<WKLayoutProps, WKLayoutState>{
                 }}>
                     {contentRight}
                 </WKViewQueue>
+            </div>
+            {/* Draggable splitter — absolutely positioned on the border, hidden on small screens via CSS */}
+            <div
+                className={classNames("wk-layout-splitter", isDragging && "wk-layout-splitter-active")}
+                onMouseDown={this.onDragStart}
+            >
+                <div className="wk-layout-splitter-line" />
             </div>
         </div>
 

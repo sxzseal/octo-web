@@ -22,6 +22,7 @@
     height: 100%;
     display: flex;
     overflow: hidden;
+    position: relative;  /* anchor for the absolute splitter */
 }
 
 .wk-layout-content-left {
@@ -29,6 +30,7 @@
     height: 100%;
     flex-shrink: 0;
     background: var(--wk-bg-base);
+    border-right: 1px solid var(--wk-border-subtle);
 }
 
 .wk-layout-content-right {
@@ -42,22 +44,24 @@
 
 /* ── Draggable Splitter ── */
 .wk-layout-splitter {
-    width: var(--wk-sp-2);            /* 8px hit area */
-    flex-shrink: 0;
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: var(--wk-width-layout-content-left);
+    width: 6px;
+    margin-left: -3px;   /* center on the border line */
     cursor: col-resize;
+    z-index: 10;
     display: flex;
     align-items: center;
     justify-content: center;
-    position: relative;
-    z-index: 5;
 }
 
 .wk-layout-splitter-line {
-    width: 1px;
+    width: 0;
     height: 100%;
-    background: var(--wk-border-subtle);
-    transition: background var(--wk-dur-fast) var(--wk-ease),
-                width var(--wk-dur-fast) var(--wk-ease);
+    transition: width var(--wk-dur-fast) var(--wk-ease),
+                background var(--wk-dur-fast) var(--wk-ease);
 }
 
 .wk-layout-splitter:hover .wk-layout-splitter-line,
