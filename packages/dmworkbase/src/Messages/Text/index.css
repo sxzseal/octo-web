@@ -51,14 +51,14 @@ body[theme-mode=dark] .wk-message-text-recv {
 
 .wk-message-text-reply {
     display: flex;
-    color: rgb(0, 0, 0,0.5);
+    color: var(--wk-text-secondary);
     font-size: 14px;
     flex-direction: column;
     cursor: pointer;
 }
 
 .wk-message-text-reply.wk-message-text-reply-recv {
-    color: rgb(0, 0, 0,0.5);
+    color: var(--wk-text-secondary);
 }
 
 

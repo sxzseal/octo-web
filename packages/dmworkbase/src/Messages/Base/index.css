@@ -359,7 +359,7 @@ body[theme-mode=dark] .wk-message-base-bubble-box.recv .wk-message-base-bubble  
 
 .reply {
     position: relative;
-    color: #666;
+    color: var(--wk-text-secondary);
     font-size: 12px;
     overflow: hidden;
     text-overflow: ellipsis;
