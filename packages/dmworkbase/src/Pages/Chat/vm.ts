@@ -208,7 +208,8 @@ export class ChatVM extends ProviderListener {
                 if (conversation.channel.channelType === ChannelTypeGroup) {
                     const key = `${conversation.channel.channelID}_${conversation.channel.channelType}`
                     if (!WKApp.shared.channelSpaceMap.has(key)) {
-                        // 缓存未命中：异步获取 channelInfo 补写缓存
+                        // 缓存未命中：暂存 conversation，等 channelInfoListener 回调补写缓存后再处理
+                        this._pendingSpaceConversations.set(key, conversation)
                         WKSDK.shared().channelManager.fetchChannelInfo(conversation.channel)
                         return // 等待 channelInfoListener 回调处理
                     }

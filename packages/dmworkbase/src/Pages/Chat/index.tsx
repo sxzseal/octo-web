@@ -670,6 +670,7 @@ export default class ChatPage extends Component<any, ChatPageState> {
                           filter={filter}
                           select={WKApp.shared.openChannel}
                           onOpenCreateCategoryRef={this.openCreateCategoryRef}
+                          onGroupCreated={() => vm.reloadRequestConversationList()}
                           onConversationClick={(conversation: ConversationWrap) => {
                             const doSwitch = () => {
                               // 子区：直接进入完整视图（参考 Discord 逻辑）

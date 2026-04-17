@@ -26,6 +26,8 @@ export interface ChatConversationListProps {
     onThreadOverflowClick: (groupNo: string) => void
     /** 外部触发「新建分组」Modal（如顶部 + 按钮），调用后 Modal 显示 */
     onOpenCreateCategoryRef?: React.MutableRefObject<(() => void) | null>
+    /** 群聊创建成功后回调，用于刷新会话列表 */
+    onGroupCreated?: () => void
 }
 
 const ChatConversationList: React.FC<ChatConversationListProps> = ({
@@ -36,6 +38,7 @@ const ChatConversationList: React.FC<ChatConversationListProps> = ({
     onClearMessages,
     onThreadOverflowClick,
     onOpenCreateCategoryRef,
+    onGroupCreated,
 }) => {
     const {
         categories,
@@ -109,15 +112,21 @@ const ChatConversationList: React.FC<ChatConversationListProps> = ({
                     onMoveGroupToCategory={moveGroupToCategory}
                     onOpenCreateCategory={() => setCreateModalVisible(true)}
                     onStartGroup={() => {
-                        const menus = WKApp.shared.chatMenus()
-                        const groupMenu = menus.find((m: any) => m.key === 'start-group')
-                        if (groupMenu?.onClick) groupMenu.onClick()
+                        WKApp.endpoints.organizationalLayer(null, {
+                            onSuccess: () => {
+                                reload()
+                                onGroupCreated?.()
+                            }
+                        })
                     }}
                     onCreateGroupInCategory={(categoryId: string) => {
-                        WKApp.endpoints.organizationalLayer(
-                            null,
-                            { defaultCategoryId: categoryId, onSuccess: reload }
-                        )
+                        WKApp.endpoints.organizationalLayer(null, {
+                            defaultCategoryId: categoryId,
+                            onSuccess: () => {
+                                reload()
+                                onGroupCreated?.()
+                            }
+                        })
                     }}
                 />
             ) : (

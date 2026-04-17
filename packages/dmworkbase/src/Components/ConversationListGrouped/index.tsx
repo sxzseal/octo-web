@@ -233,26 +233,56 @@ const ConversationListGrouped: React.FC<ConversationListGroupedProps> = ({
         />
     )
 
-    const categoriesForView = categories.map(cat => {
-        // 分组内按最新消息时间降序排序
-        const sortedGroups = [...(cat.groups || [])].sort((a, b) => {
-            const convA = groupConvMap.get(a.group_no)
-            const convB = groupConvMap.get(b.group_no)
-            const tA = convA?.timestamp ?? 0
-            const tB = convB?.timestamp ?? 0
-            return tB - tA
-        })
-        const catConvs: ConversationWrap[] = []
-        for (const g of sortedGroups) {
-            const groupConv = groupConvMap.get(g.group_no)
-            if (groupConv) {
-                catConvs.push(groupConv)
-                // 将该群组的子区一并加入
-                const threads = threadConvsByParent.get(g.group_no) || []
-                catConvs.push(...threads)
+    // 所有非默认分组里已归组的群 group_no 集合（用于默认分组的兜底逻辑）
+    const assignedGroupNos = new Set<string>()
+    for (const cat of categories) {
+        if (!cat.is_default) {
+            for (const g of cat.groups || []) {
+                assignedGroupNos.add(g.group_no)
             }
         }
-        const groupCount = (cat.groups || []).length
+    }
+
+    const categoriesForView = categories.map(cat => {
+        let catConvs: ConversationWrap[]
+
+        if (cat.is_default) {
+            // 默认分组：显示所有不在非默认分组里的群聊（含新建后尚未 reload categories 的情况）
+            catConvs = groupConversations.filter(c => !assignedGroupNos.has(c.channel.channelID))
+            catConvs = catConvs.sort((a, b) => (b.timestamp ?? 0) - (a.timestamp ?? 0))
+            // 加上每个群的子区
+            const withThreads: ConversationWrap[] = []
+            for (const conv of catConvs) {
+                withThreads.push(conv)
+                const threads = [...(threadConvsByParent.get(conv.channel.channelID) || [])]
+                    .sort((a, b) => (b.timestamp ?? 0) - (a.timestamp ?? 0))
+                withThreads.push(...threads)
+            }
+            catConvs = withThreads
+        } else {
+            // 非默认分组：按 cat.groups 顺序，按最新消息排序
+            const sortedGroups = [...(cat.groups || [])].sort((a, b) => {
+                const convA = groupConvMap.get(a.group_no)
+                const convB = groupConvMap.get(b.group_no)
+                const tA = convA?.timestamp ?? 0
+                const tB = convB?.timestamp ?? 0
+                return tB - tA
+            })
+            catConvs = []
+            for (const g of sortedGroups) {
+                const groupConv = groupConvMap.get(g.group_no)
+                if (groupConv) {
+                    catConvs.push(groupConv)
+                    const threads = threadConvsByParent.get(g.group_no) || []
+                    catConvs.push(...threads)
+                }
+            }
+        }
+
+        // groupCount：默认分组用实际 conv 数，非默认分组用 cat.groups 数
+        const groupCount = cat.is_default
+            ? groupConversations.filter(c => !assignedGroupNos.has(c.channel.channelID)).length
+            : (cat.groups || []).length
         const unreadCount = catConvs.reduce((sum, c) => sum + (c.unread || 0), 0)
         return {
             id: cat.category_id,
