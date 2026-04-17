@@ -16,5 +16,9 @@
     "lint": "pnpm --filter @octo/base lint src/ui/",
     "test": "pnpm test:storybook",
     "typecheck": "pnpm --filter @octo/base tsc --noEmit"
+  },
+  "branch": {
+    "types": ["feat", "fix", "refactor", "chore", "docs", "test"],
+    "defaultBase": "origin/develop"
   }
 }

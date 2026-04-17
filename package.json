@@ -16,7 +16,11 @@
     "lint": "turbo run lint",
     "lint:css": "stylelint '**/*.css' --config stylelint.config.mjs --allow-empty-input",
     "lint:css:ci": "stylelint --config stylelint.ci.config.mjs --allow-empty-input",
-    "format": "prettier --write \"**/*.{ts,tsx,md}\""
+    "format": "prettier --write \"**/*.{ts,tsx,md}\"",
+    "gen:component": "node scripts/gen-component.mjs",
+    "lint:architecture": "node scripts/lint-architecture.mjs",
+    "new:worktree": "bash scripts/new-worktree.sh",
+    "cleanup:worktree": "bash scripts/cleanup-worktree.sh"
   },
   "devDependencies": {
     "@playwright/test": "^1.58.2",
