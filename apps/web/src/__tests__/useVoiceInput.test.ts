@@ -279,7 +279,10 @@ describe("useVoiceInput - getChatContext", () => {
     })
 
     it("should pass getChatContext result to VoiceService.transcribe", async () => {
-        const getChatContext = vi.fn().mockReturnValue("[Alice]: hi\n[Bob]: hello")
+        const getChatContext = vi.fn().mockReturnValue({
+            memberContext: undefined,
+            chatContext: "[Alice]: hi\n[Bob]: hello",
+        })
         vi.mocked(VoiceService.shared.transcribe).mockResolvedValue({ text: "transcribed", m: "whisper-1" })
 
         const { result } = renderHook(() =>
@@ -439,7 +442,7 @@ describe("useVoiceInput - personal voice context", () => {
         vi.clearAllMocks()
     })
 
-    it("should use personal context when has_context is true", async () => {
+    it("should pass all three contexts simultaneously", async () => {
         vi.mocked(VoiceService.shared.getVoiceContext).mockResolvedValue({
             status: 200,
             has_context: true,
@@ -450,7 +453,10 @@ describe("useVoiceInput - personal voice context", () => {
             text: "转写结果",
             m: "g3fp",
         })
-        const getChatContext = vi.fn(() => "聊天成员：Alice,Bob")
+        const getChatContext = vi.fn(() => ({
+            memberContext: "聊天成员：Alice,Bob",
+            chatContext: undefined,
+        }))
         const onTranscribed = vi.fn()
 
         const { result } = renderHook(() =>
@@ -472,13 +478,15 @@ describe("useVoiceInput - personal voice context", () => {
 
         expect(VoiceService.shared.transcribe).toHaveBeenCalledWith(
             expect.any(Blob),
-            undefined,
-            "个人纠错词"
+            undefined,              // contextText
+            undefined,              // chatContext
+            "个人纠错词",             // personalContext
+            "聊天成员：Alice,Bob",    // memberContext
         )
-        expect(getChatContext).not.toHaveBeenCalled()
+        expect(getChatContext).toHaveBeenCalled()
     })
 
-    it("should fallback to getChatContext when has_context is false", async () => {
+    it("should pass member/chat context when no personal context", async () => {
         vi.mocked(VoiceService.shared.getVoiceContext).mockResolvedValue({
             status: 200,
             has_context: false,
@@ -489,7 +497,10 @@ describe("useVoiceInput - personal voice context", () => {
             text: "转写结果",
             m: "g3fp",
         })
-        const getChatContext = vi.fn(() => "聊天成员：Alice,Bob")
+        const getChatContext = vi.fn(() => ({
+            memberContext: "聊天成员：Alice,Bob",
+            chatContext: undefined,
+        }))
 
         const { result } = renderHook(() =>
             useVoiceInput({ getChatContext })
@@ -508,8 +519,10 @@ describe("useVoiceInput - personal voice context", () => {
 
         expect(VoiceService.shared.transcribe).toHaveBeenCalledWith(
             expect.any(Blob),
-            undefined,
-            "聊天成员：Alice,Bob"
+            undefined,              // contextText
+            undefined,              // chatContext
+            undefined,              // personalContext (has_context=false)
+            "聊天成员：Alice,Bob",    // memberContext
         )
         expect(getChatContext).toHaveBeenCalled()
     })
@@ -525,7 +538,10 @@ describe("useVoiceInput - personal voice context", () => {
             text: "转写结果",
             m: "g3fp",
         })
-        const getChatContext = vi.fn(() => "聊天成员：Alice")
+        const getChatContext = vi.fn(() => ({
+            memberContext: "聊天成员：Alice",
+            chatContext: undefined,
+        }))
 
         const { result } = renderHook(() =>
             useVoiceInput({ getChatContext })
@@ -544,8 +560,10 @@ describe("useVoiceInput - personal voice context", () => {
 
         expect(VoiceService.shared.transcribe).toHaveBeenCalledWith(
             expect.any(Blob),
-            undefined,
-            "聊天成员：Alice"
+            undefined,              // contextText
+            undefined,              // chatContext
+            undefined,              // personalContext (context 为空字符串，视为无)
+            "聊天成员：Alice",        // memberContext
         )
     })
 
@@ -557,7 +575,10 @@ describe("useVoiceInput - personal voice context", () => {
             text: "转写结果",
             m: "g3fp",
         })
-        const getChatContext = vi.fn(() => "聊天成员：Alice")
+        const getChatContext = vi.fn(() => ({
+            memberContext: "聊天成员：Alice",
+            chatContext: undefined,
+        }))
 
         const { result } = renderHook(() =>
             useVoiceInput({ getChatContext })
@@ -576,8 +597,10 @@ describe("useVoiceInput - personal voice context", () => {
 
         expect(VoiceService.shared.transcribe).toHaveBeenCalledWith(
             expect.any(Blob),
-            undefined,
-            "聊天成员：Alice"
+            undefined,              // contextText
+            undefined,              // chatContext
+            undefined,              // personalContext (API 失败，voiceContextRef 为 null)
+            "聊天成员：Alice",        // memberContext
         )
     })
 
@@ -625,8 +648,10 @@ describe("useVoiceInput - personal voice context", () => {
 
         expect(VoiceService.shared.transcribe).toHaveBeenCalledWith(
             expect.any(Blob),
-            undefined,
-            "延迟到达的纠错词"
+            undefined,              // contextText
+            undefined,              // chatContext (无 getChatContext)
+            "延迟到达的纠错词",       // personalContext
+            undefined,              // memberContext (无 getChatContext)
         )
     })
 

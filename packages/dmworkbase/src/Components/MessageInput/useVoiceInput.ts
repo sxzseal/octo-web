@@ -1,13 +1,14 @@
 import { useState, useEffect, useRef, useCallback } from "react"
 import VoiceService, { VoiceConfig, VoiceContextResponse } from "../../Service/VoiceService"
 import WKApp from "../../App"
+import { ChatContextResult } from "../Conversation/chatContext"
 
 export interface UseVoiceInputOptions {
     maxDuration?: number
     onTranscribed?: (text: string, shouldReplace: boolean) => void
     onError?: (error: Error) => void
     onRecordingFailed?: () => void
-    getChatContext?: () => string | undefined
+    getChatContext?: () => ChatContextResult
 }
 
 export interface UseVoiceInputReturn {
@@ -185,15 +186,21 @@ export default function useVoiceInput(options: UseVoiceInputOptions = {}): UseVo
                     voiceContextPromiseRef.current = null
                 }
 
-                let chatContext: string | undefined
+                // 个人纠错上下文
+                let personalContext: string | undefined
                 const voiceCtx = voiceContextRef.current
                 if (voiceCtx && voiceCtx.has_context === true && voiceCtx.context) {
-                    chatContext = voiceCtx.context
-                } else {
-                    chatContext = getChatContextRef.current?.()
+                    personalContext = voiceCtx.context
                 }
 
-                const result = await VoiceService.shared.transcribe(blob, contextTextRef.current, chatContext)
+                // 群成员名 + 聊天消息上下文
+                const chatCtxResult = getChatContextRef.current?.() ?? {}
+                const memberContext = chatCtxResult.memberContext
+                const chatContext = chatCtxResult.chatContext
+
+                const result = await VoiceService.shared.transcribe(
+                    blob, contextTextRef.current, chatContext, personalContext, memberContext
+                )
                 if (result.text && onTranscribed) {
                     // If context_text was provided, LLM returns complete modified text - should replace
                     const shouldReplace = !!contextTextRef.current

@@ -150,6 +150,42 @@ describe("VoiceService", () => {
             expect((formData as FormData).get("chat_context")).toBe("[Alice]: hi")
         })
 
+        it("should include personal_context when provided", async () => {
+            vi.mocked(APIClient.shared.post).mockResolvedValue({ text: "hi", m: "whisper-1" })
+            const audioBlob = new Blob(["audio-data"], { type: "audio/webm;codecs=opus" })
+            await VoiceService.shared.transcribe(audioBlob, undefined, undefined, "个人纠错词")
+            const [, formData] = vi.mocked(APIClient.shared.post).mock.calls[0]
+            expect((formData as FormData).get("personal_context")).toBe("个人纠错词")
+        })
+
+        it("should include member_context when provided", async () => {
+            vi.mocked(APIClient.shared.post).mockResolvedValue({ text: "hi", m: "whisper-1" })
+            const audioBlob = new Blob(["audio-data"], { type: "audio/webm;codecs=opus" })
+            await VoiceService.shared.transcribe(audioBlob, undefined, undefined, undefined, "聊天成员：Alice")
+            const [, formData] = vi.mocked(APIClient.shared.post).mock.calls[0]
+            expect((formData as FormData).get("member_context")).toBe("聊天成员：Alice")
+        })
+
+        it("should include all context fields when all provided", async () => {
+            vi.mocked(APIClient.shared.post).mockResolvedValue({ text: "hi", m: "whisper-1" })
+            const audioBlob = new Blob(["audio-data"], { type: "audio/webm;codecs=opus" })
+            await VoiceService.shared.transcribe(audioBlob, "input text", "[Alice]: hi", "纠错词", "聊天成员：Alice")
+            const [, formData] = vi.mocked(APIClient.shared.post).mock.calls[0]
+            expect((formData as FormData).get("context_text")).toBe("input text")
+            expect((formData as FormData).get("chat_context")).toBe("[Alice]: hi")
+            expect((formData as FormData).get("personal_context")).toBe("纠错词")
+            expect((formData as FormData).get("member_context")).toBe("聊天成员：Alice")
+        })
+
+        it("should not include personal_context and member_context when not provided", async () => {
+            vi.mocked(APIClient.shared.post).mockResolvedValue({ text: "hi", m: "whisper-1" })
+            const audioBlob = new Blob(["audio-data"], { type: "audio/webm;codecs=opus" })
+            await VoiceService.shared.transcribe(audioBlob, undefined, "[Alice]: hi")
+            const [, formData] = vi.mocked(APIClient.shared.post).mock.calls[0]
+            expect((formData as FormData).get("personal_context")).toBeNull()
+            expect((formData as FormData).get("member_context")).toBeNull()
+        })
+
         it("should return TranscribeResult with m field from backend response", async () => {
             vi.mocked(APIClient.shared.post).mockResolvedValue({ text: "hello", m: "g3fp" })
 

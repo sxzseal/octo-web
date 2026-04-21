@@ -39,7 +39,13 @@ export default class VoiceService {
         return APIClient.shared.get<VoiceConfig>("/voice/config")
     }
 
-    async transcribe(audio: Blob, contextText?: string, chatContext?: string): Promise<TranscribeResult> {
+    async transcribe(
+        audio: Blob,
+        contextText?: string,
+        chatContext?: string,
+        personalContext?: string,
+        memberContext?: string,
+    ): Promise<TranscribeResult> {
         const formData = new FormData()
         const ext = audio.type.includes("mp4") ? "mp4" : "webm"
         formData.append("audio", audio, `recording.${ext}`)
@@ -48,6 +54,12 @@ export default class VoiceService {
         }
         if (chatContext) {
             formData.append("chat_context", chatContext)
+        }
+        if (personalContext) {
+            formData.append("personal_context", personalContext)
+        }
+        if (memberContext) {
+            formData.append("member_context", memberContext)
         }
         return APIClient.shared.post("/voice/transcribe", formData)
     }

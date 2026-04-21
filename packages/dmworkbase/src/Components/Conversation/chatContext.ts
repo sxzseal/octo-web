@@ -19,13 +19,18 @@ export interface ChatContextChannelInfo {
     orgData?: { remark?: string }
 }
 
+export interface ChatContextResult {
+    memberContext?: string   // "聊天成员：Alice,Bob"
+    chatContext?: string     // "[Alice]: hi\n[Bob]: hello"
+}
+
 export function buildChatContext(params: {
     messages: ChatContextMessage[]
     subscribers: ChatContextMember[]
     channelType: number
     loginUID: string
     channelInfo?: ChatContextChannelInfo | null
-}): string | undefined {
+}): ChatContextResult {
     const { messages, subscribers, channelType, loginUID, channelInfo } = params
     const names: string[] = []
 
@@ -66,10 +71,12 @@ export function buildChatContext(params: {
 
     const uniqueNames = [...new Set(names)]
 
-    const parts: string[] = []
+    const result: ChatContextResult = {}
+
     if (uniqueNames.length > 0) {
-        parts.push(`聊天成员：${uniqueNames.join(",")}`)
+        result.memberContext = `聊天成员：${uniqueNames.join(",")}`
     }
+
     if (messages && messages.length > 0) {
         const last10 = messages.slice(-10)
         const lines = last10.map(m => {
@@ -77,7 +84,8 @@ export function buildChatContext(params: {
             const text = m.content?.text || ''
             return `[${senderName}]: ${text}`
         })
-        parts.push(lines.join('\n'))
+        result.chatContext = lines.join('\n')
     }
-    return parts.length > 0 ? parts.join('\n') : undefined
+
+    return result
 }

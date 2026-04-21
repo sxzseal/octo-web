@@ -2,11 +2,12 @@ import React, { useEffect, useRef, useState } from "react"
 import { Toast } from "@douyinfe/semi-ui"
 import useVoiceInput from "./useVoiceInput"
 import "./voiceInput.css"
+import { ChatContextResult } from "../Conversation/chatContext"
 
 interface VoiceInputIndicatorProps {
     onTranscribed: (text: string, shouldReplace: boolean) => void
     getCurrentText?: () => string | undefined
-    getChatContext?: () => string | undefined
+    getChatContext?: () => ChatContextResult
 }
 
 function formatDuration(seconds: number): string {

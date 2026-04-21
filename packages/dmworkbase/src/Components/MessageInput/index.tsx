@@ -12,6 +12,7 @@ import "./index.css"
 import { Notification } from '@douyinfe/semi-ui';
 import SlashCommandMenu, { BotCommand } from "../SlashCommandMenu";
 import VoiceInputIndicator from "./VoiceInputIndicator";
+import { ChatContextResult } from "../Conversation/chatContext";
 import { Maximize2, Minimize2 } from 'lucide-react';
 import IconClick from '../IconClick';
 import mentionAllIcon from './mention.png';
@@ -39,7 +40,7 @@ interface MessageInputProps {
     onContext?: (ctx: MessageInputContext) => void
     topView?: JSX.Element
     botCommands?: BotCommand[]
-    getChatContext?: () => string | undefined
+    getChatContext?: () => ChatContextResult
     hasPendingAttachments?: boolean
     onExpandChange?: (expanded: boolean) => void
 }

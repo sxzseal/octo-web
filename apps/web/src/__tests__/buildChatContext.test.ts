@@ -36,7 +36,8 @@ describe("buildChatContext", () => {
                 channelType: ChannelTypeGroup,
                 loginUID: LOGIN_UID,
             })
-            expect(result).toBe("聊天成员：Alice,Bob")
+            expect(result.memberContext).toBe("聊天成员：Alice,Bob")
+            expect(result.chatContext).toBeUndefined()
         })
 
         it("should collect both name and remark when different", () => {
@@ -49,7 +50,8 @@ describe("buildChatContext", () => {
                 channelType: ChannelTypeGroup,
                 loginUID: LOGIN_UID,
             })
-            expect(result).toBe("聊天成员：Alice,小A")
+            expect(result.memberContext).toBe("聊天成员：Alice,小A")
+            expect(result.chatContext).toBeUndefined()
         })
 
         it("should not duplicate when remark equals name", () => {
@@ -62,7 +64,8 @@ describe("buildChatContext", () => {
                 channelType: ChannelTypeGroup,
                 loginUID: LOGIN_UID,
             })
-            expect(result).toBe("聊天成员：Alice")
+            expect(result.memberContext).toBe("聊天成员：Alice")
+            expect(result.chatContext).toBeUndefined()
         })
 
         it("should exclude current user", () => {
@@ -76,7 +79,8 @@ describe("buildChatContext", () => {
                 channelType: ChannelTypeGroup,
                 loginUID: LOGIN_UID,
             })
-            expect(result).toBe("聊天成员：Alice")
+            expect(result.memberContext).toBe("聊天成员：Alice")
+            expect(result.chatContext).toBeUndefined()
         })
 
         it("should exclude deleted members", () => {
@@ -90,7 +94,8 @@ describe("buildChatContext", () => {
                 channelType: ChannelTypeGroup,
                 loginUID: LOGIN_UID,
             })
-            expect(result).toBe("聊天成员：Bob")
+            expect(result.memberContext).toBe("聊天成员：Bob")
+            expect(result.chatContext).toBeUndefined()
         })
 
         it("should skip empty/whitespace names", () => {
@@ -104,7 +109,8 @@ describe("buildChatContext", () => {
                 channelType: ChannelTypeGroup,
                 loginUID: LOGIN_UID,
             })
-            expect(result).toBe("聊天成员：Nickname")
+            expect(result.memberContext).toBe("聊天成员：Nickname")
+            expect(result.chatContext).toBeUndefined()
         })
 
         it("should deduplicate names across members", () => {
@@ -118,7 +124,8 @@ describe("buildChatContext", () => {
                 channelType: ChannelTypeGroup,
                 loginUID: LOGIN_UID,
             })
-            expect(result).toBe("聊天成员：Alice")
+            expect(result.memberContext).toBe("聊天成员：Alice")
+            expect(result.chatContext).toBeUndefined()
         })
 
         it("should append messages after member names line", () => {
@@ -130,7 +137,8 @@ describe("buildChatContext", () => {
                 channelType: ChannelTypeGroup,
                 loginUID: LOGIN_UID,
             })
-            expect(result).toBe("聊天成员：Alice\n[Alice]: hello")
+            expect(result.memberContext).toBe("聊天成员：Alice")
+            expect(result.chatContext).toBe("[Alice]: hello")
         })
 
         it("should handle exactly 100 members (still strategy 1)", () => {
@@ -144,8 +152,8 @@ describe("buildChatContext", () => {
                 channelType: ChannelTypeGroup,
                 loginUID: LOGIN_UID,
             })
-            expect(result).toContain("聊天成员：")
-            expect(result!.split(",").length).toBe(100)
+            expect(result.memberContext).toContain("聊天成员：")
+            expect(result.memberContext!.split(",").length).toBe(100)
         })
     })
 
@@ -170,11 +178,10 @@ describe("buildChatContext", () => {
                 channelType: ChannelTypeGroup,
                 loginUID: LOGIN_UID,
             })
-            expect(result).toContain("聊天成员：")
-            const nameLine = result!.split("\n")[0]
-            expect(nameLine).toContain("User0")
-            expect(nameLine).toContain("User5")
-            expect(nameLine).not.toContain("User1,")
+            expect(result.memberContext).toContain("聊天成员：")
+            expect(result.memberContext).toContain("User0")
+            expect(result.memberContext).toContain("User5")
+            expect(result.memberContext).not.toContain("User1,")
         })
 
         it("should exclude current user from active senders", () => {
@@ -190,9 +197,8 @@ describe("buildChatContext", () => {
                 channelType: ChannelTypeGroup,
                 loginUID: LOGIN_UID,
             })
-            const nameLine = result!.split("\n")[0]
-            expect(nameLine).not.toContain("MeUser")
-            expect(nameLine).toContain("User0")
+            expect(result.memberContext).not.toContain("MeUser")
+            expect(result.memberContext).toContain("User0")
         })
 
         it("should limit active UIDs to 100", () => {
@@ -207,8 +213,7 @@ describe("buildChatContext", () => {
                 channelType: ChannelTypeGroup,
                 loginUID: LOGIN_UID,
             })
-            const nameLine = result!.split("\n")[0]
-            const names = nameLine.replace("聊天成员：", "").split(",")
+            const names = result.memberContext!.replace("聊天成员：", "").split(",")
             expect(names.length).toBeLessThanOrEqual(100)
         })
 
@@ -221,7 +226,8 @@ describe("buildChatContext", () => {
                 channelType: ChannelTypeGroup,
                 loginUID: LOGIN_UID,
             })
-            expect(result).toBe("[Unknown]: hello")
+            expect(result.memberContext).toBeUndefined()
+            expect(result.chatContext).toBe("[Unknown]: hello")
         })
 
         it("should handle no messages in large group", () => {
@@ -232,7 +238,8 @@ describe("buildChatContext", () => {
                 channelType: ChannelTypeGroup,
                 loginUID: LOGIN_UID,
             })
-            expect(result).toBeUndefined()
+            expect(result.memberContext).toBeUndefined()
+            expect(result.chatContext).toBeUndefined()
         })
 
         it("should exclude deleted active senders", () => {
@@ -248,9 +255,8 @@ describe("buildChatContext", () => {
                 channelType: ChannelTypeGroup,
                 loginUID: LOGIN_UID,
             })
-            const nameLine = result!.split("\n")[0]
-            expect(nameLine).not.toContain("User5")
-            expect(nameLine).toContain("User10")
+            expect(result.memberContext).not.toContain("User5")
+            expect(result.memberContext).toContain("User10")
         })
 
         it("should collect remark for active senders when different from name", () => {
@@ -263,9 +269,8 @@ describe("buildChatContext", () => {
                 channelType: ChannelTypeGroup,
                 loginUID: LOGIN_UID,
             })
-            const nameLine = result!.split("\n")[0]
-            expect(nameLine).toContain("User5")
-            expect(nameLine).toContain("五号")
+            expect(result.memberContext).toContain("User5")
+            expect(result.memberContext).toContain("五号")
         })
     })
 
@@ -279,7 +284,8 @@ describe("buildChatContext", () => {
                 loginUID: LOGIN_UID,
                 channelInfo,
             })
-            expect(result).toBe("聊天成员：Alice")
+            expect(result.memberContext).toBe("聊天成员：Alice")
+            expect(result.chatContext).toBeUndefined()
         })
 
         it("should inject both title and remark when different", () => {
@@ -294,7 +300,8 @@ describe("buildChatContext", () => {
                 loginUID: LOGIN_UID,
                 channelInfo,
             })
-            expect(result).toBe("聊天成员：Alice,小A")
+            expect(result.memberContext).toBe("聊天成员：Alice,小A")
+            expect(result.chatContext).toBeUndefined()
         })
 
         it("should not duplicate when remark equals title", () => {
@@ -309,7 +316,8 @@ describe("buildChatContext", () => {
                 loginUID: LOGIN_UID,
                 channelInfo,
             })
-            expect(result).toBe("聊天成员：Alice")
+            expect(result.memberContext).toBe("聊天成员：Alice")
+            expect(result.chatContext).toBeUndefined()
         })
 
         it("should handle missing channelInfo", () => {
@@ -320,7 +328,8 @@ describe("buildChatContext", () => {
                 loginUID: LOGIN_UID,
                 channelInfo: null,
             })
-            expect(result).toBeUndefined()
+            expect(result.memberContext).toBeUndefined()
+            expect(result.chatContext).toBeUndefined()
         })
 
         it("should skip whitespace-only title", () => {
@@ -335,7 +344,8 @@ describe("buildChatContext", () => {
                 loginUID: LOGIN_UID,
                 channelInfo,
             })
-            expect(result).toBe("聊天成员：Nickname")
+            expect(result.memberContext).toBe("聊天成员：Nickname")
+            expect(result.chatContext).toBeUndefined()
         })
 
         it("should append messages after partner name", () => {
@@ -348,7 +358,8 @@ describe("buildChatContext", () => {
                 loginUID: LOGIN_UID,
                 channelInfo,
             })
-            expect(result).toBe("聊天成员：Alice\n[Alice]: hi")
+            expect(result.memberContext).toBe("聊天成员：Alice")
+            expect(result.chatContext).toBe("[Alice]: hi")
         })
     })
 
@@ -363,8 +374,9 @@ describe("buildChatContext", () => {
                 subscribers: [],
                 channelType: ChannelTypePerson,
                 loginUID: LOGIN_UID,
-            })!
-            const lines = result.split("\n")
+            })
+            expect(result.memberContext).toBeUndefined()
+            const lines = result.chatContext!.split("\n")
             expect(lines.length).toBe(10)
             expect(lines[0]).toBe("[User5]: msg5")
             expect(lines[9]).toBe("[User14]: msg14")
@@ -378,7 +390,8 @@ describe("buildChatContext", () => {
                 channelType: ChannelTypePerson,
                 loginUID: LOGIN_UID,
             })
-            expect(result).toBe("[uid123]: hello")
+            expect(result.memberContext).toBeUndefined()
+            expect(result.chatContext).toBe("[uid123]: hello")
         })
 
         it("should handle empty message text", () => {
@@ -389,19 +402,21 @@ describe("buildChatContext", () => {
                 channelType: ChannelTypePerson,
                 loginUID: LOGIN_UID,
             })
-            expect(result).toBe("[Alice]: ")
+            expect(result.memberContext).toBeUndefined()
+            expect(result.chatContext).toBe("[Alice]: ")
         })
     })
 
     describe("edge cases", () => {
-        it("should return undefined when no subscribers and no messages", () => {
+        it("should return empty result when no subscribers and no messages", () => {
             const result = buildChatContext({
                 messages: [],
                 subscribers: [],
                 channelType: ChannelTypeGroup,
                 loginUID: LOGIN_UID,
             })
-            expect(result).toBeUndefined()
+            expect(result.memberContext).toBeUndefined()
+            expect(result.chatContext).toBeUndefined()
         })
 
         it("should return only messages when no names to inject (all excluded)", () => {
@@ -413,7 +428,8 @@ describe("buildChatContext", () => {
                 channelType: ChannelTypeGroup,
                 loginUID: LOGIN_UID,
             })
-            expect(result).toBe("[User1]: hello")
+            expect(result.memberContext).toBeUndefined()
+            expect(result.chatContext).toBe("[User1]: hello")
         })
 
         it("should handle unknown channel type (no name injection)", () => {
@@ -425,7 +441,8 @@ describe("buildChatContext", () => {
                 channelType: 99, // unknown
                 loginUID: LOGIN_UID,
             })
-            expect(result).toBe("[Alice]: hello")
+            expect(result.memberContext).toBeUndefined()
+            expect(result.chatContext).toBe("[Alice]: hello")
         })
 
         it("should handle member with undefined name and remark", () => {
@@ -436,7 +453,8 @@ describe("buildChatContext", () => {
                 channelType: ChannelTypeGroup,
                 loginUID: LOGIN_UID,
             })
-            expect(result).toBeUndefined()
+            expect(result.memberContext).toBeUndefined()
+            expect(result.chatContext).toBeUndefined()
         })
     })
 })
