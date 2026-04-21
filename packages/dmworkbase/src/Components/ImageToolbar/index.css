@@ -18,7 +18,7 @@
     transition: color 0.15s;
 }
 .wk-imagetoolbar:hover .wk-toolbar-icon {
-    color: #5b6abf !important;
+    color: var(--wk-brand-primary) !important;
 }
 
 .wk-imagetoolbar-content-icon {

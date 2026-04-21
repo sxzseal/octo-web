@@ -13,7 +13,7 @@
 .wk-conv-with-category__body {
     flex: 1;
     overflow-y: auto;
-    padding: 0 4px;
+    padding: 0;   /* 去掉左右边距，让 item 背景撑满 */
 }
 
 .wk-conv-with-category__footer {

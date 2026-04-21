@@ -233,7 +233,7 @@ body[theme-mode=dark] .wk-message-base-bubble-box.recv .wk-message-base-bubble  
     align-items: center;
     justify-content: space-between;
     border-top: 1px solid rgba(0,0,0,0.05);
-    background: rgba(124,92,252,0.02);
+    background: rgba(28,28,35,0.02);
 }
 
 .wk-message-base-bubble-box.ai-panel .wk-ai-panel-foot .messageTime {

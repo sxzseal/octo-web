@@ -1,25 +1,28 @@
+/* AI Badge — Figma Tag/Light 样式 */
 .ai-badge {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    background: var(--wk-brand-gradient);
-    color: var(--wk-text-inverse);
-    font-weight: var(--wk-font-semibold);
-    border-radius: var(--wk-r-xs);
+    background: linear-gradient(90deg, #40C9FF 0%, #7A5CFF 100%); /* Figma: 青蓝→紫渐变 */
+    color: var(--wk-color-white);           /* Figma: 白色文字 */
+    font-weight: 600;                       /* Figma: 600 */
+    font-family: var(--wk-font-sans);       /* Figma: PingFang SC */
+    border-radius: 3px;                     /* Figma: 3px */
     flex-shrink: 0;
     vertical-align: middle;
-    font-family: var(--wk-font-sans);
     letter-spacing: 0.02em;
 }
 
 .ai-badge-default {
-    font-size: var(--wk-text-size-tiny);   /* 10px */
-    padding: 1px 4px;
-    line-height: 12px;
+    font-size: 12px;                        /* Figma: 12px */
+    padding: 0 4px;                         /* Figma: left:4 right:4 */
+    height: 16px;                           /* Figma: 16px */
+    line-height: 16px;
 }
 
 .ai-badge-small {
-    font-size: 8px;
-    padding: 1px 3px;
-    line-height: 10px;
+    font-size: 10px;
+    padding: 0 3px;
+    height: 14px;
+    line-height: 14px;
 }

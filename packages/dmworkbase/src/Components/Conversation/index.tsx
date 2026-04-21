@@ -758,7 +758,7 @@ export class Conversation
             const fileUrl =
               WKApp.dataSource.commonDataSource.getFileURL(rawUrl);
             if (!fileUrl) return;
-            await downloadFile(fileUrl, content.name || "file", { fileSize: content.size });
+            await downloadFile(fileUrl, content.name || "file");
           }}
         >
           <div

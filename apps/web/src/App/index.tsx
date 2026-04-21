@@ -1,11 +1,13 @@
 import { ChatPage, EndpointCategory, WKApp, Menus, shouldSkipChannelForSpace, shouldSkipPersonConversationForSpace } from '@octo/base';
 import { ContactsList } from '@octo/contacts';
 import React from 'react';
-import { MessageSquare, Users } from 'lucide-react';
+// lucide icons replaced with filled SVGs per Figma
 import './index.css';
 import AppLayout from '../Layout';
 import { WKSDK, ChannelTypePerson } from 'wukongimjssdk';
 import { setFaviconBadge, clearFaviconBadge } from '../utils/faviconBadge';
+import { ChatIcon } from '../Components/Icons/ChatIcon';
+import { ContactsIcon } from '../Components/Icons/ContactsIcon';
 function App() {
   registerMenus()
   return (
@@ -26,9 +28,7 @@ async function registerMenus() {
   })
 
   WKApp.menus.register("chat", (_context) => {
-    const m = new Menus("chat", "/", "会话",
-      <MessageSquare size={24} strokeWidth={1.5} color='#999' />,
-      <MessageSquare size={24} strokeWidth={2} color='#5b6abf' fill='#5b6abf' />)
+    const m = new Menus("chat", "/", "会话", <ChatIcon />, <ChatIcon />)
     let badge = 0;
 
     for (const conversation of WKSDK.shared().conversationManager.conversations) {
@@ -73,9 +73,7 @@ async function registerMenus() {
   }
 
   WKApp.menus.register("contacts", (param) => {
-    const m = new Menus("contacts", "/contacts", "通讯录",
-      <Users size={24} strokeWidth={1.5} color='#999' />,
-      <Users size={24} strokeWidth={2} color='#5b6abf' fill='#5b6abf' />)
+    const m = new Menus("contacts", "/contacts", "通讯录", <ContactsIcon />, <ContactsIcon />)
     m.badge = WKApp.shared.getFriendApplysUnreadCount();
     return m
   }, 4000)

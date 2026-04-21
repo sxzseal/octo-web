@@ -54,8 +54,8 @@
     height: 44px !important;
     font-size: 16px !important;
     border-radius: 8px !important;
-    background-color: #5b6abf !important;
-    border-color: #5b6abf !important;
+    background-color: var(--wk-brand-primary) !important;
+    border-color: var(--wk-brand-primary) !important;
     color: #FFFFFF !important;
 }
 

@@ -10,34 +10,60 @@
    全局固定 token（不跟主题走）
    ============================================================ */
 :root {
-  /* ── Brand ── */
-  --wk-brand-primary:         var(--wk-purple-500);
-  --wk-brand-primary-hover:   var(--wk-purple-600);
-  --wk-brand-from:            var(--wk-purple-500);   /* 渐变起点 */
-  --wk-brand-to:              var(--wk-teal-500);     /* 渐变终点 */
-  --wk-brand-gradient:        linear-gradient(135deg, var(--wk-purple-500), var(--wk-teal-500));
-  --wk-brand-gradient-hover:  linear-gradient(135deg, var(--wk-purple-600), var(--wk-teal-600));
-  --wk-brand-gradient-subtle: linear-gradient(135deg, var(--wk-purple-alpha-12), var(--wk-teal-alpha-08));
-  --wk-brand-glow:            var(--wk-purple-alpha-30);
+  /* ── Brand（Figma: 主色是深黑 #1C1C23，无渐变） ── */
+  --wk-brand-primary:         var(--wk-brand-black);     /* Figma: 主按钮/卡片/选中态 */
+  --wk-brand-primary-hover:   var(--wk-brand-black-hover);
+  --wk-brand-from:            var(--wk-brand-black);     /* 保留以兼容，无渐变 */
+  --wk-brand-to:              var(--wk-brand-black);     /* 同色 = 无渐变 */
+  --wk-brand-gradient:        var(--wk-brand-primary);   /* 兼容：6+ 处引用，值=纯色 */
+  --wk-brand-gradient-hover:  var(--wk-brand-primary-hover);
+  --wk-brand-gradient-subtle: rgba(28, 28, 35, 0.08);
+  --wk-brand-glow:            rgba(28, 28, 35, 0.20);
 
-  /* ── Status & Fixed ── */
-  --wk-color-online:      var(--wk-green-light);   /* 在线状态绿点 */
+  /* ── AI 功能色 / 链接色（紫色，仅用于 AI 相关元素） ── */
+  --wk-color-accent:          var(--wk-purple-500);    /* Figma: Thread 链接、AI 标签 */
+  --wk-color-accent-hover:    var(--wk-purple-600);
+
+  /* ── Status & Fixed（Figma 色值） ── */
+  --wk-color-online:      var(--wk-green-dark);    /* Figma: #52C41A 在线状态绿 */
   --wk-color-white:       #ffffff;                 /* 固定白色（不跟主题走） */
-  --wk-color-danger:      #FF5C72;                 /* 危险/角标红色 */
-  --wk-success-tint-10:   rgba(0, 184, 148, 0.10); /* success 色半透明背景 */
+  --wk-color-danger:      var(--wk-red-light);     /* Figma: #F54A45 未读badge/红点 */
+  --wk-success-tint-10:   rgba(65, 205, 89, 0.10); /* Figma: success 色半透明背景 */
   --wk-shadow-dropdown:   0 12px 32px var(--wk-black-alpha-12); /* 弹窗阴影 */
 
-  /* ── Brand tint（品牌色半透明，禁止在组件里硬编码 rgba(124,92,252,...)） ── */
-  --wk-brand-tint-06: rgba(124, 92, 252, 0.06);
-  --wk-brand-tint-08: rgba(124, 92, 252, 0.08);
-  --wk-brand-tint-10: rgba(124, 92, 252, 0.10);
-  --wk-brand-tint-12: rgba(124, 92, 252, 0.12);
-  --wk-brand-tint-15: rgba(124, 92, 252, 0.15);
-  --wk-brand-tint-35: rgba(124, 92, 252, 0.35);
-  --wk-brand-accent:  #6B4FD8;
+  /* ── Brand tint（主色半透明，基于 #1C1C23） ── */
+  --wk-brand-tint-03: rgba(28, 28, 35, 0.03);
+  --wk-brand-tint-04: rgba(28, 28, 35, 0.04);
+  --wk-brand-tint-06: rgba(28, 28, 35, 0.06);
+  --wk-brand-tint-08: rgba(28, 28, 35, 0.08);
+  --wk-brand-tint-10: rgba(28, 28, 35, 0.10);
+  --wk-brand-tint-12: rgba(28, 28, 35, 0.12);
+  --wk-brand-tint-15: rgba(28, 28, 35, 0.15);
+  --wk-brand-tint-35: rgba(28, 28, 35, 0.35);
+  --wk-brand-accent:  var(--wk-brand-black);
 
-  /* ── Typography — 字体族 ── */
-  --wk-font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Noto Sans SC', sans-serif;
+  /* ── Icon & Text opacity（基于主色的不同透明度） ── */
+  --wk-icon-muted:    rgba(28, 28, 35, 0.4);   /* 40% icon/三角 */
+  --wk-icon-default:  rgba(28, 28, 35, 0.6);   /* 60% 默认 icon */
+  --wk-icon-hover:    rgba(28, 28, 35, 0.7);   /* 70% hover */
+  --wk-text-strong:   rgba(28, 28, 35, 0.9);   /* 90% 强调文本 */
+
+  /* ── Badge colors ── */
+  --wk-badge-danger-bg:   rgba(245, 74, 69, 0.15);  /* 淡红背景 */
+  --wk-badge-danger-text: #F54A45;                   /* 红色文字 */
+
+  /* ── Background hover states ── */
+  --wk-bg-item-hover: rgba(46, 50, 56, 0.09);   /* hover 态背景 */
+  --wk-bg-tab:        rgba(52, 59, 58, 0.05);   /* tab 背景 */
+
+  /* ── Accent tint（AI/链接紫色半透明） ── */
+  --wk-accent-tint-06: rgba(127, 59, 245, 0.06);
+  --wk-accent-tint-08: rgba(127, 59, 245, 0.08);
+  --wk-accent-tint-10: rgba(127, 59, 245, 0.10);
+  --wk-accent-tint-12: rgba(127, 59, 245, 0.12);
+
+  /* ── Typography — 字体族（Figma: PingFang SC + Inter） ── */
+  --wk-font-sans: 'PingFang SC', 'Inter', -apple-system, BlinkMacSystemFont, 'Noto Sans SC', sans-serif;
   --wk-font-mono: 'JetBrains Mono', 'SF Mono', 'Fira Code', monospace;
 
   /* ── Typography — 字号 ── */
@@ -91,10 +117,10 @@
   --wk-sp-12: 48px;
 
   /* ── Border Radius ── */
-  --wk-r-xs:   4px;
+  --wk-r-xs:   3px;    /* Figma: Tag, 导航项 */
   --wk-r-sm:   6px;
-  --wk-r-md:   10px;
-  --wk-r-lg:   14px;
+  --wk-r-md:   8px;    /* Figma: 消息气泡, 图片 */
+  --wk-r-lg:   16px;   /* Figma: 头像 */
   --wk-r-xl:   20px;
   --wk-r-full: 9999px;
   --wk-r-circle: 50%; /* circle — for avatars; distinct from --wk-r-full (9999px pill shape) */
@@ -106,9 +132,9 @@
   --wk-dur:         200ms;
   --wk-dur-slow:    350ms;
 
-  /* ── Layout ── */
-  --wk-nav-w:       60px;
-  --wk-sidebar-w:   280px;
+  /* ── Layout（Figma 尺寸） ── */
+  --wk-nav-w:       56px;    /* Figma: 侧边栏折叠宽度 */
+  --wk-sidebar-w:   240px;   /* Figma 参考值；实际宽度由用户拖拽控制，默认 300px (App.css --wk-width-layout-content-left) */
   --wk-task-rail-w: 320px;
 
   /* ── Z-index ── */
@@ -125,21 +151,21 @@
    Light Theme（默认，body 无 theme-mode 属性时）
    ============================================================ */
 :root {
-  /* 背景层 */
-  --wk-bg-deep:     var(--wk-neutral-100);
-  --wk-bg-base:     var(--wk-neutral-50);
-  --wk-bg-surface:  var(--wk-neutral-0);
-  --wk-bg-elevated: var(--wk-neutral-100);
-  --wk-bg-hover:    var(--wk-neutral-150);
-  --wk-bg-active:   var(--wk-neutral-200);
-  --wk-bg-navrail:  #E8E9EE; /* NavRail 亮色背景，比 --wk-bg-deep 略深 */
+  /* 背景层（Figma 色值） */
+  --wk-bg-deep:     var(--wk-neutral-50);    /* Figma: #F5F6F7 侧边栏/列表背景 */
+  --wk-bg-base:     var(--wk-neutral-50);    /* Figma: #F5F6F7 */
+  --wk-bg-surface:  var(--wk-neutral-0);     /* Figma: #FFFFFF 内容区 */
+  --wk-bg-elevated: var(--wk-neutral-100);   /* Figma: #F2F3F4 Tag/系统消息 */
+  --wk-bg-hover:    var(--wk-neutral-150);   /* Figma: #DFE0E2 */
+  --wk-bg-active:   var(--wk-neutral-200);   /* Figma: #D9D9D9 */
+  --wk-bg-navrail:  var(--wk-neutral-50);    /* Figma: 侧边栏与列表同色 #F5F6F7 */
   --wk-bg-selection-header: #FAF9FF;
 
-  /* 文字 */
-  --wk-text-primary:   #1A1C24;   /* ✅ 修正：设计稿亮色是 #1A1C24，不是 #111318 */
-  --wk-text-secondary: var(--wk-neutral-400);
-  --wk-text-tertiary:  var(--wk-neutral-300);
-  --wk-text-accent:    var(--wk-purple-600);  /* 亮色下用深紫，对比度更好 */
+  /* 文字（Figma 色值） */
+  --wk-text-primary:   var(--wk-neutral-800);  /* Figma: #1F2329 标题/组织名 */
+  --wk-text-secondary: var(--wk-neutral-400);   /* Figma: #555B61 */
+  --wk-text-tertiary:  var(--wk-neutral-300);   /* Figma: #6B7075 */
+  --wk-text-accent:    var(--wk-purple-500);    /* Figma: #7F3BF5 AI链接/Thread（紫色点缀） */
   --wk-text-inverse:   var(--wk-neutral-0);
 
   /* 边框 */
@@ -148,15 +174,15 @@
   --wk-border-strong:  var(--wk-black-alpha-14);
   --wk-border-glow:    var(--wk-purple-alpha-25);
 
-  /* 功能色 */
-  --wk-color-success:    var(--wk-green-light);
-  --wk-color-success-bg: rgba(0, 184, 148, 0.08);
-  --wk-color-warning:    var(--wk-amber-light);
-  --wk-color-warning-bg: rgba(230, 147, 10, 0.08);
-  --wk-color-error:      var(--wk-red-light);
-  --wk-color-error-bg:   rgba(229, 64, 94, 0.08);
-  --wk-color-info:       var(--wk-blue-light);
-  --wk-color-info-bg:    rgba(74, 133, 230, 0.08);
+  /* 功能色（Figma 色值） */
+  --wk-color-success:    var(--wk-green-light);  /* Figma: #41CD59 */
+  --wk-color-success-bg: rgba(65, 205, 89, 0.08);
+  --wk-color-warning:    var(--wk-amber-light);  /* Figma: #FC8800 */
+  --wk-color-warning-bg: rgba(252, 136, 0, 0.08);
+  --wk-color-error:      var(--wk-red-light);    /* Figma: #F54A45 */
+  --wk-color-error-bg:   rgba(245, 74, 69, 0.08);
+  --wk-color-info:       var(--wk-blue-light);   /* Figma: #0077FA */
+  --wk-color-info-bg:    rgba(0, 119, 250, 0.08);
 
   /* Space avatar 背景色（用于 Space 首字母头像，6 种轮换） */
   --wk-space-color-1: #667eea;
@@ -167,7 +193,7 @@
   --wk-space-color-6: #fa709a;
 
   /* AI 专属 */
-  --wk-ai-surface:   rgba(124, 92, 252, 0.03);
+  --wk-ai-surface:   rgba(127, 59, 245, 0.03);
   --wk-ai-border:    var(--wk-purple-alpha-12);
   --wk-ai-glow:      var(--wk-purple-alpha-06);
   --wk-ai-panel-bg:  #FAFAFF;
@@ -199,6 +225,9 @@
 
 /* ============================================================
    Dark Theme — body[theme-mode=dark]
+   
+   ⚠️ 暗黑模式当前已关闭（App.tsx 强制 ThemeMode.light），设置面板无切换入口
+   保留以下 CSS 变量定义以备后续重启暗黑模式功能
    ============================================================ */
 body[theme-mode=dark] {
   /* 背景层 */

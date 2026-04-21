@@ -5,12 +5,12 @@
 
 /* ---- Semi Design token overrides for login page ---- */
 .wk-login {
-    --semi-color-primary: var(--wk-color-theme, #7C5CFC);
+    --semi-color-primary: var(--wk-color-theme, #1C1C23);
     /* fallback for Safari < 16.4 / Chrome < 111 */
-    --semi-color-primary-hover: #5254d4;
-    --semi-color-primary-hover: color-mix(in srgb, var(--wk-color-theme, #7C5CFC) 85%, black);
-    --semi-color-primary-active: #4446c0;
-    --semi-color-primary-active: color-mix(in srgb, var(--wk-color-theme, #7C5CFC) 75%, black);
+    --semi-color-primary-hover: #2A2A33;
+    --semi-color-primary-hover: color-mix(in srgb, var(--wk-color-theme, #1C1C23) 85%, black);
+    --semi-color-primary-active: #151519;
+    --semi-color-primary-active: color-mix(in srgb, var(--wk-color-theme, #1C1C23) 75%, black);
 
     display: flex;
     min-height: 100vh;
@@ -32,7 +32,7 @@
     min-height: 100vh;
     padding: 60px 64px;
     box-sizing: border-box;
-    background: var(--wk-brand-gradient, linear-gradient(135deg, #7C5CFC, #00D4AA));
+    background: linear-gradient(135deg, #7A5CFF, #40C9FF);
     position: relative;
     overflow: hidden;
 }
@@ -295,8 +295,8 @@
 }
 
 .wk-login-content-form input:focus {
-    border-color: var(--wk-color-theme, #7C5CFC);
-    box-shadow: 0 0 0 3px var(--wk-brand-glow, rgba(124, 92, 252, 0.12));
+    border-color: var(--wk-color-theme, #1C1C23);
+    box-shadow: 0 0 0 3px var(--wk-brand-glow, rgba(28, 28, 35, 0.12));
     background: var(--semi-color-bg-0, #fff);
 }
 
@@ -349,11 +349,11 @@
 }
 
 .wk-login-content-form-scanlogin:hover {
-    color: var(--wk-color-theme, #7C5CFC);
+    color: var(--wk-color-theme, #1C1C23);
 }
 
 .wk-login-content-form-switch {
-    color: var(--wk-color-theme, #7C5CFC);
+    color: var(--wk-color-theme, #1C1C23);
     font-size: 14px;
     cursor: pointer;
     font-weight: 500;
@@ -434,7 +434,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    color: var(--wk-color-theme, #7C5CFC);
+    color: var(--wk-color-theme, #1C1C23);
     box-shadow: 0 2px 6px rgba(99, 102, 241, 0.08);
     flex-shrink: 0;
 }
@@ -586,7 +586,7 @@
     height: 22px;
     padding: 0;
     margin: 0 10px 0 0;
-    background: var(--wk-color-theme, #7C5CFC);
+    background: var(--wk-color-theme, #1C1C23);
     border-radius: 50%;
     font-size: 12px;
     color: var(--wk-text-inverse, #fff);
@@ -629,9 +629,9 @@
 
 .wk-login-footer-buttons button {
     background-color: transparent;
-    color: var(--wk-color-theme, #7C5CFC);
+    color: var(--wk-color-theme, #1C1C23);
     outline: none !important;
-    border: 1.5px solid var(--wk-color-theme, #7C5CFC);
+    border: 1.5px solid var(--wk-color-theme, #1C1C23);
     border-radius: 8px;
     height: 40px;
     display: flex;
@@ -677,13 +677,13 @@
 
 /* ---- Invite banner ---- */
 .wk-login-invite-banner {
-    background: var(--semi-color-primary-light-default, rgba(124, 92, 252, 0.06));
-    border: 1px solid var(--semi-color-primary-light-hover, rgba(124, 92, 252, 0.15));
+    background: var(--semi-color-primary-light-default, rgba(28, 28, 35, 0.06));
+    border: 1px solid var(--semi-color-primary-light-hover, rgba(28, 28, 35, 0.15));
     border-radius: 10px;
     padding: 12px 16px;
     margin-bottom: 20px;
     text-align: center;
-    color: var(--semi-color-primary, var(--wk-color-theme, #7C5CFC));
+    color: var(--semi-color-primary, var(--wk-color-theme, #1C1C23));
     font-size: 14px;
     line-height: 1.6;
 }
@@ -703,8 +703,8 @@
     gap: 6px;
     padding: 8px 18px;
     background: transparent;
-    color: var(--wk-color-theme, #7C5CFC) !important;
-    border: 1.5px solid var(--wk-color-theme, #7C5CFC);
+    color: var(--wk-color-theme, #1C1C23) !important;
+    border: 1.5px solid var(--wk-color-theme, #1C1C23);
     border-radius: 20px;
     font-size: 13px;
     text-decoration: none;

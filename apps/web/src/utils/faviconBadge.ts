@@ -9,7 +9,7 @@
 const RENDER_SIZE = 128
 const BADGE_COLOR = '#e53935'
 const BADGE_TEXT_COLOR = '#ffffff'
-const FALLBACK_BG_COLOR = '#5b6abf'
+const FALLBACK_BG_COLOR = '#1C1C23'
 
 let originalFaviconHref: string | null = null
 // generation counter：防止 onload 乱序覆盖（快速连续调用时丢弃过期回调）

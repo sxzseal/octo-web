@@ -10,7 +10,7 @@ interface AttachmentPreviewProps {
 function getFileIconInfo(file: File): { color: string; label: string } {
     const dotIdx = file.name.lastIndexOf('.')
     const ext = dotIdx > 0 ? file.name.substring(dotIdx + 1).toLowerCase() : ""
-    if (file.type.startsWith('image/')) return { color: "#6366F1", label: "IMG" }
+    if (file.type.startsWith('image/')) return { color: "#1C1C23", label: "IMG" }
     switch (ext) {
         case "pdf": return { color: "#EF4444", label: "PDF" }
         case "doc": case "docx": return { color: "#3B82F6", label: "DOC" }

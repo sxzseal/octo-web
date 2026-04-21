@@ -19,7 +19,7 @@ interface JoinSpacePageProps {
     onSuccess: () => void;
 }
 
-const ACCENT = "var(--wk-color-primary, #5b6abf)";
+const ACCENT = "var(--wk-color-primary, #1C1C23)";
 
 const setCurrentSpace = (spaceId: string) => {
     if (spaceId) localStorage.setItem("currentSpaceId", spaceId);

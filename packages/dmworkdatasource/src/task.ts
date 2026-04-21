@@ -3,6 +3,15 @@ import axios from "axios";
 import { MediaMessageContent } from "wukongimjssdk";
 import {  MessageTask, TaskStatus } from "wukongimjssdk";
 
+interface UploadCredentials {
+    uploadUrl: string
+    downloadUrl: string
+    contentType: string
+    contentDisposition?: string
+    key: string
+    expiredTime: number
+}
+
 export class MediaMessageUploadTask extends MessageTask {
     private _progress?:number
     private controller: AbortController | undefined
@@ -18,15 +27,18 @@ export class MediaMessageUploadTask extends MessageTask {
     async start(): Promise<void> {
         const mediaContent = this.message.content as MediaMessageContent
         if(mediaContent.file) {
-            const param = new FormData();
-            param.append("file", mediaContent.file);
-            const fileName = this.getUUID();
-            const path = `/${this.message.channel.channelType}/${this.message.channel.channelID}/${fileName}${mediaContent.extension??""}`
-            const uploadURL = await  this.getUploadURL(path)
-            if(uploadURL) {
-                await this.uploadFile(mediaContent.file,uploadURL)
-
-            }else{
+            try {
+                const fileName = this.getUUID();
+                const ext = mediaContent.extension ? `.${mediaContent.extension}` : ""
+                const path = `/${this.message.channel.channelType}/${this.message.channel.channelID}/${fileName}${ext}`
+                const credentials = await this.getUploadCredentials(mediaContent.file, path)
+                if(credentials) {
+                    await this.uploadFile(mediaContent.file, credentials)
+                }else{
+                    this.status = TaskStatus.fail
+                    this.update()
+                }
+            } catch {
                 this.status = TaskStatus.fail
                 this.update()
             }
@@ -41,14 +53,16 @@ export class MediaMessageUploadTask extends MessageTask {
         }
     }
 
-   async uploadFile(file:File,uploadURL:string) {
-        const param = new FormData();
-        param.append("file", file);
+    async uploadFile(file: File, credentials: UploadCredentials) {
         // 动态超时：每 MB 预留 10 秒，最低 2 分钟兜底
         const fileSizeMB = file.size / (1024 * 1024);
         const timeoutMs = Math.max(2 * 60 * 1000, fileSizeMB * 10 * 1000);
-        const resp = await axios.post(uploadURL,param,{
-            headers: { "Content-Type": "multipart/form-data" },
+        const headers: Record<string, string> = { "Content-Type": credentials.contentType }
+        if (credentials.contentDisposition) {
+            headers["Content-Disposition"] = credentials.contentDisposition
+        }
+        const resp = await axios.put(credentials.uploadUrl, file, {
+            headers,
             signal: (this.controller = new AbortController()).signal,
             timeout: timeoutMs,
             onUploadProgress: e => {
@@ -57,29 +71,35 @@ export class MediaMessageUploadTask extends MessageTask {
                     this.update()
                 }
             }
-        }).catch(error => {
-            this.status = TaskStatus.fail
-            this.update()
-        })
-        if(resp) {
-            if(resp.data.path) {
-                const mediaContent = this.message.content as MediaMessageContent
-                mediaContent.remoteUrl = resp.data.path
-                this.status = TaskStatus.success
-                this.update()
-            } else {
+        }).catch(() => {
+            // Don't overwrite cancel status — abort triggers catch too
+            if (this.status !== TaskStatus.cancel) {
                 this.status = TaskStatus.fail
                 this.update()
             }
+        })
+        if(resp && resp.status >= 200 && resp.status < 300) {
+            const mediaContent = this.message.content as MediaMessageContent
+            mediaContent.url = credentials.downloadUrl
+            mediaContent.remoteUrl = credentials.downloadUrl
+            this.status = TaskStatus.success
+            this.update()
+        } else if(resp) {
+            this.status = TaskStatus.fail
+            this.update()
         }
     }
 
-    // 获取上传路径
-    async getUploadURL(path:string) :Promise<string|undefined> {
-       const result = await WKApp.apiClient.get(`file/upload?path=${encodeURIComponent(path)}&type=chat`)
-       if(result) {
-           return result.url
-       }
+    // 获取预签名直传凭证（COS 直传）
+    async getUploadCredentials(file: File, path: string): Promise<UploadCredentials | undefined> {
+        const contentType = file.type || "application/octet-stream"
+        const fileName = file.name || 'file'
+        const result = await WKApp.apiClient.get(
+            `file/upload/credentials?path=${encodeURIComponent(path)}&type=chat&filename=${encodeURIComponent(fileName)}&contentType=${encodeURIComponent(contentType)}`
+        )
+        if(result && result.uploadUrl && result.downloadUrl) {
+            return result as UploadCredentials
+        }
     }
 
     suspend(): void {
@@ -99,7 +119,11 @@ export class MediaMessageUploadTask extends MessageTask {
         return this._progress ?? 0
     }
 
-    /** 重试上传：防重入 + 取消上一个请求，再重置状态重新 start() */
+    /**
+     * 重试上传：防重入 + 取消上一个请求，再重置状态重新 start()。
+     * Note: expiredTime is not checked here because start() always re-fetches
+     * fresh credentials via getUploadCredentials, so stale tokens are never reused.
+     */
     async restart(): Promise<void> {
         if (this.status === TaskStatus.processing) return // 防重入
         this.controller?.abort() // 取消上一个请求（如有）

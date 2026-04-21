@@ -1,6 +1,6 @@
 
 .wk-layout {
-    --wk-width-layout-tab: 60px;
+    --wk-width-layout-tab: 56px;    /* Figma: 与 NavRail 56px 对齐 */
     --wk-height-layout-tab-min: 60px;
     --wk-layer-transition: 300ms cubic-bezier(0.33,1,0.68,1);
     --wk-slide-transition: 450ms cubic-bezier(0.25, 1, 0.5, 1);

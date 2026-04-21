@@ -399,15 +399,17 @@ export class ChatVM extends ProviderListener {
     }
 
     async requestConversationList() {
-
         this.loading = true
-        // 切换 Space 时清空 SDK 内部缓存和当前列表，避免旧 Space 会话残留
-        WKSDK.shared().conversationManager.conversations = []
-        this.conversations = []
-        this._pendingSpaceConversations.clear()
         this.notifyListener()
-        const conversationWraps = new Array<ConversationWrap>()
+
+        // 先拉取数据，避免清空列表导致 UI 闪烁（fix #266）
         const conversations = await WKSDK.shared().conversationManager.sync({})
+
+        // 拉取成功后再清空+替换（切换 Space 时清空 SDK 内部缓存，避免旧 Space 会话残留）
+        WKSDK.shared().conversationManager.conversations = []
+        this._pendingSpaceConversations.clear()
+
+        const conversationWraps = new Array<ConversationWrap>()
         if (conversations && conversations.length > 0) {
             for (const conversation of conversations) {
                 // Space 过滤：复用共享函数（含 channelSpaceMap 缓存）
@@ -503,7 +505,7 @@ export async function handleGlobalSearchClick(item: any, type: string,hideModal?
         const downloadURL = WKApp.dataSource.commonDataSource.getFileURL(payload.url);
         if (!downloadURL) return;
         if (isSafeUrl(downloadURL)) {
-            await downloadFile(downloadURL, payload.name || "file", { fileSize: payload.size });
+            await downloadFile(downloadURL, payload.name || "file");
         }
     }
 }

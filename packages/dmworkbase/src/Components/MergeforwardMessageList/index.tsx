@@ -159,7 +159,7 @@ export default class MergeforwardMessageList extends Component<MergeforwardMessa
                     className={`wk-mergeforward-file${url ? " wk-mergeforward-file--clickable" : ""}`}
                     onClick={async () => {
                         if (!url) return
-                        await downloadFile(url, fileContent.name || "file", { fileSize: fileContent.size })
+                        await downloadFile(url, fileContent.name || "file")
                     }}
                 >
                     <div className="wk-mergeforward-file__icon" style={{ backgroundColor: iconBg }}>

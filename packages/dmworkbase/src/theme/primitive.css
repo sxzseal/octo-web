@@ -4,59 +4,71 @@
  * 原始调色板，不直接在组件里用。
  * 只被 semantic.css 引用。
  * 改色只改这里，语义层自动跟。
+ *
+ * 数据来源：Figma "设计基础" (2026-04-20 提取)
  */
 
 :root {
-  /* ── Purple 调色板 ── */
-  --wk-purple-300: #C4B5FD;
-  --wk-purple-400: #B0A4FF;
-  --wk-purple-500: #7C5CFC;
-  --wk-purple-600: #6B4FD8;
-  --wk-purple-700: #5A3FC0;
+  /* ── Brand Black 调色板（Figma 真正的主色） ── */
+  --wk-brand-black:     #1C1C23;   /* Figma: 主按钮、消息卡片、选中态 */
+  --wk-brand-black-hover: #2A2A33; /* hover 态略浅 */
+  --wk-brand-dark-tab:  #343B3A;   /* Figma: Tab 切换容器背景 */
 
-  /* ── Teal 调色板 ── */
-  --wk-teal-400:   #00E6BB;
-  --wk-teal-500:   #00D4AA;
-  --wk-teal-600:   #00BF99;
-  --wk-teal-700:   #00A882;
+  /* ── Purple 调色板（Figma AI 功能色/链接色，非主色） ── */
+  --wk-purple-300: #B79AFA;
+  --wk-purple-400: #9B6DF7;
+  --wk-purple-500: #7F3BF5;   /* Figma: Thread 链接、AI 标签 */
+  --wk-purple-600: #6A2FD0;
+  --wk-purple-700: #5625AB;
 
-  /* ── Neutral 调色板 ── */
+  /* ── Teal 调色板（Figma: #0B867D 按钮图标色） ── */
+  --wk-teal-400:   #10A99E;
+  --wk-teal-500:   #0B867D;   /* Figma: 按钮图标填充 */
+  --wk-teal-600:   #097068;
+  --wk-teal-700:   #075A54;
+
+  /* ── Neutral 调色板（Figma 实际色值） ── */
   --wk-neutral-0:   #FFFFFF;
-  --wk-neutral-50:  #F7F8FA;
-  --wk-neutral-100: #F0F1F5;
-  --wk-neutral-150: #EAEBF0;
-  --wk-neutral-200: #E2E3EA;
-  --wk-neutral-300: #9498A8;
-  --wk-neutral-400: #5C6070;
-  --wk-neutral-500: #3A3D4A;
-  --wk-neutral-600: #2E3240;
+  --wk-neutral-50:  #F5F6F7;   /* Figma: 页面背景 */
+  --wk-neutral-100: #F2F3F4;   /* Figma: Tag/系统消息背景 */
+  --wk-neutral-150: #DFE0E2;   /* Figma: 分割线 */
+  --wk-neutral-200: #D9D9D9;   /* Figma: 图片占位符 */
+  --wk-neutral-300: #6B7075;   /* Figma: Tag "暂离" 背景 */
+  --wk-neutral-400: #555B61;   /* Figma: Tag "暂离" 文字 */
+  --wk-neutral-500: #343B3A;   /* Figma: Tab 容器背景 */
+  --wk-neutral-600: #2E3238;
   --wk-neutral-700: #262A36;
-  --wk-neutral-800: #1E212B;
-  --wk-neutral-850: #171921;
+  --wk-neutral-800: #1F2329;   /* Figma: 组织名文字 */
+  --wk-neutral-850: #1C1C23;   /* Figma: 正文/标签主文字（最常用） */
   --wk-neutral-900: #111318;
   --wk-neutral-950: #0A0C11;
 
-  /* ── Green / Amber / Red / Blue ── */
-  --wk-green-light:  #00B894;
-  --wk-green-dark:   #00D4AA;
-  --wk-amber-light:  #E6930A;
+  /* ── Green / Amber / Red / Blue（Figma 功能色） ── */
+  --wk-green-light:  #41CD59;   /* Figma: rgba(65,205,89) — 图标内配色 */
+  --wk-green-dark:   #52C41A;   /* Figma: Avatar 在线态 */
+  --wk-amber-light:  #FC8800;   /* Figma: Tag "挂起" 背景 */
   --wk-amber-dark:   #FFAD33;
-  --wk-red-light:    #E5405E;
-  --wk-red-dark:     #FF5C72;
-  --wk-blue-light:   #4A85E6;
+  --wk-red-light:    #F54A45;   /* Figma: 未读 badge / @提及 / 红点 */
+  --wk-red-dark:     #FF4D4F;   /* Figma: Badge 红点 (暗色) */
+  --wk-blue-light:   #0077FA;   /* Figma: Tag "优" 背景 */
   --wk-blue-dark:    #5C9AFF;
 
+  /* ── Figma 专属色（不在原有体系中） ── */
+  --wk-blue-text:    #00418F;   /* Figma: Tag "优" 文字 */
+  --wk-amber-text:   #722F01;   /* Figma: Tag "挂起" 文字 */
+  --wk-orange-icon:  #FF563B;   /* Figma: MeegoIcon 图标背景 */
+
   /* ── Alpha ── */
-  --wk-purple-alpha-04:  rgba(124, 92, 252, 0.04);
-  --wk-purple-alpha-06:  rgba(124, 92, 252, 0.06);
-  --wk-purple-alpha-08:  rgba(124, 92, 252, 0.08);
-  --wk-purple-alpha-10:  rgba(124, 92, 252, 0.10);
-  --wk-purple-alpha-12:  rgba(124, 92, 252, 0.12);
-  --wk-purple-alpha-20:  rgba(124, 92, 252, 0.20);
-  --wk-purple-alpha-25:  rgba(124, 92, 252, 0.25);
-  --wk-purple-alpha-30:  rgba(124, 92, 252, 0.30);
-  --wk-teal-alpha-08:    rgba(0, 212, 170, 0.08);
-  --wk-teal-alpha-10:    rgba(0, 212, 170, 0.10);
+  --wk-purple-alpha-04:  rgba(127, 59, 245, 0.04);
+  --wk-purple-alpha-06:  rgba(127, 59, 245, 0.06);
+  --wk-purple-alpha-08:  rgba(127, 59, 245, 0.08);
+  --wk-purple-alpha-10:  rgba(127, 59, 245, 0.10);
+  --wk-purple-alpha-12:  rgba(127, 59, 245, 0.12);
+  --wk-purple-alpha-20:  rgba(127, 59, 245, 0.20);
+  --wk-purple-alpha-25:  rgba(127, 59, 245, 0.25);
+  --wk-purple-alpha-30:  rgba(127, 59, 245, 0.30);
+  --wk-teal-alpha-08:    rgba(11, 134, 125, 0.08);
+  --wk-teal-alpha-10:    rgba(11, 134, 125, 0.10);
   --wk-white-alpha-04:   rgba(255, 255, 255, 0.04);
   --wk-white-alpha-06:   rgba(255, 255, 255, 0.06);
   --wk-white-alpha-07:   rgba(255, 255, 255, 0.07);

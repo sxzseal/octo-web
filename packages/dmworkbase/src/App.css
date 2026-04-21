@@ -1,7 +1,7 @@
 
 
  :root {
-    --wk-color-theme: #6366F1;
+    --wk-color-theme: #1C1C23;
     --wk-color-secondary: rgba(246, 246, 246);
     --wk-color-secondary-2:  rgba(246, 246, 246);
     --wk-color-hover: #eee;
@@ -11,7 +11,7 @@
     --wk-wdith-conversation-list: var(--wk-width-layout-content-left);
     /* --wk-height-chat-search: 65px; */
     --wk-height-chat-search: 64px;
-    --wk-height-chat-conversation-header: 64px;
+    --wk-height-chat-conversation-header: 48px;  /* Figma: 48px */
     --wk-wdith-chat-channelsetting: 340px;
     --wk-width-thread-panel: 380px;
     --wk-layer-transition: 300ms cubic-bezier(0.33,1,0.68,1);
@@ -40,7 +40,7 @@
     --input-bg: #ffffff;
     --sidebar-bg: #ffffff;
     --topbar-bg: #ffffff;
-    --accent: #5b6abf;
+    --accent: #1C1C23;
     --accent-light: #e8eaff;
     --accent-hover: #4a59ae;
   }
@@ -61,8 +61,8 @@
     --wk-message-item: #0F0F0F;
     --wk-message-color: white;
 
-    --semi-color-primary: #6366F1;
-    --semi-color-primary-hover: rgb(228, 99, 66,0.5);
+    --semi-color-primary: var(--wk-color-theme, #1C1C23);
+    --semi-color-primary-hover: #2A2A33;
 
     /* Dark mode 适配变量 */
     --bg-primary: #1a1a1a;
@@ -109,7 +109,7 @@ html {
     background: var( --background-color);
     color: rgba(9,30,66,.87) ;
 
-    --semi-color-primary: #6366F1;
+    --semi-color-primary: var(--wk-color-theme, #1C1C23);
   }
 
   div {

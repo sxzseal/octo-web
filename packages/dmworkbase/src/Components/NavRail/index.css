@@ -1,14 +1,15 @@
 /* ── NavRail wrapper ── */
 .wk-navrail {
-    width: 60px;
+    width: 56px;
     flex-shrink: 0;
     height: 100%;
     background: var(--wk-bg-navrail);
-    border-right: 1px solid var(--wk-border-subtle);
+    border-right: 1px solid var(--wk-brand-tint-08); /* Figma 分割线 */
+    box-sizing: border-box;            /* border 包含在 56px 内 */
     display: flex;
     flex-direction: column;
     align-items: center;
-    padding: var(--wk-sp-4, 16px) 0;
+    padding: 0;
     position: relative;
     z-index: 10;
     overflow: visible; /* dropdown 需要溢出 */
@@ -20,7 +21,8 @@
     flex-direction: column;
     align-items: center;
     flex-shrink: 0;
-    margin-bottom: var(--wk-sp-5, 20px); /* 设计稿 sp-5 = 20px */
+    margin-bottom: 8px;                /* Figma: gap=8 between logo and icons */
+    padding-top: 16px;                 /* 头像顶部留白 */
 }
 
 .wk-navrail__user-wrap {
@@ -30,8 +32,8 @@
 }
 
 .wk-navrail__user-avatar {
-    width: 36px;
-    height: 36px;
+    width: 40px;
+    height: 40px;
     border-radius: var(--wk-r-circle, 50%);
     background: var(--wk-bg-elevated) center/cover no-repeat;
     border: none;
@@ -171,20 +173,21 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: var(--wk-sp-0-5, 2px);
+    gap: 0;                            /* Figma: IconItem 56x44 紧邻 */
     flex: 1;
-    justify-content: flex-start; /* 图标从顶部堆叠，不撑满 */
+    justify-content: flex-start;
+    padding: 8px 0;                    /* Figma: Frame 5 pad top:8 bottom:8 */
 }
 
 /* ── NavItem button ── */
 .wk-navrail__item {
     position: relative;
-    width: 38px;
-    height: 38px;
-    border-radius: var(--wk-r-md, 10px);
+    width: 56px;                       /* Figma: IconItem 56x44 */
+    height: 44px;
+    border-radius: 0;
     border: none;
     background: transparent;
-    color: var(--wk-text-tertiary);
+    color: var(--wk-icon-muted);       /* Figma: 未选中 30% 透明 */
     cursor: pointer;
     display: flex;
     align-items: center;
@@ -201,26 +204,14 @@
 }
 
 .wk-navrail__item:hover {
-    color: var(--wk-text-secondary);
-    background: var(--wk-bg-hover);
+    color: var(--wk-icon-default);
+    background: var(--wk-brand-tint-04);
 }
 
+/* Figma: 选中态只有颜色变化，无背景，无指示条 */
 .wk-navrail__item--active {
-    color: var(--wk-text-primary);
-    background: var(--wk-bg-elevated);
-}
-
-/* active 左侧指示条 */
-.wk-navrail__item--active::before {
-    content: '';
-    position: absolute;
-    left: -1px;
-    top: 50%;
-    transform: translateY(-50%);
-    width: 3px;
-    height: 18px;
-    border-radius: 0 var(--wk-r-xs, 4px) var(--wk-r-xs, 4px) 0;
-    background: var(--wk-brand-gradient);
+    color: var(--wk-brand-primary);     /* Figma: 纯黑 */
+    background: transparent;
 }
 
 /* ── Badge ── */
@@ -248,17 +239,18 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: var(--wk-sp-1-5, 6px);
+    gap: 8px;                          /* Figma: 间距 */
+    padding-bottom: 16px;
 }
 
 /* ── Space icon button (bottom) ── */
 .wk-navrail__space-icon-btn {
-    width: 34px;
-    height: 34px;
-    border-radius: var(--wk-r-sm, 6px);
-    border: 1px solid var(--wk-brand-tint-15);
-    background: var(--wk-brand-tint-06);
-    color: var(--wk-brand-primary);
+    width: 32px;                       /* Figma: 32x32 */
+    height: 32px;
+    border-radius: 0;
+    border: none;                      /* Figma: 无边框 */
+    background: transparent;           /* Figma: 无底色 */
+    color: var(--wk-icon-muted);       /* Figma: 同未选中态 */
     cursor: pointer;
     display: flex;
     align-items: center;
@@ -269,8 +261,7 @@
 }
 
 .wk-navrail__space-icon-btn:hover {
-    border-color: var(--wk-brand-tint-35);
-    background: var(--wk-brand-tint-10);
+    color: var(--wk-icon-default);
 }
 
 /* ── Settings badge ── */
@@ -283,7 +274,7 @@
 /* ── Settings panel (flyout) ── */
 .wk-navrail__settings-list {
     position: fixed;
-    left: 60px;
+    left: 56px;
     bottom: var(--wk-sp-8, 32px);
     width: 180px;
     background: var(--wk-bg-elevated);

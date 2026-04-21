@@ -12,7 +12,7 @@ import { useDraggable } from "@dnd-kit/core";
 import { CSS } from "@dnd-kit/utilities";
 
 import "./index.css"
-import { Badge, Toast } from "@douyinfe/semi-ui";
+
 import WKApp from "../../App";
 import { EndpointID } from "../../Service/Const";
 import { Hash } from "lucide-react";
@@ -107,12 +107,15 @@ const CompactGroupItem: React.FC<CompactGroupItemProps> = ({
                     </svg>
                 </span>
             )}
-            <span className="wk-conv-compact-icon">
+            <span className={`wk-conv-compact-icon${conversationWrap.unread > 0 ? ' wk-conv-compact-icon--reddot' : ''}`}>
                 {isThread
                     ? <ThreadIcon size={13} />
                     : <Hash size={14} strokeWidth={2} />
                 }
             </span>
+            {conversationWrap.isMentionMe && conversationWrap.unread > 0 && (
+                <span className="wk-mention-badge">@我</span>
+            )}
             <span className="wk-conv-compact-name">
                 {channelInfo?.orgData.displayName ?? conversationWrap.channel.channelID}
             </span>
@@ -125,13 +128,11 @@ const CompactGroupItem: React.FC<CompactGroupItemProps> = ({
                 <span className="wk-conv-compact-badges">
                     <span
                         className="wk-conv-compact-badge"
-                        style={{ backgroundColor: effectiveMute ? "var(--semi-color-text-2)" : undefined }}
+                        style={effectiveMute ? { backgroundColor: "var(--semi-color-text-2)", color: "#fff" } : undefined}
                     >
                         {conversationWrap.unread > 99 ? '99+' : conversationWrap.unread}
                     </span>
-                    {conversationWrap.isMentionMe && (
-                        <span className="wk-mention-badge">@</span>
-                    )}
+
                 </span>
             )}
         </div>
@@ -381,9 +382,11 @@ export default class ConversationList extends Component<ConversationListProps, C
                             {
                                 conversationWrap.unread > 0
                                     ? <span className="wk-conv-compact-badges">
-                                        <Badge style={channelInfo?.mute ? { "border": "none", "backgroundColor": "var(--semi-color-text-2)" } : { "border": "none", "backgroundColor": "var(--wk-brand-primary)" }} count={conversationWrap.unread} type='danger'></Badge>
+                                        <span className="wk-conv-compact-badge" style={channelInfo?.mute ? { backgroundColor: "var(--semi-color-text-2)", color: "#fff" } : undefined}>
+                                            {conversationWrap.unread > 99 ? '99+' : conversationWrap.unread}
+                                        </span>
                                         {conversationWrap.isMentionMe && (
-                                            <span className="wk-mention-badge">@</span>
+                                            <span className="wk-mention-badge">@我</span>
                                         )}
                                     </span>
                                     : undefined

@@ -10,7 +10,7 @@ import { ErrorBoundary } from "../../Components/ErrorBoundary";
 import { Spin, Popover, Modal, Toast } from "@douyinfe/semi-ui";
 import WKButton from "../../Components/WKButton";
 import WKModal from "../../Components/WKModal";
-import { Search, Plus, Columns2 } from "lucide-react";
+import { Columns2 } from "lucide-react";
 import ThreadIcon from "../../Components/Icons/ThreadIcon";
 import HashIcon from "../../Components/Icons/HashIcon";
 import { ChatVM, handleGlobalSearchClick } from "./vm";
@@ -380,23 +380,15 @@ export class ChatContentPage extends Component<
                           onClick={(e) => e.stopPropagation()}
                           title="子区"
                         >
-                          <ThreadIcon size={20} color={WKApp.config.themeColor} />
+                          <ThreadIcon size={20} color="currentColor" />
                         </div>
                       </Popover>
                     )}
                     <div className="wk-chat-conversation-header-right-item">
-                      <svg
-                        fill={WKApp.config.themeColor}
-                        height="28px"
-                        role="presentation"
-                        viewBox="0 0 36 36"
-                        width="28px"
-                      >
-                        <path
-                          clipRule="evenodd"
-                          d="M18 29C24.0751 29 29 24.0751 29 18C29 11.9249 24.0751 7 18 7C11.9249 7 7 11.9249 7 18C7 24.0751 11.9249 29 18 29ZM19.5 18C19.5 18.8284 18.8284 19.5 18 19.5C17.1716 19.5 16.5 18.8284 16.5 18C16.5 17.1716 17.1716 16.5 18 16.5C18.8284 16.5 19.5 17.1716 19.5 18ZM23 19.5C23.8284 19.5 24.5 18.8284 24.5 18C24.5 17.1716 23.8284 16.5 23 16.5C22.1716 16.5 21.5 17.1716 21.5 18C21.5 18.8284 22.1716 19.5 23 19.5ZM14.5 18C14.5 18.8284 13.8284 19.5 13 19.5C12.1716 19.5 11.5 18.8284 11.5 18C11.5 17.1716 12.1716 16.5 13 16.5C13.8284 16.5 14.5 17.1716 14.5 18Z"
-                          fillRule="evenodd"
-                        ></path>
+                      <svg width="20" height="20" viewBox="0 0 16 16" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M4.66658 7.99998C4.66658 8.92045 3.92039 9.66665 2.99992 9.66665C2.07945 9.66665 1.33325 8.92045 1.33325 7.99998C1.33325 7.07951 2.07945 6.33331 2.99992 6.33331C3.92039 6.33331 4.66658 7.07951 4.66658 7.99998Z" />
+                        <path d="M9.66659 7.99998C9.66659 8.92045 8.92039 9.66665 7.99992 9.66665C7.07945 9.66665 6.33325 8.92045 6.33325 7.99998C6.33325 7.07951 7.07945 6.33331 7.99992 6.33331C8.92039 6.33331 9.66659 7.07951 9.66659 7.99998Z" />
+                        <path d="M12.9999 9.66665C13.9204 9.66665 14.6666 8.92045 14.6666 7.99998C14.6666 7.07951 13.9204 6.33331 12.9999 6.33331C12.0795 6.33331 11.3333 7.07951 11.3333 7.99998C11.3333 8.92045 12.0795 9.66665 12.9999 9.66665Z" />
                       </svg>
                       <div className="wk-conversation-header-mask"></div>
                     </div>
@@ -591,7 +583,7 @@ export default class ChatPage extends Component<any, ChatPageState> {
                         className="wk-chat-header-btn"
                         onClick={() => { vm.showGlobalSearch = true; }}
                       >
-                        <Search size={16} />
+                        <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path fillRule="evenodd" clipRule="evenodd" d="M7.00004 1.33337C3.87043 1.33337 1.33337 3.87043 1.33337 7.00004C1.33337 10.1297 3.87043 12.6667 7.00004 12.6667C8.20366 12.6667 9.31963 12.2915 10.2373 11.6516L12.9596 14.3738C13.3501 14.7643 13.9833 14.7643 14.3738 14.3738C14.7643 13.9833 14.7643 13.3501 14.3738 12.9596L11.6516 10.2373C12.2915 9.31963 12.6667 8.20366 12.6667 7.00004C12.6667 3.87043 10.1297 1.33337 7.00004 1.33337ZM3.33337 7.00004C3.33337 4.975 4.975 3.33337 7.00004 3.33337C9.02509 3.33337 10.6667 4.975 10.6667 7.00004C10.6667 9.02509 9.02509 10.6667 7.00004 10.6667C4.975 10.6667 3.33337 9.02509 3.33337 7.00004Z" /></svg>
                       </div>
                       {/* + 按钮：群聊 Tab 额外显示「创建分组」，其余菜单项保持不变 */}
                       <Popover
@@ -626,7 +618,7 @@ export default class ChatPage extends Component<any, ChatPageState> {
                           className="wk-chat-header-btn"
                           onClick={() => { vm.showAddPopover = !vm.showAddPopover; }}
                         >
-                          <Plus size={16} />
+                          <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="M13.3333 8.66667C13.8856 8.66667 14.3333 8.21895 14.3333 7.66667C14.3333 7.11438 13.8856 6.66667 13.3333 6.66667L8.66667 6.66667L8.66667 2C8.66667 1.44772 8.21895 1 7.66667 1C7.11438 1 6.66667 1.44772 6.66667 2L6.66667 6.66667L2 6.66667C1.44772 6.66667 1 7.11438 1 7.66667C1 8.21895 1.44772 8.66667 2 8.66667L6.66667 8.66667V13.3333C6.66667 13.8856 7.11438 14.3333 7.66667 14.3333C8.21895 14.3333 8.66667 13.8856 8.66667 13.3333V8.66667L13.3333 8.66667Z" /></svg>
                         </div>
                       </Popover>
                     </div>

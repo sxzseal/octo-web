@@ -88,8 +88,8 @@
 
 /* Primary 按钮颜色统一 */
 .wk-join-space-btn.semi-button-primary {
-    background-color: var(--wk-color-primary, #5b6abf) !important;
-    border-color: var(--wk-color-primary, #5b6abf) !important;
+    background-color: var(--wk-color-primary, #1C1C23) !important;
+    border-color: var(--wk-color-primary, #1C1C23) !important;
     color: #fff !important;
 }
 
@@ -119,7 +119,7 @@
 }
 
 .wk-join-space-back:hover {
-    color: #5b6abf;
+    color: var(--wk-brand-primary);
 }
 
 /* 返回链接（确认页底部） */

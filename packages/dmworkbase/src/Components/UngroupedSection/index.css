@@ -21,6 +21,6 @@
 
 /* drop-over 高亮 */
 .wk-ungrouped-section--drop-over > .wk-ungrouped-section__header {
-    background: rgba(124, 92, 252, 0.08);
+    background: rgba(28, 28, 35, 0.08);
     border-radius: var(--wk-r-sm, 6px);
 }

@@ -1,7 +1,7 @@
-import WKApp, { ThemeMode } from "../../App";
+import WKApp from "../../App";
 import classnames from "classnames";
 import React, { Component } from "react";
-import { Badge, Toast, Progress, Button } from "@douyinfe/semi-ui";
+import { Toast, Spin, Button, Progress } from "@douyinfe/semi-ui";
 import WKModal from "../WKModal";
 
 export interface NavSettingsPanelProps {
@@ -20,7 +20,41 @@ export interface NavSettingsPanelProps {
     onNotifyListener: () => void;
 }
 
-export default class NavSettingsPanel extends Component<NavSettingsPanelProps> {
+interface NavSettingsPanelState {
+    changelog: { notes: string; version: string; pub_date: string } | null;
+    changelogLoading: boolean;
+}
+
+export default class NavSettingsPanel extends Component<NavSettingsPanelProps, NavSettingsPanelState> {
+    private _fetchingChangelog = false; // 实例属性防并发，避免 setState 异步批处理导致的竞态
+
+    state: NavSettingsPanelState = {
+        changelog: null,
+        changelogLoading: false,
+    };
+
+    fetchChangelog = async () => {
+        if (this._fetchingChangelog) return;
+        this._fetchingChangelog = true;
+        this.setState({ changelogLoading: true });
+        try {
+            const apiURL = WKApp.apiClient.config.apiURL;
+            const resp = await fetch(`${apiURL}common/updater/web/1.0`);
+            if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+            const data = await resp.json();
+            if (!data || typeof data.notes !== 'string') {
+                throw new Error('Invalid changelog format');
+            }
+            this.setState({ changelog: data, changelogLoading: false });
+        } catch (e) {
+            console.error('[NavSettingsPanel] fetch changelog failed', e);
+            this.setState({ changelogLoading: false });
+            Toast.error("获取更新日志失败");
+        } finally {
+            this._fetchingChangelog = false;
+        }
+    };
+
     render() {
         const {
             settingSelected,
@@ -48,30 +82,13 @@ export default class NavSettingsPanel extends Component<NavSettingsPanelProps> {
                     />
                 )}
                 <ul className={classnames("wk-sider-setting-list wk-navrail__settings-list", settingSelected ? "open" : undefined)}>
+                    {/* 暗黑模式入口已关闭 */}
                     <li onClick={() => {
                         onToggleSetting();
-                        if (WKApp.config.themeMode === ThemeMode.dark) {
-                            WKApp.config.themeMode = ThemeMode.light;
-                        } else {
-                            WKApp.config.themeMode = ThemeMode.dark;
-                        }
+                        this.fetchChangelog();
+                        onSetShowNewVersion(true);
                     }}>
-                        {`${WKApp.config.themeMode === ThemeMode.dark ? "关闭" : "打开"}黑暗模式`}
-                    </li>
-                    <li onClick={() => {
-                        onToggleSetting();
-                        if ((window as any).__POWERED_ELECTRON__) {
-                            (window as any).ipc.send("check-update");
-                        } else {
-                            if (hasNewVersion) {
-                                onSetShowNewVersion(true);
-                            } else {
-                                Toast.success("已经是最新版本");
-                            }
-                        }
-                    }}>
-                        检查版本&nbsp;v{WKApp.config.appVersion}&nbsp;
-                        {hasNewVersion ? <Badge dot type="danger" /> : undefined}
+                        更新日志
                     </li>
                     <li onClick={() => {
                         onToggleSetting();
@@ -87,13 +104,38 @@ export default class NavSettingsPanel extends Component<NavSettingsPanelProps> {
                     </li>
                 </ul>
 
-                {/* 版本信息 Modal */}
+                {/* 更新日志 Modal */}
                 <WKModal
-                    title="检测到新版本信息"
+                    title="更新日志"
                     visible={showNewVersion}
                     onCancel={() => onSetShowNewVersion(false)}
                 >
-                    {lastVersionInfo && <VersionCheckView lastVersion={lastVersionInfo} />}
+                    {this.state.changelogLoading ? (
+                        <div style={{ display: 'flex', justifyContent: 'center', padding: '32px' }}>
+                            <Spin size="large" />
+                        </div>
+                    ) : this.state.changelog ? (
+                        <div style={{ overflow: 'auto', maxHeight: 400, padding: '8px 0' }}>
+                            <div style={{ fontSize: 13, color: 'rgba(28,28,35,0.4)', marginBottom: 12 }}>
+                                版本 {this.state.changelog.version || '未知'} · {this.state.changelog.pub_date ? new Date(this.state.changelog.pub_date).toLocaleDateString('zh-CN') : ''}
+                            </div>
+                            <pre style={{
+                                whiteSpace: 'pre-wrap',
+                                wordBreak: 'break-word',
+                                fontSize: 14,
+                                lineHeight: 1.7,
+                                margin: 0,
+                                fontFamily: "'PingFang SC', sans-serif",
+                                color: 'rgba(28,28,35,0.9)',
+                            }}>
+                                {this.state.changelog.notes}
+                            </pre>
+                        </div>
+                    ) : (
+                        <div style={{ textAlign: 'center', padding: '32px', color: 'rgba(28,28,35,0.4)' }}>
+                            暂无更新日志
+                        </div>
+                    )}
                 </WKModal>
 
                 {/* 更新进度 Modal */}
@@ -133,36 +175,4 @@ export default class NavSettingsPanel extends Component<NavSettingsPanelProps> {
     }
 }
 
-interface VersionCheckViewProps {
-    lastVersion: { appVersion: string; updateDesc: string };
-}
-class VersionCheckView extends Component<VersionCheckViewProps> {
-    render() {
-        const { lastVersion } = this.props;
-        return (
-            <div className="wk-versioncheckview">
-                <div className="wk-versioncheckview-content">
-                    <div className="wk-versioncheckview-updateinfo">
-                        <ul>
-                            <li>当前版本: {WKApp.config.appVersion}&nbsp;&nbsp;目标版本: {lastVersion.appVersion}</li>
-                            <li>更新内容：</li>
-                            <li><pre>{lastVersion.updateDesc}</pre></li>
-                        </ul>
-                    </div>
-                    <div className="wk-versioncheckview-tip">
-                        <div className="wk-versioncheckview-tip-title">更新方法：</div>
-                        <div className="wk-versioncheckview-tip-content">
-                            <ul>
-                                <li>1. Windows系统中的某些浏览器: Ctrl + F5刷新。</li>
-                                <li>2. MacOS系统的Safari浏览器: Command + Option + R刷新。</li>
-                                <li>3. MacOS系统中的某些浏览器: Command + Shift + R刷新。</li>
-                                <li>4. 浏览器打开"设置" → "清理浏览数据" → 勾选"缓存的图片和文件" → "清理" → 刷新页面。</li>
-                                <li>5. 若上述方法都不行，请直接清理浏览器的数据或缓存。</li>
-                            </ul>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        );
-    }
-}
+

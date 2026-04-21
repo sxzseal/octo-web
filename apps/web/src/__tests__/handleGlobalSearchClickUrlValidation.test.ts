@@ -124,7 +124,7 @@ describe('handleGlobalSearchClick file download URL validation', () => {
     // ---- New integration tests ----
 
     describe('file download via downloadFile', () => {
-        it('should call downloadFile with getFileURL result, payload name, and payload size', async () => {
+        it('should call downloadFile with getFileURL result and payload name', async () => {
             const item = {
                 payload: {
                     url: 'https://cdn.example.com/files/document.pdf',
@@ -136,7 +136,6 @@ describe('handleGlobalSearchClick file download URL validation', () => {
             expect(downloadFile).toHaveBeenCalledWith(
                 'https://cdn.example.com/files/document.pdf',
                 'my-document.pdf',
-                { fileSize: 1024 },
             );
         });
 

@@ -131,7 +131,7 @@
 
 .wk-message-file-progress-fill {
     height: 100%;
-    background-color: var(--wk-color-primary, #5b6abf);
+    background-color: var(--wk-color-primary, #1C1C23);
     border-radius: 2px;
     transition: width 0.2s ease;
 }

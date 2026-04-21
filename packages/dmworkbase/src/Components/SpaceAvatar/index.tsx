@@ -6,7 +6,7 @@ const AVATAR_COLORS = [
     "linear-gradient(135deg, #00B894, #00D4AA)",
     "linear-gradient(135deg, #4A85E6, #5C9AFF)",
     "linear-gradient(135deg, #E6930A, #FFAD33)",
-    "linear-gradient(135deg, #7C5CFC, #9B7DFF)",
+    "linear-gradient(135deg, #36D1DC, #5B86E5)",
     "linear-gradient(135deg, #f093fb, #f5576c)",
 ];
 

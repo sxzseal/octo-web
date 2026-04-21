@@ -62,7 +62,7 @@
 }
 .wk-btn--primary:hover:not(:disabled) {
   background: var(--wk-brand-gradient-hover);
-  box-shadow: 0 4px 16px var(--wk-purple-alpha-25);
+  box-shadow: 0 4px 16px var(--wk-brand-glow);
 }
 .wk-btn--primary:active:not(:disabled) {
   box-shadow: none;

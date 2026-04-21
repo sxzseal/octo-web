@@ -50,7 +50,7 @@
     font-size: 13px;
 }
 .wk-bot-detail-cmd-name {
-    color: var(--wk-color-theme, #6366F1);
+    color: var(--wk-color-theme, #1C1C23);
     font-family: monospace;
     white-space: nowrap;
 }

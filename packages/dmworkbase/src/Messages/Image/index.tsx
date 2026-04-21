@@ -8,6 +8,7 @@ import Lightbox from "yet-another-react-lightbox"
 import Download from "yet-another-react-lightbox/plugins/download"
 import "yet-another-react-lightbox/styles.css"
 import { Toast } from "@douyinfe/semi-ui"
+import { downloadFile } from "../../Utils/download"
 
 const SMALL_FILE_THRESHOLD = 1024 * 1024 // 1MB 以下不显示进度覆盖层
 
@@ -19,6 +20,7 @@ export class ImageContent extends MediaMessageContent {
     imgData?: string
     caption?: string
     mentionUids?: string[]
+    name?: string
     constructor(file?: File, imgData?: string, width?: number, height?: number, caption?: string, mentionUids?: string[]) {
         super()
         this.file = file
@@ -27,6 +29,9 @@ export class ImageContent extends MediaMessageContent {
         this.height = height || 0
         this.caption = caption
         this.mentionUids = mentionUids
+        if (file) {
+            this.name = file.name
+        }
     }
     decodeJSON(content: any) {
         this.width = content["width"] || 0
@@ -34,6 +39,7 @@ export class ImageContent extends MediaMessageContent {
         this.url = content["url"] || ''
         this.caption = content["caption"] || ''
         this.mentionUids = content["mention_uids"] || []
+        this.name = content["name"] || undefined
         this.remoteUrl = this.url
     }
     encodeJSON() {
@@ -43,6 +49,9 @@ export class ImageContent extends MediaMessageContent {
         }
         if (this.mentionUids && this.mentionUids.length > 0) {
             json["mention_uids"] = this.mentionUids
+        }
+        if (this.name) {
+            json["name"] = this.name
         }
         return json
     }
@@ -127,14 +136,8 @@ export class ImageCell extends MessageCell<any, ImageCellState> {
     }
 
     getImageSrc(content: ImageContent) {
-        if (content.url && content.url !== "") { // 等待发送的消息
-            let downloadURL = WKApp.dataSource.commonDataSource.getImageURL(content.url, { width: content.width, height: content.height })
-            if (downloadURL.indexOf("?") !== -1) {
-                downloadURL += "&filename=image.png"
-            } else {
-                downloadURL += "?filename=image.png"
-            }
-            return downloadURL
+        if (content.url && content.url !== "") {
+            return WKApp.dataSource.commonDataSource.getImageURL(content.url, { width: content.width, height: content.height })
         }
         return content.imgData
     }
@@ -153,11 +156,13 @@ export class ImageCell extends MessageCell<any, ImageCellState> {
         let scaleSize = this.imageScale(content.width, content.height);
         const imageURL = this.getImageSrc(content) || ""
 
+        const hasRemoteUrl = !!(content.url || (content as any).remoteUrl)
         const isUploading =
             uploadStatus !== null &&
             uploadStatus !== TaskStatus.success &&
             uploadStatus !== TaskStatus.fail &&
-            uploadStatus !== TaskStatus.cancel
+            uploadStatus !== TaskStatus.cancel &&
+            !hasRemoteUrl
 
         const pct = Math.round(uploadProgress)
 
@@ -214,8 +219,13 @@ export class ImageCell extends MessageCell<any, ImageCellState> {
             <Lightbox
                 open={showPreview}
                 close={() => this.setState({ showPreview: false })}
-                slides={[{ src: imageURL, alt: '', download: imageURL }]}
+                slides={[{ src: imageURL, alt: '' }]}
                 plugins={[Download]}
+                download={{ download: ({ slide }) => {
+                    if (slide?.src) {
+                        downloadFile(slide.src, content.name || 'image.png')
+                    }
+                }}}
                 carousel={{ finite: true }}
                 controller={{ closeOnBackdropClick: true }}
                 render={{

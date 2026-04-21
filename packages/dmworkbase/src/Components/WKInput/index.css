@@ -15,8 +15,8 @@
 }
 
 .wk-input:focus-within {
-  border-color: var(--wk-border-glow, #7C5CFC);
-  box-shadow: 0 0 0 3px var(--wk-purple-alpha-08, rgba(124,92,252,0.08));
+  border-color: var(--wk-border-glow, #1C1C23);
+  box-shadow: 0 0 0 3px var(--wk-purple-alpha-08, rgba(28,28,35,0.08));
 }
 
 .wk-input--error {
@@ -64,18 +64,23 @@
 .wk-input--has-prefix .wk-input__inner { padding-left: var(--wk-sp-2, 8px); }
 .wk-input--has-suffix .wk-input__inner { padding-right: var(--wk-sp-2, 8px); }
 
+/* TODO: dark mode temporarily disabled, keep for future */
 /* dark mode */
+/* TODO: dark mode temporarily disabled, keep for future */
 body[theme-mode=dark] .wk-input {
   background: var(--wk-bg-surface, rgba(255,255,255,0.06));
   border-color: var(--wk-border-default, rgba(255,255,255,0.12));
 }
+/* TODO: dark mode temporarily disabled, keep for future */
 body[theme-mode=dark] .wk-input:hover {
   border-color: var(--wk-border-strong, rgba(255,255,255,0.2));
 }
+/* TODO: dark mode temporarily disabled, keep for future */
 body[theme-mode=dark] .wk-input:focus-within {
   border-color: var(--wk-border-glow, #9B7DFF);
-  box-shadow: 0 0 0 3px rgba(124,92,252,0.15);
+  box-shadow: 0 0 0 3px rgba(28,28,35,0.15);
 }
+/* TODO: dark mode temporarily disabled, keep for future */
 body[theme-mode=dark] .wk-input__inner {
   color: var(--wk-text-primary, #e0e0e0);
 }

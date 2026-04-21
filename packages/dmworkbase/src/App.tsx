@@ -46,7 +46,7 @@ export enum ThemeMode {
 export class WKConfig {
   appName: string = "DMWork";
   appVersion: string = "0.0.0"; // app版本
-  themeColor: string = "#6366F1"; // 主题颜色
+  themeColor: string = "#1C1C23"; // 主题颜色
   secondColor: string = "rgba(232, 234, 237)";
   pageSize: number = 15; // 数据页大小
   pageSizeOfMessage: number = 30; // 每次请求消息数量
@@ -302,10 +302,8 @@ export default class WKApp extends ProviderListener {
     this.deviceName = this.getOSAndVersion();
     this.deviceModel = this.getBrandsFromUserAgent();
 
-    const themeMode = StorageService.shared.getItem("theme-mode");
-    if (themeMode === "1") {
-      WKApp.config.themeMode = ThemeMode.dark;
-    }
+    // 暗黑模式已关闭，强制亮色
+    WKApp.config.themeMode = ThemeMode.light;
 
     WKSDK.shared().config.provider.connectAddrCallback = async (
       callback: ConnectAddrCallback

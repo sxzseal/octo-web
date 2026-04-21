@@ -1,6 +1,6 @@
 /**
  * DMWork v4 Design Tokens — TypeScript
- * Source: 设计标准.html
+ * Source: Figma "设计基础" (2026-04-20 提取)
  *
  * 用途：
  * - JS 动态样式（inline style、canvas、动画）
@@ -10,95 +10,111 @@
 
 export const colors = {
   brand: {
-    primary:      '#7C5CFC',
-    primaryHover: '#6B4FD8',
-    secondary:    '#00D4AA',
-    glow:         'rgba(124, 92, 252, 0.3)',
+    primary:      '#1C1C23',   /* Figma: 主色 — 深黑 */
+    primaryHover: '#2A2A33',
+    darkTab:      '#343B3A',   /* Figma: Tab 容器背景 */
+    glow:         'rgba(28, 28, 35, 0.2)',
+  },
+  accent: {
+    purple:       '#7F3BF5',   /* Figma: AI/Thread 链接色 */
+    purpleHover:  '#6A2FD0',
+    teal:         '#0B867D',   /* Figma: 按钮图标 */
   },
   semantic: {
-    success: '#00D4AA',
-    warning: '#FFAD33',
-    error:   '#FF5C72',
-    info:    '#5C9AFF',
+    success: '#41CD59',
+    warning: '#FC8800',
+    error:   '#F54A45',
+    info:    '#0077FA',
   },
   ai: {
-    surface: 'rgba(124, 92, 252, 0.04)',
-    border:  'rgba(124, 92, 252, 0.12)',
-    glow:    'rgba(124, 92, 252, 0.06)',
+    surface: 'rgba(127, 59, 245, 0.04)',  /* AI 保持紫色 */
+    border:  'rgba(127, 59, 245, 0.12)',
+    glow:    'rgba(127, 59, 245, 0.06)',
   },
   dark: {
     bgDeep:     '#111318',
     bgBase:     '#171921',
     bgSurface:  '#1E212B',
     bgElevated: '#262A36',
-    bgHover:    '#2E3240',
-    bgActive:   '#363B4A',
+    bgHover:    '#2E3238',
+    bgActive:   '#343B3A',
     textPrimary:   '#E4E6ED',
     textSecondary: '#9CA1B3',
     textTertiary:  '#7A7F96',
-    textAccent:    '#B0A4FF',
+    textAccent:    '#9B6DF7',  /* 暗色下 AI 链接色 */
     borderSubtle:  'rgba(255, 255, 255, 0.04)',
     borderDefault: 'rgba(255, 255, 255, 0.07)',
     borderStrong:  'rgba(255, 255, 255, 0.12)',
-    borderGlow:    'rgba(124, 92, 252, 0.2)',
+    borderGlow:    'rgba(127, 59, 245, 0.2)',
   },
   light: {
-    bgDeep:     '#F7F8FA',
-    bgBase:     '#FFFFFF',
-    bgSurface:  '#F0F1F5',
-    bgElevated: '#EAEBF0',
-    bgHover:    '#E2E3EA',
-    bgActive:   '#D8DAE5',
-    textPrimary:   '#111318',
-    textSecondary: '#5C6070',
-    textTertiary:  '#9498A8',
-    textAccent:    '#7C5CFC',
+    bgDeep:     '#F5F6F7',
+    bgBase:     '#F5F6F7',
+    bgSurface:  '#FFFFFF',
+    bgElevated: '#F2F3F4',
+    bgHover:    '#DFE0E2',
+    bgActive:   '#D9D9D9',
+    textPrimary:   '#1F2329',
+    textSecondary: '#555B61',
+    textTertiary:  '#6B7075',
+    textAccent:    '#7F3BF5',  /* 亮色下 AI 链接色 */
     borderSubtle:  'rgba(0, 0, 0, 0.05)',
     borderDefault: 'rgba(0, 0, 0, 0.08)',
     borderStrong:  'rgba(0, 0, 0, 0.12)',
-    borderGlow:    'rgba(124, 92, 252, 0.2)',
+    borderGlow:    'rgba(127, 59, 245, 0.2)',
+  },
+  /** Figma Tag 专属色 */
+  tag: {
+    blueBg:    '#0077FA',
+    blueText:  '#00418F',
+    grayBg:    '#6B7075',
+    grayText:  '#555B61',
+    orangeBg:  '#FC8800',
+    orangeText:'#722F01',
   },
 } as const
 
 export const spacing = {
-  1:  4,
-  2:  8,
-  3:  12,
-  4:  16,
-  5:  20,
-  6:  24,
-  8:  32,
-  10: 40,
-  12: 48,
+  0.5: 2,
+  1:   4,
+  1.5: 6,
+  2:   8,
+  3:   12,
+  4:   16,
+  5:   20,
+  6:   24,
+  8:   32,
+  10:  40,
+  12:  48,
 } as const
 
 export const radius = {
-  xs:   4,
+  xs:   3,    /* Figma: Tag, 导航项 */
   sm:   6,
-  md:   10,
-  lg:   14,
+  md:   8,    /* Figma: 消息气泡, AI 卡片, 图片 */
+  lg:   16,   /* Figma: 普通头像 */
   xl:   20,
-  full: 9999,
+  full: 9999, /* pill */
 } as const
 
 export const typography = {
-  fontSans: "'Inter', -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Noto Sans SC', sans-serif",
+  fontSans: "'PingFang SC', 'Inter', -apple-system, BlinkMacSystemFont, 'Noto Sans SC', sans-serif",
   fontMono: "'JetBrains Mono', 'SF Mono', 'Fira Code', monospace",
   sizes: {
     h1:      28,
     h2:      22,
-    h3:      16,
-    h4:      14,
-    body:    14,
-    caption: 12,
-    tiny:    10,
+    h3:      16,  /* Figma: heading-lg 组织名 */
+    h4:      14,  /* Figma: heading-md 用户名/群名 */
+    body:    14,  /* Figma: 正文 */
+    caption: 12,  /* Figma: Tag/辅助文字 */
+    tiny:    10,  /* Figma: badge 数字 */
     code:    13,
   },
   weights: {
-    regular: 400,
-    medium:  500,
+    regular:  400,
+    medium:   500,
     semibold: 600,
-    bold:    700,
+    bold:     700,
   },
   lineHeights: {
     tight:  1.25,
@@ -117,8 +133,8 @@ export const animation = {
 } as const
 
 export const layout = {
-  navWidth:      60,
-  sidebarWidth:  280,
+  navWidth:      56,   /* Figma: 侧边栏折叠 */
+  sidebarWidth:  240,  /* Figma: 会话列表 */
   taskRailWidth: 320,
 } as const
 
