@@ -20,10 +20,52 @@
   padding: 8px 16px;
   box-sizing: border-box;
   transition: border-color 0.2s;
+  cursor: text;
 }
 
 .wk-messageinput-card:focus-within {
   border-color: #1c1c23;
+}
+
+/* 展开状态 */
+.wk-messageinput-box--expanded {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  margin-top: 80px;
+}
+
+.wk-messageinput-box--expanded .wk-messageinput-card {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  border-radius: 12px;
+}
+
+.wk-messageinput-box--expanded .wk-messageinput-row {
+  flex: 1;
+  flex-direction: column;
+  align-items: stretch;
+}
+
+.wk-messageinput-box--expanded .wk-messageinput-inputbox {
+  flex: 1;
+  margin-right: 0;
+}
+
+.wk-messageinput-box--expanded .wk-messageinput-editor {
+  height: 100%;
+}
+
+.wk-messageinput-box--expanded .wk-messageinput-editor .ProseMirror {
+  min-height: 100%;
+  max-height: none;
+  height: 100%;
+}
+
+.wk-messageinput-box--expanded .wk-messageinput-actionbox {
+  margin-top: 8px;
+  margin-left: auto;
 }
 
 /* 输入行：输入框 + 按钮横向排列 */
@@ -43,6 +85,7 @@
 
 .wk-messageinput-card--multiline .wk-messageinput-inputbox {
   width: 100%;
+  margin-right: 0;
 }
 
 .wk-messageinput-card--multiline .wk-messageinput-actionbox {
@@ -133,6 +176,8 @@
   min-width: 0;
   display: flex;
   align-items: center;
+  margin-right: 16px;
+  cursor: text;
 }
 
 .wk-messageinput-menu-btn {
@@ -222,29 +267,35 @@
   list-style: none;
 }
 
-/* 覆盖工具栏中所有按钮的尺寸，统一 20px */
+/* 覆盖工具栏中所有按钮的尺寸，统一 24px */
 .wk-messageinput-actionbox .wk-iconclick,
 .wk-messageinput-actionbox .wk-conversation-chattoolbars-item {
-  width: 20px !important;
-  height: 20px !important;
+  width: 24px !important;
+  height: 24px !important;
   padding: 0 !important;
   margin: 0 !important;
   flex-shrink: 0;
+  color: var(--wk-icon-muted);
+}
+
+.wk-messageinput-actionbox .wk-iconclick:hover,
+.wk-messageinput-actionbox .wk-conversation-chattoolbars-item:hover {
+  color: var(--wk-text-primary);
 }
 
 .wk-messageinput-actionitem {
-  width: 20px;
-  height: 20px;
+  width: 24px;
+  height: 24px;
   display: flex;
   justify-content: center;
   align-items: center;
   cursor: pointer;
-  color: var(--wk-text-secondary, var(--text-secondary));
+  color: var(--wk-icon-muted);
   transition: color 0.15s, opacity 0.15s;
 }
 
 .wk-messageinput-actionitem:hover {
-  color: var(--wk-text-primary, var(--text-primary));
+  color: var(--wk-text-primary);
 }
 
 .wk-messageinput-actionitem:active {
@@ -388,11 +439,19 @@
   padding: 0 0.125rem;
 }
 
-/* Placeholder */
+/* Placeholder - Tiptap Placeholder 扩展 */
 .wk-messageinput-editor .ProseMirror p.is-editor-empty:first-child::before {
   content: attr(data-placeholder);
   float: left;
-  color: var(--text-tertiary);
+  color: var(--text-tertiary, #999);
+  pointer-events: none;
+  height: 0;
+}
+
+.wk-messageinput-editor .ProseMirror.is-empty::before {
+  content: attr(data-placeholder);
+  float: left;
+  color: var(--text-tertiary, #999);
   pointer-events: none;
   height: 0;
 }

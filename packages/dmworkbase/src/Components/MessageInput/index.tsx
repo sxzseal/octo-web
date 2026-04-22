@@ -1,6 +1,13 @@
-import React, { useState, useEffect, useRef, useCallback } from "react";
+import React, {
+  useState,
+  useEffect,
+  useRef,
+  useCallback,
+  useMemo,
+} from "react";
 import { useEditor, EditorContent } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
+import Placeholder from "@tiptap/extension-placeholder";
 import TiptapMention from "@tiptap/extension-mention";
 import { createMentionSuggestion } from "./mentionSuggestion";
 import ConversationContext from "../Conversation/context";
@@ -228,6 +235,19 @@ const MessageInput: React.FC<MessageInputProps> = (props) => {
   const [isMultiLine, setIsMultiLine] = useState(false);
   const [expanded, setExpanded] = useState(false);
   const previousScopeRef = useRef("all");
+
+  // 动态生成 placeholder
+  const placeholder = useMemo(() => {
+    const channel = props.context.channel();
+    const channelInfo = WKSDK.shared().channelManager.getChannelInfo(channel);
+    const name = channelInfo?.title || channelInfo?.name || "";
+
+    if (channel.channelType === ChannelTypePerson) {
+      return name ? `对 ${name} 发送消息` : "发送消息";
+    } else {
+      return name ? `在 ${name} 中回复...` : "输入消息...";
+    }
+  }, [props.context]);
   const localMembersRef = useRef(props.members);
   const sendRef = useRef<(() => void) | null>(null);
   const mentionActiveRef = useRef(false);
@@ -263,6 +283,9 @@ const MessageInput: React.FC<MessageInputProps> = (props) => {
         horizontalRule: false,
         codeBlock: false,
         strike: false,
+      }),
+      Placeholder.configure({
+        placeholder,
       }),
       TiptapMention.configure({
         HTMLAttributes: {
@@ -314,9 +337,6 @@ const MessageInput: React.FC<MessageInputProps> = (props) => {
     ],
     content: "",
     editorProps: {
-      attributes: {
-        "data-placeholder": "按 Shift + Enter 换行,按 Enter 发送",
-      },
       // ProseMirror 级别的键盘处理，在所有 keymap 之前执行
       handleKeyDown: (_view, event) => {
         return editorHandleKeyDownRef.current?.(_view, event) ?? false;
@@ -342,12 +362,12 @@ const MessageInput: React.FC<MessageInputProps> = (props) => {
         setSlashActiveIndex(0);
       }
 
-      // 检测是否多行（编辑器高度超过单行）
-      const editorEl = editor.view.dom;
-      if (editorEl) {
-        const height = editorEl.scrollHeight;
-        setIsMultiLine(height > 24); // 单行约 21-24px
-      }
+      // 检测是否多行（检查是否有换行符或多个段落）
+      const json = editor.getJSON();
+      const paragraphs = json.content || [];
+      const hasMultipleParagraphs = paragraphs.length > 1;
+      const hasNewline = text.includes("\n");
+      setIsMultiLine(hasMultipleParagraphs || hasNewline);
     },
   });
 
@@ -364,6 +384,18 @@ const MessageInput: React.FC<MessageInputProps> = (props) => {
       hotkeys.setScope(previousScopeRef.current);
     };
   }, []);
+
+  // 动态更新 placeholder
+  useEffect(() => {
+    if (editor) {
+      editor.extensionManager.extensions
+        .filter((ext) => ext.name === "placeholder")
+        .forEach((ext) => {
+          (ext.options as any).placeholder = placeholder;
+          editor.view.dispatch(editor.state.tr);
+        });
+    }
+  }, [editor, placeholder]);
 
   // 导出 context 方法
   useEffect(() => {
@@ -565,6 +597,12 @@ const MessageInput: React.FC<MessageInputProps> = (props) => {
           "wk-messageinput-card--multiline": isMultiLine,
           "wk-messageinput-card--has-topview": !!topView,
         })}
+        onClick={(e) => {
+          // 点击卡片空白区域时聚焦编辑器
+          if (editor && e.target === e.currentTarget) {
+            editor.commands.focus();
+          }
+        }}
       >
         {/* 引用/编辑条在卡片内部 */}
         {topView && <div className="wk-messageinput-topview">{topView}</div>}
@@ -574,7 +612,13 @@ const MessageInput: React.FC<MessageInputProps> = (props) => {
           {/* 输入框区域 */}
           <div
             className="wk-messageinput-inputbox"
-            style={{ position: "relative" }}
+            style={{ position: "relative", cursor: "text" }}
+            onClick={(e) => {
+              // 点击输入框区域时聚焦编辑器
+              if (editor) {
+                editor.commands.focus();
+              }
+            }}
           >
             {botCommands && botCommands.length > 0 && (
               <SlashCommandMenu
@@ -594,7 +638,15 @@ const MessageInput: React.FC<MessageInputProps> = (props) => {
                 /
               </div>
             )}
-            <div className="wk-messageinput-editor">
+            <div
+              className="wk-messageinput-editor"
+              onClick={(e) => {
+                // 点击编辑器区域时聚焦
+                if (editor) {
+                  editor.commands.focus();
+                }
+              }}
+            >
               <EditorContent editor={editor} />
             </div>
           </div>
@@ -646,16 +698,14 @@ const MessageInput: React.FC<MessageInputProps> = (props) => {
             />
 
             {/* 展开/收起按钮 */}
-            <div className="wk-messageinput-actionitem">
-              <IconClick
-                size="sm"
-                title={expanded ? "收起" : "展开输入框"}
-                onClick={toggleExpand}
-                icon={
-                  expanded ? <Minimize2 size={15} /> : <Maximize2 size={15} />
-                }
-              />
-            </div>
+            <IconClick
+              size="sm"
+              title={expanded ? "收起" : "展开输入框"}
+              onClick={toggleExpand}
+              icon={
+                expanded ? <Minimize2 size={18} /> : <Maximize2 size={18} />
+              }
+            />
           </div>
         </div>
       </div>
