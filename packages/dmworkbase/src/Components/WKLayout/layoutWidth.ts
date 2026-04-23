@@ -50,15 +50,23 @@ export function persistWidth(width: number): void {
 // ── Right (thread) panel helpers ──
 
 /**
- * Thread panel max width based on window width (not container).
- * Ratio ~63.5% matches Discord's behavior (1219/1920).
+ * Thread panel max width based on available space (window - left panel).
+ * Ensures chat area has at least 50% of available space.
+ * 
+ * @param windowWidth - Total window width
+ * @param leftPanelWidth - Left conversation list width (default 300px)
+ * @returns Maximum allowed thread panel width
  */
-export function getMaxThreadWidth(windowWidth: number): number {
-    return getMaxWidth(windowWidth, THREAD_MIN_WIDTH, THREAD_MAX_WIDTH, 0.635)
+export function getMaxThreadWidth(windowWidth: number, leftPanelWidth = SPLITTER_DEFAULT_WIDTH): number {
+    const availableSpace = windowWidth - leftPanelWidth
+    // Thread can take at most 50% of available space, ensuring chat area gets at least 50%
+    const dynamicMax = Math.floor(availableSpace * 0.5)
+    return Math.max(THREAD_MIN_WIDTH, Math.min(THREAD_MAX_WIDTH, dynamicMax))
 }
 
-export function clampThreadWidth(width: number, windowWidth: number): number {
-    return clampWidth(width, windowWidth, THREAD_MIN_WIDTH, THREAD_MAX_WIDTH, 0.635)
+export function clampThreadWidth(width: number, windowWidth: number, leftPanelWidth = SPLITTER_DEFAULT_WIDTH): number {
+    const max = getMaxThreadWidth(windowWidth, leftPanelWidth)
+    return Math.max(THREAD_MIN_WIDTH, Math.min(max, width))
 }
 
 export function restoreThreadWidth(): number {

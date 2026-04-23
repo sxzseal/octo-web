@@ -81,21 +81,26 @@ describe('layoutWidth', () => {
     describe('thread panel', () => {
         describe('clampThreadWidth', () => {
             it('clamps below minimum', () => {
-                expect(clampThreadWidth(100, 1200)).toBe(THREAD_MIN_WIDTH)
+                expect(clampThreadWidth(100, 1200, 300)).toBe(THREAD_MIN_WIDTH)
             })
 
-            it('clamps to ~63.5% of window width', () => {
-                // 1920 * 0.635 = 1219
-                expect(clampThreadWidth(1300, 1920)).toBe(1219)
+            it('limits to 50% of available space (window - left panel)', () => {
+                // window=1920, left=300 → available=1620 → max=810
+                expect(clampThreadWidth(1000, 1920, 300)).toBe(810)
             })
 
-            it('caps at THREAD_MAX_WIDTH for very wide windows', () => {
-                // 2560 * 0.635 = 1625 > 1600
-                expect(clampThreadWidth(1700, 2560)).toBe(THREAD_MAX_WIDTH)
+            it('ensures chat area gets at least 50% of available space', () => {
+                // window=1600, left=280 → available=1320 → max=660
+                expect(clampThreadWidth(900, 1600, 280)).toBe(660)
+            })
+
+            it('caps at THREAD_MAX_WIDTH even if 50% would be higher', () => {
+                // window=4000, left=300 → available=3700 → 50%=1850 > 1600
+                expect(clampThreadWidth(1700, 4000, 300)).toBe(THREAD_MAX_WIDTH)
             })
 
             it('passes through valid values', () => {
-                expect(clampThreadWidth(500, 1200)).toBe(500)
+                expect(clampThreadWidth(500, 1600, 300)).toBe(500)
             })
         })
 

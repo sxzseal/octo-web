@@ -14,6 +14,7 @@ import { formatRelativeTime } from "../../Utils/time"
 import {
   SMALL_SCREEN_WIDTH,
   THREAD_DEFAULT_WIDTH,
+  SPLITTER_DEFAULT_WIDTH,
   clampThreadWidth,
   restoreThreadWidth,
   persistThreadWidth,
@@ -46,11 +47,13 @@ export default class ThreadPanel extends Component<ThreadPanelProps, ThreadPanel
   private dragStartX = 0
   private dragStartWidth = 0
   private lastPanelWidth = THREAD_DEFAULT_WIDTH
-  private cachedContainerWidth = 1200  // cached on drag start
+  private cachedWindowWidth = 1920  // cached on drag start
+  private cachedLeftPanelWidth = 300  // cached on drag start
 
   constructor(props: ThreadPanelProps) {
     super(props)
-    const savedWidth = clampThreadWidth(restoreThreadWidth(), window.innerWidth)
+    const leftPanelWidth = this.getLeftPanelWidth()
+    const savedWidth = clampThreadWidth(restoreThreadWidth(), window.innerWidth, leftPanelWidth)
     this.lastPanelWidth = savedWidth
 
     this.state = {
@@ -91,14 +94,32 @@ export default class ThreadPanel extends Component<ThreadPanelProps, ThreadPanel
     }
   }
 
+  // ── Helper to get left panel width from CSS variable or default ──
+  private getLeftPanelWidth(): number {
+    try {
+      const root = document.documentElement
+      const cssValue = getComputedStyle(root).getPropertyValue('--wk-wdith-conversation-list').trim()
+      if (cssValue) {
+        const parsed = parseInt(cssValue, 10)
+        if (!isNaN(parsed)) return parsed
+      }
+    } catch (_) {
+      // Best-effort CSS variable read: silently fall through to default.
+      // This is intentional — DOM access may fail in edge cases (SSR, tests).
+      // Falls back to SPLITTER_DEFAULT_WIDTH; does not affect core functionality.
+    }
+    return SPLITTER_DEFAULT_WIDTH
+  }
+
   // ── Splitter drag for thread panel width ──
 
   private onPanelDragStart = (e: React.MouseEvent) => {
     e.preventDefault()
     this.dragStartX = e.clientX
     this.dragStartWidth = this.lastPanelWidth
-    // Use window width for max calculation (matches Discord's behavior)
-    this.cachedContainerWidth = window.innerWidth
+    // Cache window width and left panel width for max calculation
+    this.cachedWindowWidth = window.innerWidth
+    this.cachedLeftPanelWidth = this.getLeftPanelWidth()
     this.setState({ isDragging: true })
     document.addEventListener('mousemove', this.onPanelDragMove)
     document.addEventListener('mouseup', this.onPanelDragEnd)
@@ -109,7 +130,11 @@ export default class ThreadPanel extends Component<ThreadPanelProps, ThreadPanel
   private onPanelDragMove = (e: MouseEvent) => {
     // Dragging LEFT edge: moving mouse left = wider panel
     const delta = this.dragStartX - e.clientX
-    const newWidth = clampThreadWidth(this.dragStartWidth + delta, this.cachedContainerWidth)
+    const newWidth = clampThreadWidth(
+      this.dragStartWidth + delta,
+      this.cachedWindowWidth,
+      this.cachedLeftPanelWidth
+    )
     this.lastPanelWidth = newWidth
 
     // Direct DOM update — no React re-render during drag
