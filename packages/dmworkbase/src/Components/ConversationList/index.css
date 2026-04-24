@@ -425,11 +425,11 @@ body[theme-mode=dark] .wk-conversationlist:hover::-webkit-scrollbar-thumb {
 .wk-conv-compact-item {
     display: flex;
     align-items: center;
-    gap: 4px;                          /* Figma: 4px */
-    padding: 0 8px 0 16px;             /* Figma: right:8, 内容靠 align-items 居中 */
+    gap: 4px;
+    padding: 0 8px 0 20px;           /* 加大左缩进体现层级，黑条仍贴左边缘 */
     border-radius: 0;
     cursor: pointer;
-    height: 28px;                      /* Figma: 28px */
+    height: 32px;
     box-sizing: border-box;
     position: relative;
     transition: background 200ms;
@@ -451,8 +451,8 @@ body[theme-mode=dark] .wk-conversationlist:hover::-webkit-scrollbar-thumb {
 
 .wk-conv-compact-icon {
     flex-shrink: 0;
-    width: 16px;                       /* Figma: 16x16 */
-    height: 16px;
+    width: 24px;                       /* 群聊头像宽度，子区 icon 居中 */
+    height: 24px;
     display: flex;
     align-items: center;
     justify-content: center;

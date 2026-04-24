@@ -33,13 +33,14 @@ interface CompactGroupItemProps {
     conversationWrap: ConversationWrap
     selected: boolean
     onClick: () => void
+    onDoubleClick?: (e: React.MouseEvent) => void
     onContextMenu: (e: React.MouseEvent) => void
     /** 该群聊有子区，需要在 # icon 下方画竖线 */
     hasThreads?: boolean
 }
 
 const CompactGroupItem: React.FC<CompactGroupItemProps> = ({
-    conversationWrap, selected, onClick, onContextMenu, hasThreads,
+    conversationWrap, selected, onClick, onDoubleClick, onContextMenu, hasThreads,
 }) => {
     const channelInfo = conversationWrap.channelInfo
     // channelInfo 未加载时主动拉取，加载完触发 re-render
@@ -87,6 +88,8 @@ const CompactGroupItem: React.FC<CompactGroupItemProps> = ({
                 effectiveMute ? "wk-conv-compact-item--muted" : undefined,
             )}
             onClick={onClick}
+            onDoubleClick={onDoubleClick}
+            onMouseDown={onDoubleClick ? (e) => { if (e.detail >= 2) e.preventDefault() } : undefined}
             onContextMenu={onContextMenu}
         >
             {/* 拖拽 handle（非子区才显示） */}
@@ -110,7 +113,7 @@ const CompactGroupItem: React.FC<CompactGroupItemProps> = ({
             <span className={`wk-conv-compact-icon${conversationWrap.unread > 0 ? ' wk-conv-compact-icon--reddot' : ''}`}>
                 {isThread
                     ? <ThreadIcon size={13} />
-                    : <GroupIcon size={14} />
+                    : <WKAvatar channel={conversationWrap.channel} style={{ width: 24, height: 24, borderRadius: 6, flexShrink: 0 }} />
                 }
             </span>
             {conversationWrap.isMentionMe && conversationWrap.unread > 0 && (
@@ -192,6 +195,15 @@ export default class ConversationList extends Component<ConversationListProps, C
 
     _handleScroll = () => {
         this.contextMenusContext.hide()
+    }
+
+    _toggleGroupExpand = (groupId: string) => {
+        this.setState(s => {
+            const next = new Set(s.expandedGroupIds)
+            if (next.has(groupId)) next.delete(groupId)
+            else next.add(groupId)
+            return { expandedGroupIds: next }
+        })
     }
     _handleContextMenu(conversationWrap: ConversationWrap, event: React.MouseEvent) {
         this.contextMenusContext.show(event)
@@ -303,6 +315,11 @@ export default class ConversationList extends Component<ConversationListProps, C
                     selected={selected}
                     hasThreads={hasThreads}
                     onClick={() => { if (this.props.onClick) this.props.onClick(conversationWrap) }}
+                    onDoubleClick={
+                        conversationWrap.channel.channelType === ChannelTypeGroup && hasThreads
+                            ? (e) => { e.preventDefault(); this._toggleGroupExpand(conversationWrap.channel.channelID) }
+                            : undefined
+                    }
                     onContextMenu={(e) => { this._handleContextMenu(conversationWrap, e) }}
                 />
             )
@@ -439,9 +456,9 @@ export default class ConversationList extends Component<ConversationListProps, C
         return true
     }
 
-    // 将子区放在父群组后面，最多显示2个，超出部分用计数表示
+    // 将子区放在父群组后面，默认全部收起（MAX_VISIBLE_THREADS=0），展开后显示全部
     private groupThreadsWithParent(convs: ConversationWrap[]): { items: Array<ConversationWrap | { type: 'thread-overflow'; parentGroupId: string; count: number; unreadCount: number }>, threadsByParent: Map<string, ConversationWrap[]> } {
-        const MAX_VISIBLE_THREADS = 2
+        const MAX_VISIBLE_THREADS = 0
 
         // 分离群组和子区
         const threads: ConversationWrap[] = []
@@ -464,7 +481,7 @@ export default class ConversationList extends Component<ConversationListProps, C
             }
         }
 
-        // 重新组织：群组后面跟着其子区（最多2个）
+        // 重新组织：群组后面跟着其子区（默认全收起）
         const result: Array<ConversationWrap | { type: 'thread-overflow'; parentGroupId: string; count: number; unreadCount: number }> = []
         const usedThreads = new Set<string>()
 
@@ -474,7 +491,7 @@ export default class ConversationList extends Component<ConversationListProps, C
                 continue
             }
             result.push(conv)
-            // 如果是群组，添加其子区（最多2个）
+            // 如果是群组，子区默认全部折叠进 overflow
             if (conv.channel.channelType === ChannelTypeGroup) {
                 const groupThreads = threadsByParent.get(conv.channel.channelID) || []
                 const visibleThreads = groupThreads.slice(0, MAX_VISIBLE_THREADS)
@@ -582,16 +599,9 @@ export default class ConversationList extends Component<ConversationListProps, C
                 if (compact) {
                     // compact 模式：overflow indicator 改为「+N 个子区」/ 「收起」可切换
                     const isExpanded = expandedGroupIds.has(item.parentGroupId)
-                    const toggleExpand = () => {
-                        this.setState(s => {
-                            const next = new Set(s.expandedGroupIds)
-                            if (next.has(item.parentGroupId)) next.delete(item.parentGroupId)
-                            else next.add(item.parentGroupId)
-                            return { expandedGroupIds: next }
-                        })
-                    }
-                    // 控件位置固定在前2个子区下方，展开的额外子区在控件下面
-                    const extraThreads = (threadsByParent.get(item.parentGroupId) ?? []).slice(2)
+                    const toggleExpand = () => this._toggleGroupExpand(item.parentGroupId)
+                    // 展开时渲染所有子区
+                    const extraThreads = threadsByParent.get(item.parentGroupId) ?? []
                     return (
                         <React.Fragment key={`overflow-${item.parentGroupId}`}>
                             {/* 展开时：先渲染剩余子区，控件始终置底 */}
@@ -703,6 +713,18 @@ export default class ConversationList extends Component<ConversationListProps, C
                     icon: "M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9 M13.73 21a2 2 0 0 1-3.46 0",
                     onClick: () => { if (channelInfo) this.onMute(channelInfo) }
                 })
+
+                // 5. 展开/收起子区（compact 模式下、群组且有子区时显示）
+                if (compact && channel && channel.channelType === ChannelTypeGroup && threadsByParent.has(channel.channelID)) {
+                    const isExpanded = expandedGroupIds.has(channel.channelID)
+                    menus.push({
+                        title: isExpanded ? "收起子区" : "展开子区",
+                        icon: isExpanded
+                            ? "M19 9l-7 7-7-7"
+                            : "M5 15l7-7 7 7",
+                        onClick: () => { this._toggleGroupExpand(channel.channelID) }
+                    })
+                }
 
                 // 6. 分隔线
                 menus.push({ separator: true } as ContextMenusData)

@@ -1,7 +1,7 @@
 .wk-category-header {
     display: flex;
     align-items: center;
-    gap: 4px;              /* Figma: 4px */
+    gap: 0;
     padding: 4px;              /* Figma: 4px, 三角+文字从左 4px 开始 */
     border-radius: 6px;    /* --r-sm */
     height: 28px;          /* Figma: 28px */
@@ -100,6 +100,8 @@
     align-items: center;
     justify-content: center;
     flex-shrink: 0;
+    position: relative;
+    left: -4px;
     transition: transform 0.15s ease;
     color: var(--wk-icon-muted);  /* Figma: 40% 透明度 */
 }
