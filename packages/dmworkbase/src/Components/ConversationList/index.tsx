@@ -38,11 +38,15 @@ interface CompactGroupItemProps {
     onContextMenu: (e: React.MouseEvent) => void
     /** 该群聊有子区，需要在 # icon 下方画竖线 */
     hasThreads?: boolean
+    onToggleThreads?: (e: React.MouseEvent) => void
+    /** 折叠时子区的未读数（展开时为 0） */
+    threadUnread?: number
 }
 
 const CompactGroupItem: React.FC<CompactGroupItemProps> = ({
-    conversationWrap, selected, avatarKey, onClick, onDoubleClick, onContextMenu, hasThreads,
+    conversationWrap, selected, avatarKey, onClick, onDoubleClick, onContextMenu, hasThreads, onToggleThreads, threadUnread = 0,
 }) => {
+    const totalUnread = conversationWrap.unread + threadUnread
     const channelInfo = conversationWrap.channelInfo
     // channelInfo 未加载时主动拉取，加载完触发 re-render
     React.useEffect(() => {
@@ -82,7 +86,7 @@ const CompactGroupItem: React.FC<CompactGroupItemProps> = ({
             className={classNames(
                 "wk-conv-compact-item",
                 selected ? "wk-conv-compact-item--selected" : undefined,
-                conversationWrap.unread > 0 ? "wk-conv-compact-item--unread" : undefined,
+                totalUnread > 0 ? "wk-conv-compact-item--unread" : undefined,
                 isThread ? "wk-conv-compact-item--thread" : undefined,
                 isDragging ? "wk-conv-compact-item--dragging" : undefined,
                 hasThreads ? "wk-conv-compact-item--has-threads" : undefined,
@@ -111,32 +115,49 @@ const CompactGroupItem: React.FC<CompactGroupItemProps> = ({
                     </svg>
                 </span>
             )}
-            <span className={`wk-conv-compact-icon${conversationWrap.unread > 0 ? ' wk-conv-compact-icon--reddot' : ''}`}>
+            <span className={`wk-conv-compact-icon${totalUnread > 0 ? ' wk-conv-compact-icon--reddot' : ''}`}>
                 {isThread
                     ? <ThreadIcon size={13} />
-                    : <WKAvatar key={avatarKey} channel={conversationWrap.channel} style={{ width: 24, height: 24, borderRadius: 6, flexShrink: 0 }} />
+                    : (
+                        <WKAvatar key={avatarKey} channel={conversationWrap.channel} style={{ width: 26, height: 26, borderRadius: '50%', flexShrink: 0 }} />
+                    )
                 }
             </span>
-            {conversationWrap.isMentionMe && conversationWrap.unread > 0 && (
+            {conversationWrap.isMentionMe && totalUnread > 0 && (
                 <span className="wk-mention-badge">@我</span>
             )}
             <span className="wk-conv-compact-name">
-                {channelInfo?.orgData.displayName ?? conversationWrap.channel.channelID}
+                {channelInfo?.orgData.displayName
+                    ? channelInfo.orgData.displayName
+                    : isThread
+                        ? <span className="wk-conv-compact-name-skeleton" />
+                        : conversationWrap.channel.channelID
+                }
             </span>
             {effectiveMute && (
                 <span className="wk-conv-compact-mute-icon">
                     <svg className="icon" viewBox="0 0 1131 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" width="12" height="12"><path d="M914.688 892.736L64 236.224l38.784-50.88L271.36 315.648a300.288 300.288 0 0 1 246.976-157.952v-33.28c0-16.64 13.504-30.08 30.08-30.08h2.304c16.576 0 30.08 13.44 30.08 30.08v32.96a299.776 299.776 0 0 1 284.928 299.136v294.272l45.504 58.624 48.768 37.696-45.312 45.632zM234.624 480.384l506.88 391.232H140.416l94.272-121.536-0.064-269.696z" fill="#bfbfbf" /></svg>
                 </span>
             )}
-            {conversationWrap.unread > 0 && (
+            {totalUnread > 0 && (
                 <span className="wk-conv-compact-badges">
                     <span
                         className="wk-conv-compact-badge"
                         style={effectiveMute ? { backgroundColor: "var(--semi-color-text-2)", color: "#fff" } : undefined}
                     >
-                        {conversationWrap.unread > 99 ? '99+' : conversationWrap.unread}
+                        {totalUnread > 99 ? '99+' : totalUnread}
                     </span>
-
+                </span>
+            )}
+            {hasThreads && (
+                <span
+                    className="wk-conv-compact-thread-tag"
+                    aria-label="展开/收起子区"
+                    onClick={(e) => { e.stopPropagation(); onToggleThreads?.(e) }}
+                >
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="#6569E8">
+                        <path d="M12 2.81a1 1 0 0 1 0-1.41l.36-.36a1 1 0 0 1 1.41 0l9.2 9.2a1 1 0 0 1 0 1.4l-.7.7a1 1 0 0 1-1.3.13l-9.54-6.72a1 1 0 0 1-.08-1.58l1-1L12 2.8ZM12 21.2a1 1 0 0 1 0 1.41l-.35.35a1 1 0 0 1-1.41 0l-9.2-9.19a1 1 0 0 1 0-1.41l.7-.7a1 1 0 0 1 1.3-.12l9.54 6.72a1 1 0 0 1 .07 1.58l-1 1 .35.36ZM15.66 16.8a1 1 0 0 1-1.38.28l-8.49-5.66A1 1 0 1 1 6.9 9.76l8.49 5.65a1 1 0 0 1 .27 1.39ZM17.1 14.25a1 1 0 1 0 1.11-1.66L9.73 6.93a1 1 0 0 0-1.11 1.66l8.49 5.66Z" />
+                    </svg>
                 </span>
             )}
         </div>
@@ -298,7 +319,7 @@ export default class ConversationList extends Component<ConversationListProps, C
         return false
     }
 
-    conversationItem(conversationWrap: ConversationWrap, hasThreads = false) {
+    conversationItem(conversationWrap: ConversationWrap, hasThreads = false, threadUnread = 0) {
         let channelInfo = conversationWrap.channelInfo
         if (!channelInfo) {
             WKSDK.shared().channelManager.fetchChannelInfo(conversationWrap.channel)
@@ -317,8 +338,14 @@ export default class ConversationList extends Component<ConversationListProps, C
                     selected={selected}
                     avatarKey={avatarKey}
                     hasThreads={hasThreads}
+                    threadUnread={threadUnread}
                     onClick={() => { if (this.props.onClick) this.props.onClick(conversationWrap) }}
                     onDoubleClick={
+                        conversationWrap.channel.channelType === ChannelTypeGroup && hasThreads
+                            ? (e) => { e.preventDefault(); this._toggleGroupExpand(conversationWrap.channel.channelID) }
+                            : undefined
+                    }
+                    onToggleThreads={
                         conversationWrap.channel.channelType === ChannelTypeGroup && hasThreads
                             ? (e) => { e.preventDefault(); this._toggleGroupExpand(conversationWrap.channel.channelID) }
                             : undefined
@@ -597,50 +624,25 @@ export default class ConversationList extends Component<ConversationListProps, C
 
         const renderItem = (item: ConversationWrap | { type: 'thread-overflow'; parentGroupId: string; count: number; unreadCount: number }) => {
             if ('type' in item && item.type === 'thread-overflow') {
-                if (compact) {
-                    // compact 模式：overflow indicator 改为「+N 个子区」/ 「收起」可切换
-                    const isExpanded = expandedGroupIds.has(item.parentGroupId)
-                    const toggleExpand = () => this._toggleGroupExpand(item.parentGroupId)
-                    // 展开时渲染所有子区
-                    const extraThreads = threadsByParent.get(item.parentGroupId) ?? []
-                    return (
-                        <React.Fragment key={`overflow-${item.parentGroupId}`}>
-                            {/* 展开时：先渲染剩余子区，控件始终置底 */}
-                            {isExpanded && extraThreads.map(conv => {
-                                const selected = !!(this.props.select && this.props.select.isEqual(conv.channel))
-                                return (
-                                    <CompactGroupItem
-                                        key={conv.channel.getChannelKey()}
-                                        conversationWrap={conv}
-                                        selected={selected}
-                                        onClick={() => { if (this.props.onClick) this.props.onClick(conv) }}
-                                        onContextMenu={(e) => { this._handleContextMenu(conv, e) }}
-                                    />
-                                )
-                            })}
-                            {/* 展开/收起控件始终置底 */}
-                            <div
-                                className={`wk-conv-compact-thread-overflow${isExpanded ? ' wk-conv-compact-thread-overflow--expanded' : ''}`}
-                                onClick={toggleExpand}
-                            >
-                                {isExpanded ? '收起' : `+ ${item.count} 个子区`}
-                                {!isExpanded && item.unreadCount > 0 && (
-                                    <span className="wk-conv-compact-thread-overflow-badge">
-                                        {item.unreadCount > 99 ? '99+' : item.unreadCount}
-                                    </span>
-                                )}
-                            </div>
-                        </React.Fragment>
-                    )
-                }
+                // 展开/收起由双击群组行触发，不显示「+N 个子区」控件
+                const isExpanded = expandedGroupIds.has(item.parentGroupId)
+                if (!isExpanded) return null
+                const extraThreads = threadsByParent.get(item.parentGroupId) ?? []
                 return (
-                    <div
-                        key={`overflow-${item.parentGroupId}`}
-                        className="wk-conversationlist-thread-overflow"
-                        onClick={() => onThreadOverflowClick?.(item.parentGroupId)}
-                    >
-                        <span>+{item.count} 个子区</span>
-                    </div>
+                    <React.Fragment key={`overflow-${item.parentGroupId}`}>
+                        {extraThreads.map(conv => {
+                            const selected = !!(this.props.select && this.props.select.isEqual(conv.channel))
+                            return (
+                                <CompactGroupItem
+                                    key={conv.channel.getChannelKey()}
+                                    conversationWrap={conv}
+                                    selected={selected}
+                                    onClick={() => { if (this.props.onClick) this.props.onClick(conv) }}
+                                    onContextMenu={(e) => { this._handleContextMenu(conv, e) }}
+                                />
+                            )
+                        })}
+                    </React.Fragment>
                 )
             }
             const conv = item as ConversationWrap
@@ -653,7 +655,15 @@ export default class ConversationList extends Component<ConversationListProps, C
 
             const hasThreads = conv.channel.channelType === ChannelTypeGroup
                 && threadsByParent.has(conv.channel.channelID)
-            return this.conversationItem(conv, hasThreads)
+            const threadUnread = (() => {
+                if (!hasThreads) return 0
+                const isExpanded = expandedGroupIds.has(conv.channel.channelID)
+                if (isExpanded) return 0
+                const threads = threadsByParent.get(conv.channel.channelID) ?? []
+                // 子区勿扰继承父群组，父群组勿扰时整行不显示未读，这里只需汇总子区未读
+                return threads.reduce((sum, t) => sum + t.unread, 0)
+            })()
+            return this.conversationItem(conv, hasThreads, threadUnread)
         }
 
         return <div id="wk-conversationlist" className="wk-conversationlist" onScroll={this._handleScroll}>

@@ -231,7 +231,7 @@ export class ChatContentPage extends Component<
                           <WKAvatar
                             key={WKApp.shared.getChannelAvatarTag(channel)}
                             channel={channel}
-                            style={{ width: 28, height: 28, borderRadius: 6, flexShrink: 0 }}
+                            style={{ width: 28, height: 28, borderRadius: '50%', flexShrink: 0 }}
                           />
                         ) : channel.channelType === ChannelTypeCommunityTopic ? (
                           // 子区：🧵 icon，圆角背景（对齐群聊 hash-icon 样式）
@@ -486,19 +486,25 @@ export default class ChatPage extends Component<any, ChatPageState> {
         render={(vm: ChatVM) => {
           const { activeTab } = this.state
           // 计算各 Tab 未读总数
+          // 预构建子区 Map，避免 O(n²)
+          const threadsByParentForTab = new Map<string, ConversationWrap[]>()
+          for (const c of vm.conversations) {
+            if (c.channel.channelType !== ChannelTypeCommunityTopic) continue
+            if (c.channelInfo?.mute) continue
+            const parentGroupNo = (c.channelInfo?.orgData?.parentGroupNo as string | undefined)
+              || parseThreadChannelId(c.channel.channelID)?.groupNo
+            if (!parentGroupNo) continue
+            const list = threadsByParentForTab.get(parentGroupNo) || []
+            list.push(c)
+            threadsByParentForTab.set(parentGroupNo, list)
+          }
           const groupUnread = vm.conversations.reduce((sum: number, c: ConversationWrap) => {
-            if (c.channel.channelType !== ChannelTypeGroup && c.channel.channelType !== ChannelTypeCommunityTopic) return sum
-            const info = c.channelInfo
-            if (info?.mute) return sum
-            // 子区：额外检查父群聊 mute
-            if (c.channel.channelType === ChannelTypeCommunityTopic) {
-              const parentGroupNo = info?.orgData?.parentGroupNo as string | undefined
-              if (parentGroupNo) {
-                const parentInfo = WKSDK.shared().channelManager.getChannelInfo(new Channel(parentGroupNo, ChannelTypeGroup))
-                if (parentInfo?.mute) return sum
-              }
-            }
-            return sum + (c.unread || 0)
+            // 只计群组，子区未读已通过父群组 totalUnread 汇总，不重复计入
+            if (c.channel.channelType !== ChannelTypeGroup) return sum
+            if (c.channelInfo?.mute) return sum
+            const threads = threadsByParentForTab.get(c.channel.channelID) ?? []
+            const threadUnread = threads.reduce((s, t) => s + (t.unread || 0), 0)
+            return sum + (c.unread || 0) + threadUnread
           }, 0)
           const dmUnread = vm.conversations.reduce((sum: number, c: ConversationWrap) => {
             if (c.channel.channelType === ChannelTypePerson) {

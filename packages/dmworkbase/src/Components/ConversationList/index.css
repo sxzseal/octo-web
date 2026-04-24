@@ -425,11 +425,11 @@ body[theme-mode=dark] .wk-conversationlist:hover::-webkit-scrollbar-thumb {
 .wk-conv-compact-item {
     display: flex;
     align-items: center;
-    gap: 4px;
+    gap: 8px;
     padding: 0 8px 0 20px;           /* 加大左缩进体现层级，黑条仍贴左边缘 */
     border-radius: 0;
     cursor: pointer;
-    height: 32px;
+    height: 36px;
     box-sizing: border-box;
     position: relative;
     transition: background 200ms;
@@ -451,14 +451,16 @@ body[theme-mode=dark] .wk-conversationlist:hover::-webkit-scrollbar-thumb {
 
 .wk-conv-compact-icon {
     flex-shrink: 0;
-    width: 24px;                       /* 群聊头像宽度，子区 icon 居中 */
-    height: 24px;
+    width: 26px;
+    height: 26px;
     display: flex;
     align-items: center;
     justify-content: center;
     color: var(--wk-text-tertiary, #9498A8);
     position: relative;
 }
+
+
 
 /* Figma: emoji/icon 左上角 6x6 红色小圆点（有未读消息时显示） */
 .wk-conv-compact-icon--reddot::after {
@@ -482,6 +484,23 @@ body[theme-mode=dark] .wk-conversationlist:hover::-webkit-scrollbar-thumb {
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+}
+
+/* 子区名称 skeleton：channelInfo 未加载时显示灰色占位条 */
+.wk-conv-compact-name-skeleton {
+    display: inline-block;
+    width: 80px;
+    height: 12px;
+    border-radius: 4px;
+    background: linear-gradient(90deg, var(--wk-bg-elevated, #f0f0f0) 25%, var(--wk-bg-hover, #e0e0e0) 50%, var(--wk-bg-elevated, #f0f0f0) 75%);
+    background-size: 200% 100%;
+    animation: wk-skeleton-shimmer 1.2s infinite;
+    vertical-align: middle;
+}
+
+@keyframes wk-skeleton-shimmer {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
 }
 
 .wk-conv-compact-item--unread .wk-conv-compact-name {
@@ -555,14 +574,22 @@ body[theme-mode=dark] .wk-conversationlist:hover::-webkit-scrollbar-thumb {
 /* compact 模式子区 L连接线 */
 .wk-conv-compact-item.wk-conv-compact-item--thread {
     position: relative;
-    padding-left: 48px;
+    padding-left: 52px;
+    height: 32px;                      /* 子区行高保持原来 32px */
+    gap: 2px;
+}
+
+/* 子区 icon 容器贴合 icon 尺寸，不撑空白 */
+.wk-conv-compact-item--thread .wk-conv-compact-icon {
+    width: 13px;
+    height: 13px;
 }
 
 /* L 转角（带弧度）：从中间到底部，border-left + border-bottom */
 .wk-conv-compact-item.wk-conv-compact-item--thread::after {
     content: '';
     position: absolute;
-    left: 36px;
+    left: 40px;
     top: 0;
     height: 50%;
     width: 10px;
@@ -576,7 +603,7 @@ body[theme-mode=dark] .wk-conversationlist:hover::-webkit-scrollbar-thumb {
 .wk-conv-compact-item.wk-conv-compact-item--thread:has(+ .wk-conv-compact-thread-overflow)::before {
     content: '';
     position: absolute;
-    left: 36px;
+    left: 40px;
     top: 50%;
     bottom: 0;
     width: 1px;
@@ -637,7 +664,59 @@ body[theme-mode=dark] .wk-conversationlist:hover::-webkit-scrollbar-thumb {
     position: relative;
 }
 
+.wk-conv-compact-thread-tag {
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
+    border-radius: 4px;
+    margin-left: 2px;
+    cursor: pointer;
+    opacity: 0.85;
+    transition: background 0.15s, opacity 0.15s;
+}
+
+.wk-conv-compact-thread-tag:hover {
+    opacity: 1;
+    background: rgba(101, 105, 232, 0.12);
+}
+
+
+
+
+
 /* 父群聊有子区：不画竖线，连接线靠子区自身的 ::after L 形体现 */
+
+/* 头像 wrapper，用于叠加子区角标 */
+.wk-conv-compact-avatar-wrap {
+    position: relative;
+    display: inline-flex;
+    flex-shrink: 0;
+}
+
+/* 右下角子区标识角标 */
+.wk-conv-compact-thread-badge {
+    position: absolute;
+    bottom: -2px;
+    right: -3px;
+    width: 12px;
+    height: 12px;
+    border-radius: 3px;
+    background: var(--wk-bg-navrail, #f5f6f7);
+    border: 1px solid var(--wk-border-subtle, rgba(28,28,35,0.10));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--wk-text-tertiary, #9498A8);
+    pointer-events: none;
+}
+
+body[theme-mode=dark] .wk-conv-compact-thread-badge {
+    background: var(--wk-bg-deep, #1c1c23);
+    border-color: rgba(255,255,255,0.12);
+}
 
 /* compact 模式 mute 状态 */
 .wk-conv-compact-item--muted .wk-conv-compact-name {

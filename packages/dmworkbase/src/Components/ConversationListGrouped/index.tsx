@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from "react"
 import { Modal } from "@douyinfe/semi-ui"
 import { flushSync } from "react-dom"
-import { ChannelTypeGroup, Channel } from "wukongimjssdk"
+import WKSDK, { ChannelTypeGroup, Channel } from "wukongimjssdk"
 import { parseThreadChannelId } from "../../Service/Thread"
 import { CategoryItem } from "../../Service/CategoryService"
 import { ConversationWrap } from "../../Service/Model"
@@ -283,8 +283,21 @@ const ConversationListGrouped: React.FC<ConversationListGroupedProps> = ({
         const groupCount = cat.is_default
             ? groupConversations.filter(c => !assignedGroupNos.has(c.channel.channelID)).length
             : (cat.groups || []).length
-        const unreadCount = catConvs.reduce((sum, c) => sum + (c.unread || 0), 0)
-        const hasMention = catConvs.some(c => c.isMentionMe)
+        const isMuted = (c: ConversationWrap): boolean => {
+            if (c.channelInfo?.mute) return true
+            // 子区继承父群组勿扰状态
+            const parentGroupNo = c.channelInfo?.orgData?.parentGroupNo
+                || parseThreadChannelId(c.channel.channelID)?.groupNo
+            if (parentGroupNo) {
+                const parentInfo = WKSDK.shared().channelManager.getChannelInfo(
+                    new Channel(parentGroupNo, ChannelTypeGroup)
+                )
+                if (parentInfo?.mute) return true
+            }
+            return false
+        }
+        const unreadCount = catConvs.reduce((sum, c) => sum + (isMuted(c) ? 0 : (c.unread || 0)), 0)
+        const hasMention = catConvs.some(c => !isMuted(c) && c.isMentionMe)
         return {
             id: cat.category_id,
             name: cat.is_default ? '默认分组' : cat.name,
