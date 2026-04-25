@@ -328,7 +328,9 @@ export class ChannelQrcodeResp implements APIResp {
     fill(data: any): void {
         this.qrcode = data.qrcode
         this.expire = data.expire
+        this.invite_url = data.invite_url || ''
     }
     qrcode!: string
     expire!: string
+    invite_url!: string
 }

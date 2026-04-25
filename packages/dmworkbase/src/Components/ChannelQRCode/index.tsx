@@ -72,7 +72,7 @@ export default class ChannelQRCode extends Component<ChannelQRCodeProps> {
 
                     {
                         vm.qrcodeResp && channelInfo?.orgData?.invite !== 1 ? <div className="wk-channelqrcode-actions">
-                            <Button theme="solid" type="primary" onClick={() => this.handleCopyLink(vm.qrcodeResp!.qrcode)}>
+                            <Button theme="solid" type="primary" onClick={() => this.handleCopyLink(vm.qrcodeResp!.invite_url || vm.qrcodeResp!.qrcode)}>
                                 复制邀请链接
                             </Button>
                         </div> : undefined
