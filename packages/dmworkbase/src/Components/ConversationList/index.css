@@ -756,3 +756,31 @@ body[theme-mode=dark] .wk-conv-compact-thread-badge {
     user-select: none;
     margin: 0;                                /* 间距由父容器 gap:4 控制 */
 }
+
+/* ── 外部群角标 ── */
+/* 常规会话列表：群名后显示「外部」Tag（紫色，对齐 Subscribers/SubscriberList 视觉） */
+.wk-conversationlist-item-external-tag {
+    margin-left: var(--wk-sp-1);
+    font-size: var(--wk-text-size-tiny);
+    flex-shrink: 0;
+}
+
+/* 紧凑群聊 Tab：mini 「外部」标识（12px 字号，圆角紫色淡底） */
+.wk-conv-compact-external-badge {
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin-left: var(--wk-sp-1);
+    padding: 0 4px;
+    height: 14px;
+    font-size: 10px;
+    font-weight: 500;
+    line-height: 1;
+    border-radius: 3px;
+    color: var(--semi-color-purple-6, #7b41e1);
+    background: color-mix(in srgb, var(--semi-color-purple-6, #7b41e1) 12%, transparent);
+    user-select: none;
+    white-space: nowrap;
+}
+

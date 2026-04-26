@@ -4,7 +4,7 @@ import { Channel, ChannelInfo, ChannelTypePerson, ChannelTypeGroup } from "wukon
 import { ChannelTypeCommunityTopic } from "../../Service/Const";
 import { parseThreadChannelId } from "../../Service/Thread";
 import React, { Component } from "react";
-import { Modal } from "@douyinfe/semi-ui";
+import { Modal, Tag } from "@douyinfe/semi-ui";
 import { ConversationWrap, MessageWrap } from "../../Service/Model";
 import { getTimeStringAutoShort2 } from '../../Utils/time'
 import classNames from "classnames";
@@ -134,6 +134,10 @@ const CompactGroupItem: React.FC<CompactGroupItemProps> = ({
                         : conversationWrap.channel.channelID
                 }
             </span>
+            {conversationWrap.channel.channelType === ChannelTypeGroup
+                && channelInfo?.orgData?.is_external_group === 1 && (
+                <span className="wk-conv-compact-external-badge" aria-label="外部群">外部</span>
+            )}
             {effectiveMute && (
                 <span className="wk-conv-compact-mute-icon">
                     <svg className="icon" viewBox="0 0 1131 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" width="12" height="12"><path d="M914.688 892.736L64 236.224l38.784-50.88L271.36 315.648a300.288 300.288 0 0 1 246.976-157.952v-33.28c0-16.64 13.504-30.08 30.08-30.08h2.304c16.576 0 30.08 13.44 30.08 30.08v32.96a299.776 299.776 0 0 1 284.928 299.136v294.272l45.504 58.624 48.768 37.696-45.312 45.632zM234.624 480.384l506.88 391.232H140.416l94.272-121.536-0.064-269.696z" fill="#bfbfbf" /></svg>
@@ -390,6 +394,12 @@ export default class ConversationList extends Component<ConversationListProps, C
                                 )}
                                 {channelInfo?.orgData.displayName}
                             </h3>
+                            {conversationWrap.channel.channelType === ChannelTypeGroup
+                                && channelInfo?.orgData?.is_external_group === 1 && (
+                                <Tag size="small" color="purple" className="wk-conversationlist-item-external-tag">
+                                    外部
+                                </Tag>
+                            )}
                             {channelInfo?.orgData?.robot === 1 && <AiBadge />}
                             {
                                 channelInfo?.orgData.identityIcon ? <img style={{ "width": channelInfo?.orgData?.identitySize.width, "height": channelInfo?.orgData?.identitySize.height }} src={channelInfo?.orgData.identityIcon}></img> : undefined
