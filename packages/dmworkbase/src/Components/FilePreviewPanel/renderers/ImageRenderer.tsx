@@ -25,17 +25,6 @@ const ImageRenderer: React.FC<ImageRendererProps> = ({
   onError,
   mode = "auto",
 }) => {
-  // 文件大小检查（超过 20MB 不渲染）
-  if (file.size && isFileTooLarge(file.size)) {
-    return (
-      <FileTooLarge
-        fileName={file.name}
-        fileSize={file.size}
-        fileUrl={file.url}
-      />
-    );
-  }
-
   const [loading, setLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
   const [imageSize, setImageSize] = useState({ width: 0, height: 0 });
@@ -100,6 +89,17 @@ const ImageRenderer: React.FC<ImageRendererProps> = ({
   const handleOpenInNewWindow = useCallback(() => {
     window.open(file.url, "_blank", "noopener,noreferrer");
   }, [file.url]);
+
+  // 文件大小检查（超过 20MB 不渲染）- 移到 hooks 之后
+  if (file.size && isFileTooLarge(file.size)) {
+    return (
+      <FileTooLarge
+        fileName={file.name}
+        fileSize={file.size}
+        fileUrl={file.url}
+      />
+    );
+  }
 
   // 根据图片尺寸、容器尺寸和模式计算图片样式类
   const getImageFitClass = (): string => {

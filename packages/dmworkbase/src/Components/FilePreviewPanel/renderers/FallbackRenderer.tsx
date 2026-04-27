@@ -10,6 +10,7 @@ import {
   Info,
 } from "lucide-react";
 import { BaseRendererProps } from "../types";
+import { formatFileSize } from "../config";
 import "./FallbackRenderer.css";
 
 export interface FallbackRendererProps extends BaseRendererProps {}
@@ -54,16 +55,6 @@ function getFileIcon(
 ): React.FC<{ size?: number; className?: string }> {
   const ext = extension.toLowerCase();
   return FILE_TYPE_ICONS[ext] || File;
-}
-
-// 格式化文件大小
-function formatFileSize(bytes?: number): string {
-  if (bytes === undefined || bytes <= 0) return "";
-  if (bytes < 1024) return `${bytes} B`;
-  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
-  if (bytes < 1024 * 1024 * 1024)
-    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
-  return `${(bytes / (1024 * 1024 * 1024)).toFixed(1)} GB`;
 }
 
 /**

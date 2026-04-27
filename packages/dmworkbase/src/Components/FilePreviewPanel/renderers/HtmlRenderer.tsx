@@ -1,4 +1,10 @@
-import React, { useState, useRef, useEffect, useCallback } from "react";
+import React, {
+  useState,
+  useRef,
+  useEffect,
+  useCallback,
+  useLayoutEffect,
+} from "react";
 import SyntaxHighlighter from "react-syntax-highlighter";
 import { BaseRendererProps } from "../types";
 import { isFileTooLarge } from "../config";
@@ -118,20 +124,14 @@ const HtmlRenderer: React.FC<HtmlRendererProps> = ({
     if (!iframe) return;
 
     const handleMessage = (event: MessageEvent) => {
-      // 安全检查：验证消息来源
-      // blob URL 的 origin 是 "null"（字符串），需要特殊处理
-      // 同时检查消息是否来自我们的 iframe
-      const isFromOurIframe =
-        event.source === iframe.contentWindow ||
-        event.origin === "null" || // blob URL origin
-        event.origin === window.location.origin;
-
-      if (!isFromOurIframe) {
+      // 安全检查：验证消息确实来自我们的 iframe
+      // 只检查 event.source，这是唯一可靠的验证方式
+      if (event.source !== iframe.contentWindow) {
         return; // 忽略来自其他来源的消息
       }
 
       // 检查消息类型
-      if (event.data && event.data.type === "html-render-error") {
+      if (event.data?.type === "html-render-error") {
         const errorMsg = `渲染错误: ${event.data.message || "未知错误"}`;
         setRenderError(errorMsg);
         handleViewModeChange("source");
@@ -142,6 +142,13 @@ const HtmlRenderer: React.FC<HtmlRendererProps> = ({
     window.addEventListener("message", handleMessage);
     return () => window.removeEventListener("message", handleMessage);
   }, [viewMode, blobUrl, handleViewModeChange, onError]);
+
+  // 使用 useEffect 通知错误，避免在渲染阶段调用外部回调
+  useEffect(() => {
+    if (error) {
+      onError?.(error);
+    }
+  }, [error, onError]);
 
   // 文件大小检查（超过 20MB 不渲染）- 移到 hooks 之后
   if (file.size && isFileTooLarge(file.size)) {
@@ -161,7 +168,6 @@ const HtmlRenderer: React.FC<HtmlRendererProps> = ({
 
   // 内容加载错误
   if (error) {
-    onError?.(error);
     return <RendererState type="error" message={error} onRetry={reload} />;
   }
 

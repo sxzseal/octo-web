@@ -110,12 +110,15 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({
   });
 
   // 检测是否为大文件（超过限制强制使用源码模式）
-  // 使用 TextEncoder 替代 Blob 计算 size，避免内存浪费
+  // 优先使用 file.size（服务器已提供），避免额外内存分配
   const isLargeFile = useMemo(() => {
+    if (file.size) {
+      return file.size > MARKDOWN_PREVIEW_LIMIT;
+    }
+    // 回退：使用 content.length 粗略判断（对 ASCII 为主的 Markdown 够用）
     if (!content) return false;
-    const contentSize = new TextEncoder().encode(content).length;
-    return contentSize > MARKDOWN_PREVIEW_LIMIT;
-  }, [content]);
+    return content.length > MARKDOWN_PREVIEW_LIMIT;
+  }, [file.size, content]);
 
   // 大文件强制使用源码模式
   const effectiveViewMode = isLargeFile ? "source" : viewMode;
@@ -265,6 +268,13 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({
     };
   }, [isTocOpen, effectiveViewMode, content, tocItems]);
 
+  // 使用 useEffect 通知错误，避免在渲染阶段调用外部回调
+  useEffect(() => {
+    if (error) {
+      onError?.(error);
+    }
+  }, [error, onError]);
+
   // 文件大小检查（超过 20MB 不渲染）- 移到 hooks 之后
   if (file.size && isFileTooLarge(file.size)) {
     return (
@@ -290,7 +300,6 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({
 
   // 错误状态
   if (error) {
-    onError?.(error);
     return (
       <div className="wk-file-preview-markdown-renderer wk-file-preview-markdown-renderer--error">
         <span className="wk-file-preview-markdown-renderer__message">

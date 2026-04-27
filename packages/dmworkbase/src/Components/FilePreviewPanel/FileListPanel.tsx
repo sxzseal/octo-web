@@ -12,6 +12,7 @@ import {
   X,
 } from "lucide-react";
 import { ConversationFile } from "./FilePreviewHeader";
+import { formatFileSize } from "./config";
 import "./FileListPanel.css";
 
 export interface FileListPanelProps {
@@ -77,16 +78,6 @@ function getFileIcon(extension: string): React.ReactNode {
   }
 
   return <File size={16} />;
-}
-
-/** 格式化文件大小 */
-function formatFileSize(bytes?: number): string {
-  if (!bytes) return "";
-  if (bytes < 1024) return `${bytes} B`;
-  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
-  if (bytes < 1024 * 1024 * 1024)
-    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
-  return `${(bytes / (1024 * 1024 * 1024)).toFixed(1)} GB`;
 }
 
 /**
