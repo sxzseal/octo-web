@@ -465,7 +465,7 @@ const PdfRenderer: React.FC<PdfRendererProps> = ({ file, onError }) => {
               onPageChange={handlePageChange}
               defaultScale={SpecialZoomLevel.PageWidth}
               characterMap={{
-                url: "https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/cmaps/",
+                url: "/pdfjs/cmaps/",
                 isCompressed: true,
               }}
               renderError={(error) => (
