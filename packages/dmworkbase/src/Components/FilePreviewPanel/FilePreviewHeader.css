@@ -269,21 +269,20 @@
    响应式：小宽度面板适配
    ============================================ */
 
-/* 左侧区域允许收缩但不撑满 */
-.wk-file-preview-header__left {
-  min-width: 0;
-  flex-shrink: 1;
-  overflow: hidden;
-}
-
-/* 文件名根据空间自适应 */
+/* 文件选择器允许收缩，但不影响浮窗定位 */
 .wk-file-preview-header__dropdown {
   min-width: 0;
-  max-width: 100%;
+  flex-shrink: 1;
 }
 
+/* 文件名截断 */
 .wk-file-preview-header__dropdown-btn {
-  max-width: 100%;
+  max-width: 240px;
+}
+
+/* 视图切换按钮不收缩 */
+.wk-file-preview-header__view-toggle {
+  flex-shrink: 0;
 }
 
 /* 面板宽度 < 500px 时的适配 */
