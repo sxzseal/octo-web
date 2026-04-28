@@ -161,7 +161,6 @@ export class ChatContentPage extends Component<
       if (detail?.groupNo === this.props.channel.channelID) {
         this.setState({
           showThreadPanel: true,
-          showChannelSetting: false,
           activeThread: detail.thread || null,
           previewFile: null, // 关闭文件预览
           activePreviewMessageId: null,
@@ -235,7 +234,6 @@ export class ChatContentPage extends Component<
         this.setState({
           showThreadPanel: true,
           activeThread: null,
-          showChannelSetting: false,
           previewFile: null, // 关闭文件预览（互斥）
           activePreviewMessageId: null,
         });
@@ -349,7 +347,6 @@ export class ChatContentPage extends Component<
                 this.setState({
                   showThreadPanel: !this.state.showThreadPanel,
                   activeThread: null,
-                  showChannelSetting: false,
                   previewFile: null, // 关闭文件预览
                   activePreviewMessageId: null,
                 });
@@ -497,7 +494,6 @@ export class ChatContentPage extends Component<
                             this.setState({
                               showThreadPanel: true,
                               activeThread: null,
-                              showChannelSetting: false,
                               previewFile: null, // 关闭文件预览（互斥）
                               activePreviewMessageId: null,
                             });
@@ -513,7 +509,6 @@ export class ChatContentPage extends Component<
                         e.stopPropagation();
                         this.setState({
                           showChannelSetting: !this.state.showChannelSetting,
-                          showThreadPanel: false,
                           previewFile: null, // 关闭文件预览（互斥）
                           activePreviewMessageId: null,
                         });
@@ -561,7 +556,6 @@ export class ChatContentPage extends Component<
                   if (threadInfo) {
                     this.setState({
                       showThreadPanel: true,
-                      showChannelSetting: false,
                       previewFile: null, // 关闭文件预览（互斥）
                       activePreviewMessageId: null,
                       activeThread: buildThreadStub(
