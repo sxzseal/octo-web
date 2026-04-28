@@ -69,9 +69,9 @@ import FoldSessionExpandedList from "./FoldSessionExpandedList";
  */
 function getEffectiveContent(message: Message): MessageContent {
   if (message.remoteExtra?.isEdit && message.remoteExtra?.contentEdit) {
-    return message.remoteExtra.contentEdit
+    return message.remoteExtra.contentEdit;
   }
-  return message.content
+  return message.content;
 }
 
 const foldSessionAvatarIcon = new URL(
@@ -236,14 +236,23 @@ export class Conversation
     // 消息不在当前列表中，使用传入的信息构造一个最小化的 Message 对象
     // 用于设置回复状态
     const channel = new Channel(info.channelId, info.channelType);
+
+    // 创建一个符合 MessageContent 接口的对象，确保 conversationDigest 可被正确序列化
+    const fakeContent = {
+      contentType: 0,
+      conversationDigest: info.conversationDigest,
+      encodeJSON: function () {
+        return { conversationDigest: this.conversationDigest };
+      },
+      decode: function () {},
+    } as unknown as MessageContent;
+
     const fakeMessage = {
       messageID: info.messageId,
       messageSeq: info.messageSeq,
       fromUID: info.fromUID,
       channel: channel,
-      content: {
-        conversationDigest: info.conversationDigest,
-      },
+      content: fakeContent,
       remoteExtra: undefined,
     } as unknown as Message;
 
@@ -1571,7 +1580,9 @@ export class Conversation
                       WKApp.shared.baseContext.showConversationSelect(
                         (channels: Channel[]) => {
                           for (const message of messages) {
-                            const cloneContent = getEffectiveContent(message.message);
+                            const cloneContent = getEffectiveContent(
+                              message.message
+                            );
                             for (const channel of channels) {
                               this.sendMessage(cloneContent, channel);
                             }
