@@ -57,6 +57,8 @@ export default class SummaryListPage extends Component<{}, SummaryListPageState>
     };
 
     private searchTimer: ReturnType<typeof setTimeout> | null = null;
+    private batchPollTimer: ReturnType<typeof setInterval> | null = null;
+    private isBatchPolling = false;
 
     private handleStatusChange_ = () => this.loadData();
     private handleSpaceChanged_ = () => this.loadData();
@@ -69,6 +71,7 @@ export default class SummaryListPage extends Component<{}, SummaryListPageState>
 
     componentWillUnmount() {
         if (this.searchTimer) clearTimeout(this.searchTimer);
+        this.stopBatchPoll();
         window.removeEventListener("summary-status-change", this.handleStatusChange_);
         WKApp.mittBus.off("summary-space-changed", this.handleSpaceChanged_);
     }
@@ -84,7 +87,9 @@ export default class SummaryListPage extends Component<{}, SummaryListPageState>
                 keyword: keyword || undefined,
             };
             const resp = await api.listSummaries(params);
-            this.setState({ items: resp.items, total: resp.total, loading: false });
+            this.setState({ items: resp.items, total: resp.total, loading: false }, () => {
+                this.maybeStartBatchPoll();
+            });
         } catch (err: any) {
             this.setState({ error: err.message || "加载失败", loading: false });
         }
@@ -93,6 +98,56 @@ export default class SummaryListPage extends Component<{}, SummaryListPageState>
     handlePageChange = (page: number) => {
         this.setState({ page }, () => this.loadData());
     };
+
+    private maybeStartBatchPoll() {
+        const activeIds = this.state.items
+            .filter(item =>
+                item.status === TaskStatus.PENDING ||
+                item.status === TaskStatus.WAITING_CONFIRM ||
+                item.status === TaskStatus.PROCESSING
+            )
+            .map(item => item.task_id);
+
+        if (activeIds.length === 0) {
+            this.stopBatchPoll();
+            return;
+        }
+
+        this.stopBatchPoll();
+        this.batchPollTimer = setInterval(() => this.doBatchPoll(activeIds), 5000);
+    }
+
+    private async doBatchPoll(taskIds: number[]) {
+        if (this.isBatchPolling) return;
+        this.isBatchPolling = true;
+        try {
+            const updates = await api.batchStatus(taskIds);
+            const updateMap = new Map(updates.map(u => [u.id, u]));
+            let changed = false;
+            const newItems = this.state.items.map(item => {
+                const update = updateMap.get(item.task_id);
+                if (update && update.status !== item.status) {
+                    changed = true;
+                    return { ...item, status: update.status };
+                }
+                return item;
+            });
+            if (changed) {
+                this.setState({ items: newItems }, () => this.maybeStartBatchPoll());
+            }
+        } catch {
+            // ignore
+        } finally {
+            this.isBatchPolling = false;
+        }
+    }
+
+    private stopBatchPoll() {
+        if (this.batchPollTimer) {
+            clearInterval(this.batchPollTimer);
+            this.batchPollTimer = null;
+        }
+    }
 
     handleStatusChange = (value: string | number) => {
         const statusFilter = value === "" ? undefined : (value as TaskStatusType);

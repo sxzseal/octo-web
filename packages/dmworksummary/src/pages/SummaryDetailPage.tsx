@@ -215,42 +215,57 @@ export default class SummaryDetailPage extends Component<SummaryDetailPageProps,
         }
     };
 
-    /** Re-fetch task detail every 3s when task is in progress */
+    /** Poll task status via lightweight batch endpoint, only reload full detail on change */
     startStatusPolling() {
         if (this.statusPollTimer) return;
-        this.statusPollTimer = setInterval(async () => {
+
+        const pollOnce = async () => {
             if (this.taskId == null) return;
             if (this.isStatusPolling) return;
             this.isStatusPolling = true;
             try {
-                const detail = await api.getSummaryDetail(this.taskId);
+                const updates = await api.batchStatus([this.taskId]);
+                const update = updates.find(u => u.id === this.taskId);
+                if (!update) return;
+
                 const prevStatus = this.state.lastKnownStatus;
-                const newStatus = detail.status;
+                const newStatus = update.status;
 
                 if (prevStatus !== undefined && prevStatus !== newStatus) {
+                    // Update lastKnownStatus immediately to avoid repeated event dispatch
+                    // if getSummaryDetail fails on the next line
+                    this.setState({ lastKnownStatus: newStatus });
                     window.dispatchEvent(new CustomEvent("summary-status-change"));
-                }
+                    try {
+                        const detail = await api.getSummaryDetail(this.taskId);
+                        this.setState({ detail });
 
-                if (
-                    newStatus === TaskStatus.COMPLETED ||
-                    newStatus === TaskStatus.FAILED ||
-                    newStatus === TaskStatus.CANCELLED
-                ) {
-                    this.stopStatusPolling();
-                    this.setState({ detail, lastKnownStatus: newStatus });
-                    if (detail.summary_mode === SummaryMode.BY_PERSON) {
-                        this.loadPersonalResult();
-                        this.loadMembers();
+                        if (
+                            newStatus === TaskStatus.COMPLETED ||
+                            newStatus === TaskStatus.FAILED ||
+                            newStatus === TaskStatus.CANCELLED
+                        ) {
+                            this.stopStatusPolling();
+                            if (detail.summary_mode === SummaryMode.BY_PERSON) {
+                                this.loadPersonalResult();
+                                this.loadMembers();
+                            }
+                        }
+                    } catch {
+                        // Detail fetch failed, status already updated — next poll won't re-trigger
                     }
                 } else {
-                    this.setState({ detail, lastKnownStatus: newStatus });
+                    this.setState({ lastKnownStatus: newStatus });
                 }
             } catch {
                 // ignore polling errors
             } finally {
                 this.isStatusPolling = false;
             }
-        }, 3000);
+        };
+
+        pollOnce();
+        this.statusPollTimer = setInterval(pollOnce, 3000);
     }
 
     stopStatusPolling() {

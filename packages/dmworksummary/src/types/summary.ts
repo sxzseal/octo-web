@@ -246,6 +246,19 @@ export const TimeRangeTypeLabels: Record<number, string> = {
     4: "自上次总结以来",
 };
 
+/** 批量状态查询 - 单任务状态 */
+export interface BatchStatusItem {
+    id: number;
+    status: TaskStatusType;
+    progress: number;
+    updated_at: string;
+}
+
+/** 批量状态查询 - 响应 */
+export interface BatchStatusResponse {
+    tasks: BatchStatusItem[];
+}
+
 /** 聊天候选项（选择聊天弹窗用） */
 export interface ChatCandidate {
     chat_id: string;

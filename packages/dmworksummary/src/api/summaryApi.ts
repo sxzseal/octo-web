@@ -2,6 +2,8 @@ import axios from 'axios';
 import { WKApp } from '@octo/base';
 import type {
     ApiResponse,
+    BatchStatusItem,
+    BatchStatusResponse,
     ChatCandidate,
     CreateSummaryParams,
     CreateScheduleParams,
@@ -112,6 +114,13 @@ export async function regenerateSummary(taskId: number): Promise<{ task_id: numb
 }
 
 // ─── Status Management ─────────────────────────────────
+
+export async function batchStatus(taskIds: number[]): Promise<BatchStatusItem[]> {
+    const data = await post<BatchStatusResponse>('/summaries/batch-status', {
+        task_ids: taskIds,
+    });
+    return data?.tasks ?? [];
+}
 
 export async function cancelSummary(taskId: number): Promise<void> {
     return post(`/summaries/${taskId}/cancel`);
