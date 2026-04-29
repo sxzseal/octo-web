@@ -11,6 +11,8 @@
 .wk-file-preview-fallback-renderer__card {
   display: flex;
   align-items: center;
+  width: 400px;
+  max-width: 100%;
   padding: var(--wk-sp-3) var(--wk-sp-5);
   background: var(--wk-bg-surface);
   border: 1px solid var(--wk-border-default);
