@@ -125,7 +125,7 @@ export default class SummaryListPage extends Component<{}, SummaryListPageState>
                 return;
             }
             this.doBatchPoll(currentActiveIds);
-        }, 5000);
+        }, 2000);
     }
 
     private async doBatchPoll(taskIds: number[]) {
