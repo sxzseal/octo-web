@@ -31,7 +31,7 @@ export function splitSummaryText(markdown: string, maxLen = 4500): string[] {
     if (last.length + SIGNATURE.length <= maxLen) {
         chunks[chunks.length - 1] = last + SIGNATURE;
     } else {
-        chunks.push('---\n_by Octo 智能总结_');
+        chunks.push(SIGNATURE.trimStart());
     }
 
     return chunks;
@@ -61,11 +61,17 @@ function mergeSections(sections: string[], maxLen: number): string[] {
 
 function hardCut(text: string, maxLen: number): string[] {
     const chunks: string[] = [];
-    let remaining = text;
-    while (remaining.length > maxLen) {
-        chunks.push(remaining.slice(0, maxLen));
-        remaining = remaining.slice(maxLen);
+    const chars = [...text];
+    let buffer = '';
+
+    for (const char of chars) {
+        if ((buffer + char).length > maxLen) {
+            if (buffer) chunks.push(buffer);
+            buffer = char;
+        } else {
+            buffer += char;
+        }
     }
-    if (remaining) chunks.push(remaining);
+    if (buffer) chunks.push(buffer);
     return chunks;
 }

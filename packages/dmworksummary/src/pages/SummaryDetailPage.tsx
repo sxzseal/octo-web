@@ -51,6 +51,8 @@ interface SummaryDetailPageState {
     expandedReports: Record<string, boolean>;
 }
 
+const INTER_MESSAGE_DELAY_MS = 200;
+
 export default class SummaryDetailPage extends Component<SummaryDetailPageProps, SummaryDetailPageState> {
     state: SummaryDetailPageState = {
         detail: null,
@@ -329,21 +331,46 @@ export default class SummaryDetailPage extends Component<SummaryDetailPageProps,
         const { detail } = this.state;
         if (!detail?.result?.content?.trim()) return;
         WKApp.shared.baseContext.showConversationSelect(async (channels: Channel[]) => {
-            try {
-                const chunks = splitSummaryText(detail.result!.content);
-                for (const ch of channels) {
+            const chunks = splitSummaryText(detail?.result?.content ?? '');
+            const errors: string[] = [];
+
+            for (const ch of channels) {
+                try {
                     for (let i = 0; i < chunks.length; i++) {
-                        WKSDK.shared().chatManager.send(new MessageText(chunks[i]), ch);
+                        const msg = new MessageText(chunks[i]);
+
+                        // Inject space_id for person channels (matching ConversationVM.sendMessage pattern)
+                        const spaceId = WKApp.shared.currentSpaceId;
+                        if (spaceId && ch.channelType === ChannelTypePerson) {
+                            const originalEncodeJSON = msg.encodeJSON.bind(msg);
+                            msg.encodeJSON = () => {
+                                const obj = originalEncodeJSON();
+                                obj.space_id = spaceId;
+                                return obj;
+                            };
+                            msg.contentObj = { ...(msg.contentObj || {}), space_id: spaceId };
+                        }
+
+                        await WKSDK.shared().chatManager.send(msg, ch);
                         if (i < chunks.length - 1) {
-                            await new Promise((r) => setTimeout(r, 200));
+                            await new Promise((r) => setTimeout(r, INTER_MESSAGE_DELAY_MS));
                         }
                     }
+                } catch {
+                    errors.push(ch.channelID);
                 }
-                Toast.success("已转发");
-            } catch {
-                Toast.error("转发失败");
             }
-        }, "转发到聊天");
+
+            if (errors.length > 0) {
+                if (errors.length === channels.length) {
+                    Toast.error('转发失败');
+                } else {
+                    Toast.error(`部分频道转发失败 (${errors.length}/${channels.length})`);
+                }
+            } else {
+                Toast.success('已转发');
+            }
+        }, '转发到聊天');
     };
 
     renderProcessing() {
