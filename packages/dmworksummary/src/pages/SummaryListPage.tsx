@@ -134,6 +134,7 @@ export default class SummaryListPage extends Component<{}, SummaryListPageState>
             });
             if (changed) {
                 this.setState({ items: newItems }, () => this.maybeStartBatchPoll());
+                window.dispatchEvent(new CustomEvent("summary-status-change"));
             }
         } catch {
             // ignore
