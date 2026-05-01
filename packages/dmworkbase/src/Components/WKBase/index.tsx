@@ -1,17 +1,91 @@
 import { Modal } from "@douyinfe/semi-ui";
 import WKModal from "../WKModal";
-import { Channel } from "wukongimjssdk";
+import WKSDK, { Channel, ChannelTypePerson } from "wukongimjssdk";
 import React, { Component, HTMLProps, ReactNode } from "react";
 import ConversationSelect from "../ConversationSelect";
 import UserInfo from "../UserInfo";
+import BotDetailModal from "../BotDetailModal";
 import WKApp from "../../App";
+import { resolveExternalForViewer } from "../../Utils/externalViewer";
+import {
+  ChannelInfoLike,
+  ChannelInfoOrgDataLike,
+  createUserInfoRouter,
+  ExternalViewerGate,
+  UserInfoRouter,
+} from "./userInfoRouter";
 import "./index.css";
+
+/**
+ * YUJ-207: default production ExternalViewerGate wired into WKBase.
+ *
+ * Mirrors UserInfoVM.isExternalToViewer() so a bot avatar click in an external
+ * (cross-space) group is demoted to the UserInfo path, where
+ * UserInfo.getBottomPanel applies the existing YUJ-67 "仅可在群内交流" hint.
+ * Without this gate, `dispatchUserInfo(..., isBot=true)` would open
+ * BotDetailModal, which renders 发送消息 / 添加好友 purely from follow state
+ * and bypasses the YUJ-67 UI guard (reviewer lml2468, round-3 blocker).
+ *
+ * Data precedence is identical to UserInfoVM.isExternalToViewer:
+ *   1) fromChannel subscriber orgData (highest-fidelity — YUJ-63 group-scoped
+ *      home_space fields) — only consulted for non-Person fromChannel since
+ *      Person channels have no subscribers list;
+ *   2) user-level channelInfo orgData (fallback for direct opens / 1v1);
+ *   3) missing data → false (fail open, same as UserInfoVM) so cached-miss
+ *      bots are never silently blocked.
+ *
+ * Exported for tests (see WKBaseExternalViewerGate.test.tsx) so the data-
+ * precedence can be asserted without standing up the full WKBase tree.
+ */
+export function createDefaultExternalViewerGate(): ExternalViewerGate {
+  return {
+    isExternal: (uid, fromChannel, channelInfo) => {
+      // 1) Group subscriber orgData (primary source, matches UserInfoVM step 1).
+      if (fromChannel && fromChannel.channelType !== ChannelTypePerson) {
+        const subscribers =
+          (WKSDK.shared().channelManager.getSubscribes(fromChannel) as
+            | { uid?: string; orgData?: ChannelInfoOrgDataLike }[]
+            | null
+            | undefined) ?? [];
+        const sub = subscribers.find((s) => s && s.uid === uid);
+        const org = sub?.orgData;
+        if (org) {
+          const { isExternal } = resolveExternalForViewer({
+            homeSpaceId: org.home_space_id ?? null,
+            homeSpaceName: org.home_space_name ?? null,
+            isExternalLegacy: org.is_external ?? null,
+            sourceSpaceNameLegacy: org.source_space_name ?? null,
+            viewerSpaceId: WKApp.shared.currentSpaceId ?? null,
+          });
+          if (isExternal) return true;
+        }
+      }
+      // 2) User-level channelInfo orgData (fallback, matches UserInfoVM step 2).
+      const channelOrg = (channelInfo as ChannelInfoLike | null | undefined)
+        ?.orgData;
+      if (channelOrg) {
+        const { isExternal } = resolveExternalForViewer({
+          homeSpaceId: channelOrg.home_space_id ?? null,
+          homeSpaceName: channelOrg.home_space_name ?? null,
+          isExternalLegacy: channelOrg.is_external ?? null,
+          sourceSpaceNameLegacy: channelOrg.source_space_name ?? null,
+          viewerSpaceId: WKApp.shared.currentSpaceId ?? null,
+        });
+        if (isExternal) return true;
+      }
+      return false;
+    },
+  };
+}
 
 export interface WKBaseState {
   showUserInfo?: boolean;
   userUID?: string;
   vercode?: string; // 加好友的验证码
   fromChannel?: Channel;
+  // YUJ-195 (GH#1112): Bot 资料弹窗共用同一个 uid 状态，但走独立 visible 标志，
+  // 以便在命中 bot 时渲染可编辑的 BotDetailModal 而不是只读 UserInfo。
+  showBotDetail?: boolean;
   showConversationSelect?: boolean;
   conversationSelectTitle?: string;
   showAlert?: boolean;
@@ -70,13 +144,58 @@ export default class WKBase
   extends Component<WKBaseProps, WKBaseState>
   implements WKBaseContext
 {
+  // YUJ-195 / PR#1113 review: bot-vs-human routing + stale-request guard are
+  // delegated to a React-free production helper (UserInfoRouter). The helper
+  // tracks a monotonically-increasing token so that a late-resolving async
+  // fetchChannelInfo from an earlier click cannot overwrite the modal state
+  // produced by a subsequent click / hideUserInfo / unmount.
+  //
+  // YUJ-207 (round-4 blocker): the router now also receives an
+  // ExternalViewerGate that mirrors UserInfoVM.isExternalToViewer. Bots in
+  // cross-space external groups are demoted to the UserInfo path so the
+  // existing YUJ-67 "仅可在群内交流" hint fires — without it,
+  // dispatchUserInfo(..., isBot=true) routes straight to BotDetailModal and
+  // bypasses the UI guard (BotDetailModal renders 发送消息 / 添加好友 from
+  // follow state alone).
+  private userInfoRouter: UserInfoRouter = createUserInfoRouter(
+    ({ uid, fromChannel, vercode, isBot }) => {
+      this.dispatchUserInfo(uid, fromChannel, vercode, isBot);
+    },
+    createDefaultExternalViewerGate(),
+  );
+
   constructor(props: any) {
     super(props);
     this.state = {};
   }
   showUserInfo(uid: string, fromChannel?: Channel, vercode?: string): void {
+    // YUJ-195 (GH#1112): 统一的 "查看用户资料" 入口。机器人（robot === 1）必须走
+    // BotDetailModal，这样 bot owner 才能继续编辑头像/简介，与通讯录 bot 卡片一致。
+    // 此前只有 Contacts / Subscribers / GlobalSearch 等少数调用方手动区分 isBot，
+    // 会话内点击 bot 头像 → 上下文菜单"查看用户信息"，以及私聊头像等入口落回到
+    // 只读 UserInfo。将判定集中到这里，使所有 showUserInfo 调用自动获益。
+    this.userInfoRouter.showUserInfo(uid, fromChannel, vercode);
+  }
+
+  private dispatchUserInfo(
+    uid: string,
+    fromChannel: Channel | undefined,
+    vercode: string | undefined,
+    isBot: boolean
+  ): void {
+    if (isBot) {
+      this.setState({
+        showBotDetail: true,
+        showUserInfo: false,
+        userUID: uid,
+        fromChannel: undefined,
+        vercode: undefined,
+      });
+      return;
+    }
     this.setState({
       showUserInfo: true,
+      showBotDetail: false,
       userUID: uid,
       fromChannel: fromChannel,
       vercode: vercode,
@@ -108,8 +227,13 @@ export default class WKBase
   }
 
   hideUserInfo() {
+    // 与 showUserInfo 对称：主动关闭时也视为一次状态变更，让 router 递增 token
+    // 使任何在飞的 fetchChannelInfo 结果都被丢弃，避免关闭后又被晚到的 resolve
+    // 重新打开 modal。
+    this.userInfoRouter.invalidate();
     this.setState({
       showUserInfo: false,
+      showBotDetail: false,
       userUID: undefined,
       vercode: undefined,
     });
@@ -134,6 +258,13 @@ export default class WKBase
     }
   }
 
+  componentWillUnmount() {
+    // Stale-guard: router.dispose() marks the router disposed and invalidates
+    // the token so any unresolved fetchChannelInfo returning post-unmount is a
+    // no-op (no setState-on-unmounted React warning).
+    this.userInfoRouter.dispose();
+  }
+
   cancelAlert() {
     this.setState({
       showAlert: false,
@@ -155,6 +286,7 @@ export default class WKBase
   render(): ReactNode {
     const {
       showUserInfo,
+      showBotDetail,
       userUID,
       fromChannel,
       vercode,
@@ -201,6 +333,27 @@ export default class WKBase
             ></UserInfo>
           ) : undefined}
         </WKModal>
+
+        {/* YUJ-195 (GH#1112): Bot 资料弹窗，统一替代会话/消息场景下的只读 UserInfo，
+            使 bot owner 在任何入口（通讯录 / 群聊 / 私聊 / 全局搜索 / 订阅者列表）
+            都能看到可编辑的头像与简介。BotDetailModal 自带 WKModal，不再外层包裹。 */}
+        <BotDetailModal
+          uid={showBotDetail && userUID ? userUID : ""}
+          visible={!!showBotDetail && !!userUID}
+          onClose={() => {
+            this.setState({
+              showBotDetail: false,
+              userUID: undefined,
+            });
+          }}
+          onChat={(channel) => {
+            this.setState({
+              showBotDetail: false,
+              userUID: undefined,
+            });
+            WKApp.endpoints.showConversation(channel);
+          }}
+        />
 
         <WKModal
           className="wk-base-modal wk-base-modal-forward"

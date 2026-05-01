@@ -15,5 +15,20 @@ export default defineConfig({
     globals: true,
     environment: 'jsdom',
     setupFiles: ['./src/__tests__/setup.ts'],
+    // Force Vite to transform @tiptap/react instead of letting Node's strict
+    // ESM resolver handle it. Its dist ships `import ... from 'react/jsx-runtime'`
+    // without a `.js` extension, which Node's strict ESM resolver rejects under
+    // PNPM's nested node_modules layout. Without this, any test file whose
+    // module graph transitively reaches @tiptap/react (e.g. via the real
+    // @douyinfe/semi-ui package, which WKBase uses) fails to load before any
+    // vi.mock can intervene. Pre-existing issue also previously blocking the
+    // voice-input test files; now that those files can load, their own
+    // assertions run — failures inside them are pre-existing and unrelated
+    // to YUJ-195 / PR#1113.
+    server: {
+      deps: {
+        inline: [/@tiptap\/react/],
+      },
+    },
   },
 })
