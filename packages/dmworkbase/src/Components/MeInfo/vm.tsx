@@ -128,7 +128,15 @@ export class MeInfoVM extends ProviderListener {
         this.verifyPending = true
         this.notifyListener()
         try {
-            const res = await WKApp.apiClient.post("internal/verify-token")
+            // YUJ-359 follow-up: Web 显式传 return_to，让 verify-service 在 CAS 完成后
+            // 302 回资料页（带 ?verified=1），避免服务端 default 是 dmwork:// deep link
+            // 时 Web 浏览器不识别导致白屏。didMount 中已有 ?verified=1 检测逻辑
+            // 会自动 reloadSelfProfile。
+            //
+            // origin 用 window.location.origin（https://<host>）而非 hardcode，兼容
+            // im-test / im-prod / 本地 dev 三套环境。pathname 回到个人信息页。
+            const returnTo = `${window.location.origin}${window.location.pathname}?verified=1`
+            const res = await WKApp.apiClient.post("internal/verify-token", { return_to: returnTo })
             const verifyUrl = (res as any)?.verify_url
             if (typeof verifyUrl !== "string" || verifyUrl.length === 0) {
                 Toast.error("获取认证链接失败，请稍后再试")
