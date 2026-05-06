@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react"
-import { Channel, ChannelTypePerson } from "wukongimjssdk"
+import { Channel, ChannelTypePerson, WKSDK } from "wukongimjssdk"
 import { WKApp, SpaceService } from "@octo/base"
 import BotCard, { AppBotInfo } from "./BotCard"
 import "./AppBotExplorePage.css"
@@ -66,7 +66,13 @@ export default function AppBotExplorePage() {
   }, [reloadTick])
 
   const openChat = (bot: AppBotInfo) => {
-    WKApp.endpoints.showConversation(new Channel(bot.uid, ChannelTypePerson))
+    const channel = new Channel(bot.uid, ChannelTypePerson)
+    // Ensure conversation exists in SDK before navigating — without this,
+    // the conversation list stays empty when user has never chatted with this Bot
+    if (!WKSDK.shared().conversationManager.findConversation(channel)) {
+      WKSDK.shared().conversationManager.createEmptyConversation(channel)
+    }
+    WKApp.endpoints.showConversation(channel)
   }
 
   const filtered = useMemo(() => {
