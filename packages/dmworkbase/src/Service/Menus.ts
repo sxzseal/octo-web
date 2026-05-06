@@ -32,6 +32,8 @@ export class Menus {
   routePath!: string;
   onPress?: () => void;
   badge?: number
+  /** When true, contentLeft takes full width and contentRight/splitter are hidden */
+  fullWidth?: boolean
 
   constructor(id: string, routePath: string, title: string, icon: JSX.Element, selectedIcon: JSX.Element, onPress?: () => void) {
     this.id = id

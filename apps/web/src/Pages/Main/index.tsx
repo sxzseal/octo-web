@@ -156,6 +156,7 @@ export class MainPage extends Component<{}, MainPageState> {
                 return (
                     <>
                         <WKLayout
+                            fullWidth={!!vm.currentMenus?.fullWidth}
                             onRenderTab={() => (
                                 <NavRail
                                     // Space

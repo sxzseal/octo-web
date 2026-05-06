@@ -114,3 +114,8 @@
     }
 
 }
+/* Full-width mode: contentLeft takes all available space, no split */
+.wk-layout-content-full .wk-layout-content-left {
+    width: 100% !important;
+    flex: 1;
+}

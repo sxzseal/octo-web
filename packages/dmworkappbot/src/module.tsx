@@ -37,13 +37,15 @@ export default class AppBotModule implements IModule {
     WKApp.menus.register(
       "appbot",
       () => {
-        return new Menus(
+        const m = new Menus(
           "appbot",
           "/appbot",
           "应用",
           <AppBotIcon />,
           <AppBotIcon active />,
         )
+        m.fullWidth = true
+        return m
       },
       3000,
     )

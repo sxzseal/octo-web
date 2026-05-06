@@ -25,7 +25,8 @@ export interface WKLayoutProps {
     contentRight?:JSX.Element
     onLeftContext?:(context:WKViewQueueContext)=>void
     onRightContext?:(context:WKViewQueueContext)=>void
-
+    /** When true, contentLeft takes full width — splitter and contentRight are hidden */
+    fullWidth?: boolean
 }
 
 interface WKLayoutState {
@@ -132,7 +133,7 @@ export class WKLayout extends Component<WKLayoutProps, WKLayoutState>{
     }
 
     render() {
-        const { onRenderTab, contentLeft,contentRight,onLeftContext,onRightContext } = this.props
+        const { onRenderTab, contentLeft,contentRight,onLeftContext,onRightContext, fullWidth } = this.props
         const isExtension = (window as any).__POWERED_EXTENSION__
         const isSmallScreen = window.innerWidth <= SMALL_SCREEN_WIDTH
         const { leftWidth, isDragging } = this.state
@@ -150,17 +151,21 @@ export class WKLayout extends Component<WKLayoutProps, WKLayoutState>{
 
         // CSS variables for splitter positioning + nested chat content-left
         // Note: --wk-wdith-conversation-list uses the legacy typo from App.css
-        const contentStyle = isSmallScreen ? undefined : {
+        const contentStyle = (isSmallScreen || fullWidth) ? undefined : {
             '--wk-width-layout-content-left': widthPx,
             '--wk-wdith-conversation-list': widthPx,
         } as React.CSSProperties
 
-        const leftStyle = isSmallScreen ? undefined : {
+        const leftStyle = (isSmallScreen || fullWidth) ? undefined : {
             width: widthPx,
         }
 
         const contentElement = <div
-            className={classNames("wk-layout-content", this.rightContext?.viewCount() > 0 ? "wk-layout-open" : undefined)}
+            className={classNames(
+                "wk-layout-content",
+                this.rightContext?.viewCount() > 0 ? "wk-layout-open" : undefined,
+                fullWidth && "wk-layout-content-full",
+            )}
             style={contentStyle}
         >
             <div className="wk-layout-content-left" style={leftStyle}>
@@ -172,24 +177,28 @@ export class WKLayout extends Component<WKLayoutProps, WKLayoutState>{
                     {contentLeft}
                 </WKViewQueue>
             </div>
-            <div className="wk-layout-content-right">
-                <WKViewQueue onContext={(context) => {
-                    this.rightContext = context
-                    if(onRightContext) {
-                        onRightContext(context)
-                    }
-                }}>
-                    {contentRight}
-                </WKViewQueue>
-            </div>
-            {/* Draggable splitter — absolutely positioned, hidden on small screens */}
-            <div
-                className={classNames("wk-layout-splitter", isDragging && "wk-layout-splitter-active")}
-                onMouseDown={this.onDragStart}
-                onDoubleClick={this.onDoubleClick}
-            >
-                <div className="wk-layout-splitter-line" />
-            </div>
+            {!fullWidth && (
+                <div className="wk-layout-content-right">
+                    <WKViewQueue onContext={(context) => {
+                        this.rightContext = context
+                        if(onRightContext) {
+                            onRightContext(context)
+                        }
+                    }}>
+                        {contentRight}
+                    </WKViewQueue>
+                </div>
+            )}
+            {/* Draggable splitter — absolutely positioned, hidden on small screens or fullWidth */}
+            {!fullWidth && (
+                <div
+                    className={classNames("wk-layout-splitter", isDragging && "wk-layout-splitter-active")}
+                    onMouseDown={this.onDragStart}
+                    onDoubleClick={this.onDoubleClick}
+                >
+                    <div className="wk-layout-splitter-line" />
+                </div>
+            )}
         </div>
 
         return <div className="wk-layout" ref={this.layoutRef}>
