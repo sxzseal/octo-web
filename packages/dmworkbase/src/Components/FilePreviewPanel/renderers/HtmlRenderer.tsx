@@ -3,7 +3,6 @@ import React, {
   useRef,
   useEffect,
   useCallback,
-  useLayoutEffect,
   useMemo,
 } from "react";
 import SyntaxHighlighter from "react-syntax-highlighter";
@@ -31,6 +30,7 @@ export interface HtmlRendererProps extends BaseRendererProps {
  * 1. 预览模式：iframe 沙箱渲染
  * 2. 源码模式：语法高亮 + 行号
  * 3. 错误自动切源码：iframe 渲染出错时自动切换到源码并显示红色提示条
+ * 4. CSP 降级策略：检测到 CSP 错误时自动禁用脚本重新渲染
  */
 const HtmlRenderer: React.FC<HtmlRendererProps> = ({
   file,
@@ -48,6 +48,11 @@ const HtmlRenderer: React.FC<HtmlRendererProps> = ({
   const [iframeLoading, setIframeLoading] = useState(true);
   const [renderError, setRenderError] = useState<string | null>(null);
   const iframeRef = useRef<HTMLIFrameElement>(null);
+
+  // 脚本执行策略：默认允许脚本，检测到 CSP 错误后降级为禁用脚本
+  const [scriptEnabled, setScriptEnabled] = useState(true);
+  // 是否因 CSP 降级（用于显示提示）
+  const [cspFallback, setCspFallback] = useState(false);
 
   // 加载 HTML 内容
   const {
@@ -76,6 +81,12 @@ const HtmlRenderer: React.FC<HtmlRendererProps> = ({
     [onViewModeChange]
   );
 
+  // 文件变化时重置脚本策略
+  useEffect(() => {
+    setScriptEnabled(true);
+    setCspFallback(false);
+  }, [file.url]);
+
   // 切换到预览模式时重置加载状态
   useEffect(() => {
     if (content && viewMode === "preview") {
@@ -86,20 +97,6 @@ const HtmlRenderer: React.FC<HtmlRendererProps> = ({
   // iframe 加载完成
   const handleIframeLoad = useCallback(() => {
     setIframeLoading(false);
-
-    // 尝试检测 iframe 内部是否有错误
-    try {
-      const iframe = iframeRef.current;
-      if (iframe && iframe.contentDocument) {
-        // 检查是否是空白页或错误页
-        const body = iframe.contentDocument.body;
-        if (body && body.innerHTML.includes("error")) {
-          // 可能有错误，但不强制切换
-        }
-      }
-    } catch {
-      // 跨域访问限制，忽略
-    }
   }, []);
 
   // iframe 加载错误
@@ -112,7 +109,37 @@ const HtmlRenderer: React.FC<HtmlRendererProps> = ({
     onError?.(errorMsg);
   }, [handleViewModeChange, onError]);
 
-  // 监听 iframe 内部的 JS 错误
+  // 监听 CSP 错误，自动降级到无脚本模式
+  useEffect(() => {
+    if (viewMode !== "preview" || !content || !scriptEnabled) return;
+
+    // 监听 securitypolicyviolation 事件（CSP 违规）
+    const handleCSPViolation = (event: SecurityPolicyViolationEvent) => {
+      // 检查是否是脚本相关的 CSP 违规
+      if (
+        event.violatedDirective.includes("script-src") ||
+        event.effectiveDirective.includes("script-src")
+      ) {
+        console.warn(
+          "[HtmlRenderer] CSP violation detected, falling back to script-disabled mode"
+        );
+        // 降级到无脚本模式
+        setScriptEnabled(false);
+        setCspFallback(true);
+        setIframeLoading(true);
+      }
+    };
+
+    document.addEventListener("securitypolicyviolation", handleCSPViolation);
+    return () => {
+      document.removeEventListener(
+        "securitypolicyviolation",
+        handleCSPViolation
+      );
+    };
+  }, [viewMode, content, scriptEnabled]);
+
+  // 监听 iframe 内部的 JS 错误（通过 postMessage）
   useEffect(() => {
     if (viewMode !== "preview" || !content) return;
 
@@ -121,9 +148,8 @@ const HtmlRenderer: React.FC<HtmlRendererProps> = ({
 
     const handleMessage = (event: MessageEvent) => {
       // 安全检查：验证消息确实来自我们的 iframe
-      // 只检查 event.source，这是唯一可靠的验证方式
       if (event.source !== iframe.contentWindow) {
-        return; // 忽略来自其他来源的消息
+        return;
       }
 
       // 检查消息类型
@@ -248,11 +274,23 @@ const HtmlRenderer: React.FC<HtmlRendererProps> = ({
   }
 
   // 预览模式：使用 srcdoc 渲染 HTML
-  // 安全说明：sandbox 只允许 allow-scripts，不加 allow-same-origin 以防止 XSS
-  // 副作用：HTML 内部创建的 blob:null URL 可能被线上 CSP 阻止
-  // TODO: 需运维配合修改 nginx CSP，添加 blob: 到 script-src/connect-src
+  // 安全策略：
+  // - 默认 allow-scripts（允许脚本）
+  // - 检测到 CSP 错误后自动降级为禁用脚本模式
+  // - 不加 allow-same-origin 以防止 XSS
   return (
     <div className="wk-file-preview-html-renderer wk-file-preview-html-renderer--preview">
+      {/* CSP 降级提示 */}
+      {cspFallback && !iframeLoading && (
+        <div className="wk-file-preview-html-renderer__csp-notice">
+          <span className="wk-file-preview-html-renderer__csp-notice-icon">
+            ℹ
+          </span>
+          <span className="wk-file-preview-html-renderer__csp-notice-text">
+            由于安全策略限制，已禁用脚本执行，部分交互功能可能不可用
+          </span>
+        </div>
+      )}
       {iframeLoading && (
         <div className="wk-file-preview-html-renderer__loading-overlay">
           <div className="wk-file-preview-html-renderer__spinner" />
@@ -269,7 +307,7 @@ const HtmlRenderer: React.FC<HtmlRendererProps> = ({
         }`}
         onLoad={handleIframeLoad}
         onError={handleIframeError}
-        sandbox="allow-scripts"
+        sandbox={scriptEnabled ? "allow-scripts" : ""}
         title={file.name}
       />
     </div>

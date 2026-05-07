@@ -79,6 +79,31 @@
 }
 
 /* ============================================
+   CSP 降级提示
+   ============================================ */
+
+.wk-file-preview-html-renderer__csp-notice {
+  display: flex;
+  align-items: center;
+  gap: var(--wk-sp-2);
+  padding: var(--wk-sp-2) var(--wk-sp-4);
+  background: var(--wk-color-info-bg);
+  border-bottom: 1px solid var(--wk-color-info-border);
+  color: var(--wk-color-info);
+  font-size: var(--wk-text-size-sm);
+  flex-shrink: 0;
+}
+
+.wk-file-preview-html-renderer__csp-notice-icon {
+  font-size: 14px;
+  line-height: 1;
+}
+
+.wk-file-preview-html-renderer__csp-notice-text {
+  flex: 1;
+}
+
+/* ============================================
    错误提示条
    ============================================ */
 
