@@ -247,7 +247,13 @@ const HtmlRenderer: React.FC<HtmlRendererProps> = ({
     );
   }
 
-  // 预览模式：使用 srcdoc 代替 blob URL，避免 CSP 阻止 blob: 协议
+  // 预览模式：使用 srcdoc 渲染 HTML
+  // sandbox 配置说明：
+  // - allow-scripts: 允许执行脚本
+  // - allow-same-origin: 让 iframe 继承父页面的 origin，解决 blob:null CSP 问题
+  //   （否则 srcdoc 的 origin 是 null，HTML 内部创建的 blob:null/xxx URL 会被 CSP 阻止）
+  // - allow-modals: 允许 alert/confirm/prompt
+  // - allow-popups: 允许弹出窗口（如 window.open）
   return (
     <div className="wk-file-preview-html-renderer wk-file-preview-html-renderer--preview">
       {iframeLoading && (
@@ -266,7 +272,7 @@ const HtmlRenderer: React.FC<HtmlRendererProps> = ({
         }`}
         onLoad={handleIframeLoad}
         onError={handleIframeError}
-        sandbox="allow-scripts"
+        sandbox="allow-scripts allow-same-origin allow-modals allow-popups"
         title={file.name}
       />
     </div>
