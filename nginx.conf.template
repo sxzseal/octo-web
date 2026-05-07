@@ -24,7 +24,10 @@ server {
         add_header Referrer-Policy "strict-origin-when-cross-origin" always;
         # Content Security Policy - permissive to avoid breaking functionality
         # Note: 'unsafe-inline' and 'unsafe-eval' are needed for React/inline styles
-        add_header Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; font-src 'self' data:; connect-src 'self' ws: wss: http: https:; media-src 'self' blob:; worker-src 'self' blob:; object-src 'none'; frame-ancestors 'self';" always;
+        # blob: is required for srcdoc iframe previews (HTML file preview)
+        # srcdoc iframe origin is null, so internally created blob URLs become blob:null/...
+        # Adding blob: to script-src and connect-src allows these URLs to load
+        add_header Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' blob:; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; font-src 'self' data:; connect-src 'self' ws: wss: http: https: blob:; media-src 'self' blob:; worker-src 'self' blob:; object-src 'none'; frame-ancestors 'self';" always;
         # HSTS - uncomment when full HTTPS chain is confirmed
         # add_header Strict-Transport-Security "max-age=31536000; includeSubDomains" always;
 

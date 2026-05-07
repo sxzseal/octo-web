@@ -276,8 +276,8 @@ const HtmlRenderer: React.FC<HtmlRendererProps> = ({
 
   // 预览模式：使用 srcdoc 渲染 HTML
   // 安全策略：
-  // - 默认 allow-scripts（允许脚本）
-  // - 检测到 CSP 错误后自动降级为禁用脚本模式
+  // - 默认 allow-scripts（允许脚本）、nginx CSP 已允许 blob: URL
+  // - 检测到 CSP 错误后自动降级为禁用脚本模式（奈落保证）
   // - 不加 allow-same-origin 以防止 XSS
   return (
     <div className="wk-file-preview-html-renderer wk-file-preview-html-renderer--preview">
