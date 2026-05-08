@@ -1165,15 +1165,23 @@ export default class ConversationVM extends ProviderListener {
         }
         this.notifyListener()
     }
-    // 通过clientSeq获取消息对象
+    // 通过clientSeq获取消息对象（同时搜索 messages 和 sendQueue，避免 ack 丢失）
     findMessageWithClientSeq(clientSeq: number): MessageWrap | undefined {
-        if (!this.messages || this.messages.length <= 0) {
-            return
+        if (this.messages && this.messages.length > 0) {
+            for (let i = this.messages.length - 1; i >= 0; i--) {
+                const message = this.messages[i]
+                if (message.clientSeq === clientSeq) {
+                    return message
+                }
+            }
         }
-        for (let i = this.messages.length - 1; i >= 0; i--) {
-            const message = this.messages[i]
-            if (message.clientSeq === clientSeq) {
-                return message
+        // 消息可能还在 sendQueue 中（尚未通过 appendMessage 合并到 messages）
+        const sending = ConversationVM.sendQueue.get(this.channel.getChannelKey())
+        if (sending && sending.length > 0) {
+            for (let i = sending.length - 1; i >= 0; i--) {
+                if (sending[i].clientSeq === clientSeq) {
+                    return sending[i]
+                }
             }
         }
     }

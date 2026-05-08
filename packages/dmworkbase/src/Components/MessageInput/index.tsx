@@ -68,6 +68,112 @@ function extractAttachmentsFromEditor(
   return attachments;
 }
 
+/**
+ * 编辑器内容块类型：文本段落或粘贴图片/文件。
+ * 用于按顺序发送编辑器中穿插的文本和媒体。
+ */
+export type EditorContentBlock =
+  | { type: "text"; text: string; mention?: MentionModel }
+  | { type: "image"; id: string; file: File }
+  | { type: "file"; id: string; file: File };
+
+/**
+ * 从编辑器 JSON 中按文档顺序提取有序内容块。
+ * attachment 是 inline 节点（嵌套在 paragraph 内部），会把前后文本切割成独立文本段。
+ * 连续的纯文本段落合并为一个 text block（用 \n 分隔）。
+ */
+function extractOrderedBlocks(
+  editorInstance: any,
+  attachmentFilesMap: Map<string, File>
+): EditorContentBlock[] {
+  if (!editorInstance) return [];
+  const json = editorInstance.getJSON();
+  if (!json.content) return [];
+
+  const blocks: EditorContentBlock[] = [];
+  let pendingTextParts: string[] = []; // 当前累积的文本片段（跨行用 \n 连接）
+
+  // 从 inline 节点中提取文本（text / mention / hardBreak）
+  function inlineToText(node: any): string {
+    if (node.type === "text") {
+      return node.text || "";
+    } else if (node.type === "mention") {
+      return `@[${node.attrs.id}:${node.attrs.label}]`;
+    } else if (node.type === "hardBreak") {
+      return "\n";
+    }
+    return "";
+  }
+
+  // 把累积的 pendingTextParts 冲刷为一个 text block
+  function flushText() {
+    const joined = stripInvisibleChars(pendingTextParts.join(""));
+    if (joined.trim() !== "") {
+      const { content, mention } = formatMentionTextV2(joined);
+      blocks.push({ type: "text", text: content, mention });
+    }
+    pendingTextParts = [];
+  }
+
+  for (let blockIdx = 0; blockIdx < json.content.length; blockIdx++) {
+    const topNode = json.content[blockIdx];
+
+    // 顶层如果直接是 attachment（理论上不会，但防御性处理）
+    if (topNode.type === "attachment" && topNode.attrs) {
+      const file = attachmentFilesMap.get(topNode.attrs.id);
+      if (file) {
+        flushText();
+        const blockType = file.type.startsWith("image/") ? "image" : "file";
+        blocks.push({ type: blockType, id: topNode.attrs.id, file });
+      }
+      continue;
+    }
+
+    // paragraph / heading 等块级节点：遍历其 inline content
+    const children = topNode.content || [];
+    const hasAttachment = children.some((c: any) => c.type === "attachment");
+
+    if (!hasAttachment) {
+      // 整段都是纯文本，累积
+      let lineText = "";
+      for (const child of children) {
+        lineText += inlineToText(child);
+      }
+      // 段落间用 \n 分隔
+      if (pendingTextParts.length > 0) {
+        pendingTextParts.push("\n");
+      }
+      pendingTextParts.push(lineText);
+    } else {
+      // 段落内有 attachment，需要拆分：text...attachment...text...
+      // 先加段落换行分隔（如果前面有累积文本）
+      if (pendingTextParts.length > 0) {
+        pendingTextParts.push("\n");
+      }
+
+      for (const child of children) {
+        if (child.type === "attachment" && child.attrs) {
+          const file = attachmentFilesMap.get(child.attrs.id);
+          if (file) {
+            // 遇到 attachment，先冲刷前面累积的文本
+            flushText();
+            const blockType = file.type.startsWith("image/") ? "image" : "file";
+            blocks.push({ type: blockType, id: child.attrs.id, file });
+          }
+        } else {
+          // 普通 inline 节点（text / mention / hardBreak）
+          pendingTextParts.push(inlineToText(child));
+        }
+      }
+    }
+  }
+
+  // 冲刷最后残余的文本
+  flushText();
+
+  return blocks;
+}
+
 // Strip zero-width and invisible Unicode characters
 const INVISIBLE_CHARS_RE =
   /[\u200B\u200C\u200D\u200E\u200F\uFEFF\u00AD\u2060\u2061\u2062\u2063\u2064\u034F\u061C\u180E]/g;
@@ -89,7 +195,11 @@ interface MessageInputProps {
   onSend?: (
     text: string,
     mention?: MentionModel,
-    attachments?: AttachmentFile[]
+    attachments?: AttachmentFile[],
+    /** 顶部附件区文件（通过上传按钮添加），优先于编辑器内容发送 */
+    topFiles?: AttachmentFile[],
+    /** 编辑器中按文档顺序排列的内容块（文本段和粘贴图片交替） */
+    editorBlocks?: EditorContentBlock[]
   ) => void;
   members?: Array<Subscriber>;
   onInputRef?: any;
@@ -835,11 +945,13 @@ const MessageInput: React.FC<MessageInputProps> = (props) => {
       })
       .filter((a): a is AttachmentFile => a !== null);
 
-    // 合并编辑器附件和顶部附件区附件
+    // 顶部附件区文件（通过上传按钮添加）
     const topAttachmentFiles: AttachmentFile[] = topAttachments.map((a) => ({
       id: a.id,
       file: a.file,
     }));
+
+    // 兼容旧 allAttachments（保留向后兼容）
     const allAttachments = [...editorAttachments, ...topAttachmentFiles];
 
     const hasText = text.trim() !== "";
@@ -849,10 +961,16 @@ const MessageInput: React.FC<MessageInputProps> = (props) => {
       // 从编辑器提取带格式的文本（包含 @[uid:name] 格式的 mention）
       const formattedText = extractMentionsFromEditor(editor);
       const { content, mention } = formatMentionTextV2(formattedText);
+
+      // 提取编辑器中有序内容块（文本段和粘贴图片按文档顺序交替）
+      const orderedBlocks = extractOrderedBlocks(editor, attachmentFilesRef.current);
+
       props.onSend(
         content,
         mention,
-        allAttachments.length > 0 ? allAttachments : undefined
+        allAttachments.length > 0 ? allAttachments : undefined,
+        topAttachmentFiles.length > 0 ? topAttachmentFiles : undefined,
+        orderedBlocks.length > 0 ? orderedBlocks : undefined
       );
     }
 

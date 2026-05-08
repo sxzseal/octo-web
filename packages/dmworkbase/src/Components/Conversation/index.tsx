@@ -15,6 +15,7 @@ import {
   MediaMessageContent,
   TaskStatus,
   MessageTask,
+  MessageStatus,
 } from "wukongimjssdk";
 import React, { Component, HTMLProps } from "react";
 
@@ -35,6 +36,7 @@ import ConversationContext from "./context";
 import MessageInput, {
   MentionModel,
   MessageInputContext,
+  EditorContentBlock,
 } from "../MessageInput";
 import { BotCommand } from "../SlashCommandMenu";
 import ContextMenus, { ContextMenusContext } from "../ContextMenus";
@@ -287,55 +289,178 @@ export class Conversation
   }
 
   /**
-   * 发送媒体消息并等待上传完成后才返回，保证多附件严格顺序发送。
-   * 普通文字消息直接 sendMessage 返回。
+   * 发送媒体消息并等待上传完成 + 服务端 ack 后才返回。
+   * 保证多条消息严格顺序发送，且本地回显排序正确（每条消息的 messageSeq 确定后再发下一条）。
    * 超时 30s 自动 resolve（避免网络断开时永久阻塞）。
    */
   private async sendMediaAndWait(
     content: MessageContent,
     channel?: Channel
   ): Promise<void> {
-    const message = await this.sendMessage(content, channel);
-
-    // 非媒体消息（或无文件需上传）无需等待
+    // 非媒体消息（或无文件需上传）无需等待上传，直接发送并等 ack
     if (
       !(content instanceof MediaMessageContent) ||
       !(content as MediaMessageContent).file
     ) {
+      await this.sendTextAndWaitAck(content, channel);
       return;
     }
 
-    await new Promise<void>((resolve) => {
-      const TIMEOUT = 30_000;
-      let settled = false;
+    const TIMEOUT = 30_000;
+    let settled = false;
+    let clientSeq: number | null = null;
 
-      const done = () => {
-        if (settled) return;
-        settled = true;
-        WKSDK.shared().taskManager.removeListener(listener);
-        clearTimeout(timer);
-        resolve();
-      };
+    const { promise, resolve } = (() => {
+      let res: () => void;
+      const p = new Promise<void>((r) => { res = r; });
+      return { promise: p, resolve: res! };
+    })();
 
-      // 超时兜底：30s 后强制 resolve，不阻塞后续附件
-      // ⚠️ 注意：WKSDK 的 BaseTask.cancel() 是空实现，超时后上传仍在后台继续。
-      // 若超时触发，下一条附件会立即开始上传，两者并发，顺序无法保证。
-      // 30s 是网络极差时的最后防线，正常情况下 task.success/fail 会在此之前触发。
-      const timer = setTimeout(done, TIMEOUT);
+    const done = () => {
+      if (settled) return;
+      settled = true;
+      pendingAcks = []; // 释放暂存引用
+      queueMicrotask(() => {
+        WKSDK.shared().taskManager.removeListener(taskListener);
+        WKSDK.shared().chatManager.removeMessageStatusListener(ackListener);
+      });
+      clearTimeout(timer);
+      resolve();
+    };
 
-      const listener = (task: any) => {
-        if (
-          task instanceof MessageTask &&
-          task.message.clientSeq === message.clientSeq &&
-          (task.status === TaskStatus.success ||
-            task.status === TaskStatus.fail)
-        ) {
+    const timer = setTimeout(done, TIMEOUT);
+
+    // ── 所有 listener 在 sendMessage 之前注册，避免快速完成时错过事件 ──
+
+    const taskListener = (task: any) => {
+      if (settled) return;
+      if (
+        task instanceof MessageTask &&
+        clientSeq !== null &&
+        task.message.clientSeq === clientSeq &&
+        (task.status === TaskStatus.success || task.status === TaskStatus.fail)
+      ) {
+        // 上传完成（成功或失败）：ack 应很快到达，由 ackListener 触发 done()。
+        // 但如果 ack 已经在 pendingAcks 中或 message.status 已更新，直接 done()。
+        if (task.status === TaskStatus.fail) {
           done();
         }
-      };
-      WKSDK.shared().taskManager.addListener(listener);
-    });
+        // success: 不立即 done()，让 ackListener 来，确保 messageSeq 已写入 order
+      }
+    };
+    WKSDK.shared().taskManager.addListener(taskListener);
+
+    let pendingAcks: any[] = [];
+    const ackListener = (ackPacket: any) => {
+      if (settled) return;
+      if (clientSeq === null) {
+        pendingAcks.push(ackPacket);
+        return;
+      }
+      if (ackPacket.clientSeq === clientSeq) {
+        done();
+      }
+    };
+    WKSDK.shared().chatManager.addMessageStatusListener(ackListener);
+
+    // 发送消息（内部会 addTask → task.start()，所有 listener 已就绪）
+    let message: Message;
+    try {
+      message = await this.sendMessage(content, channel);
+    } catch (err) {
+      done();
+      throw err;
+    }
+    clientSeq = message.clientSeq;
+
+    // sendMessage 返回后主动检查
+    if (!settled) {
+      // 检查暂存的 ack（ack 在 clientSeq 赋值前到达的情况）
+      const found = pendingAcks.some(p => p.clientSeq === clientSeq);
+      pendingAcks = []; // 立即释放无关 ack 引用
+      if (found) {
+        done();
+      }
+      // 最终 fallback：检查 message.status（VM 可能已经处理了 ack）
+      if (!settled && (message.status === MessageStatus.Normal || message.status === MessageStatus.Fail)) {
+        done();
+      }
+    }
+
+    await promise;
   }
+
+  /**
+   * 发送文本消息并等待服务端 ack 回来后才返回。
+   * 用于连续发送多条消息时保证本地回显顺序与服务端一致：
+   * 每条消息拿到 messageSeq 后 order 被正确设置，再发下一条时 fillOrder 不会乱。
+   * 超时 10s 自动 resolve（文本消息不需要上传，ack 应该很快回来）。
+   */
+  private async sendTextAndWaitAck(
+    content: MessageContent,
+    channel?: Channel
+  ): Promise<void> {
+    const TIMEOUT = 10_000;
+    let settled = false;
+    let clientSeq: number | null = null;
+
+    const { promise, resolve } = (() => {
+      let res: () => void;
+      const p = new Promise<void>((r) => { res = r; });
+      return { promise: p, resolve: res! };
+    })();
+
+    const done = () => {
+      if (settled) return;
+      settled = true;
+      pendingAcks = []; // 释放暂存引用
+      queueMicrotask(() => {
+        WKSDK.shared().chatManager.removeMessageStatusListener(statusListener);
+      });
+      clearTimeout(timer);
+      resolve();
+    };
+
+    const timer = setTimeout(done, TIMEOUT);
+
+    // 在 sendMessage 之前注册 listener，避免快速 ack 竞态
+    let pendingAcks: any[] = [];
+    const statusListener = (ackPacket: any) => {
+      if (settled) return;
+      if (clientSeq === null) {
+        pendingAcks.push(ackPacket);
+        return;
+      }
+      if (ackPacket.clientSeq === clientSeq) {
+        done();
+      }
+    };
+    WKSDK.shared().chatManager.addMessageStatusListener(statusListener);
+
+    let message: Message;
+    try {
+      message = await this.sendMessage(content, channel);
+    } catch (err) {
+      done();
+      throw err;
+    }
+    clientSeq = message.clientSeq;
+
+    // fallback：检查暂存的 ack 或已处理的 status
+    if (!settled) {
+      const found = pendingAcks.some(p => p.clientSeq === clientSeq);
+      pendingAcks = []; // 立即释放无关 ack 引用
+      if (found) {
+        done();
+      }
+      if (!settled && (message.status === MessageStatus.Normal || message.status === MessageStatus.Fail)) {
+        done();
+      }
+    }
+
+    await promise;
+  }
+
   scrollToBottom(animate?: boolean): void {
     this.vm.scrollToBottom(animate || false);
   }
@@ -1871,50 +1996,17 @@ export class Conversation
                       onSend={async (
                         text: string,
                         mention?: MentionModel,
-                        attachments?: { id: string; file: File }[]
+                        _attachments?: { id: string; file: File }[],
+                        topFiles?: { id: string; file: File }[],
+                        editorBlocks?: EditorContentBlock[]
                       ) => {
-                        const content = new MessageText(text);
-                        if (mention) {
-                          const mn = new Mention();
-                          mn.all = mention.all;
-                          mn.uids = mention.uids;
-                          content.mention = mn;
-                          // SDK encode() 会覆盖 mention，导致 entities 丢失
-                          // override encode()，在 SDK 生成的 bytes 后重新注入 entities
-                          if (mention.entities && mention.entities.length > 0) {
-                            const entities = mention.entities;
-                            // 1. 本地立即渲染：把 entities 写入 contentObj，走 entity 解析路径
-                            if (!content.contentObj) content.contentObj = {};
-                            if (!content.contentObj.mention)
-                              content.contentObj.mention = {};
-                            content.contentObj.mention.entities = entities;
-                            // 2. 发送给服务端：override encode()，把 entities 写入 payload
-                            const originalEncode = content.encode.bind(content);
-                            content.encode = () => {
-                              try {
-                                const bytes = originalEncode();
-                                // bytes 是 JSON 字符串的 Uint8Array，解码修改再编码回去
-                                const str = new TextDecoder().decode(bytes);
-                                const obj = JSON.parse(str);
-                                if (!obj.mention) obj.mention = {};
-                                obj.mention.entities = entities;
-                                return new TextEncoder().encode(
-                                  JSON.stringify(obj)
-                                );
-                              } catch (e) {
-                                console.warn(
-                                  "[Mention] encode override failed, entities may be lost",
-                                  e
-                                );
-                                return originalEncode();
-                              }
-                            };
-                          }
-                        }
+                        // ── 回复/编辑处理 ──────────────
+                        let reply: Reply | undefined;
                         if (vm.currentReplyMessage) {
                           if (vm.currentHandlerType === 2) {
                             // 编辑消息
-                            let json = content.encodeJSON();
+                            const editContent = new MessageText(text);
+                            let json = editContent.encodeJSON();
                             json["type"] = MessageContentType.text;
                             await vm.editMessage(
                               vm.currentReplyMessage.messageID,
@@ -1926,7 +2018,7 @@ export class Conversation
                             vm.currentReplyMessage = undefined;
                             return;
                           }
-                          const reply = new Reply();
+                          reply = new Reply();
                           reply.messageID = vm.currentReplyMessage.messageID;
                           reply.messageSeq = vm.currentReplyMessage.messageSeq;
                           reply.fromUID = vm.currentReplyMessage.fromUID;
@@ -1941,73 +2033,163 @@ export class Conversation
                             reply.fromName = channelInfo.title;
                           }
                           reply.content = vm.currentReplyMessage.content;
-                          content.reply = reply;
                           vm.currentReplyMessage = undefined;
                         }
 
-                        // ── 附件发送（从编辑器中提取） ──────────────
-                        const filesToSend =
-                          attachments?.map((a) => a.file) || [];
-                        if (filesToSend.length > 0) {
-                          for (const file of filesToSend) {
-                            try {
-                              if (file.type && file.type.startsWith("image/")) {
-                                const reader = new FileReader();
-                                const previewUrl = await new Promise<string>(
-                                  (resolve) => {
-                                    reader.onloadend = () =>
-                                      resolve(reader.result as string);
-                                    reader.onerror = () => resolve(""); // 文件损坏时不阻塞后续附件
-                                    reader.readAsDataURL(file);
-                                  }
-                                );
-                                if (!previewUrl) {
-                                  Toast.error(`图片「${file.name}」读取失败`);
-                                  continue;
-                                }
-                                // 读取真实宽高，供渲染层正确计算尺寸
-                                const { width, height } = await new Promise<{
-                                  width: number;
-                                  height: number;
-                                }>((resolve) => {
-                                  const img = new Image();
-                                  img.onload = () =>
-                                    resolve({
-                                      width: img.naturalWidth,
-                                      height: img.naturalHeight,
-                                    });
-                                  img.onerror = () =>
-                                    resolve({ width: 0, height: 0 });
-                                  img.src = previewUrl;
-                                });
-                                await this.sendMediaAndWait(
-                                  new ImageContent(
-                                    file,
-                                    previewUrl,
-                                    width,
-                                    height
-                                  )
-                                );
-                              } else {
-                                const name = file.name || "unknown";
-                                const dotIndex = name.lastIndexOf(".");
-                                const ext =
-                                  dotIndex > 0
-                                    ? name.substring(dotIndex + 1)
-                                    : "";
-                                await this.sendMediaAndWait(
-                                  new FileContent(file, name, ext, file.size)
-                                );
-                              }
-                            } catch (err) {
-                              Toast.error(`文件「${file.name}」发送失败`);
+                        // ── 辅助：发送单张图片（读取预览+宽高） ──────────────
+                        const sendImageFile = async (file: File) => {
+                          const reader = new FileReader();
+                          const previewUrl = await new Promise<string>(
+                            (resolve) => {
+                              reader.onloadend = () =>
+                                resolve(reader.result as string);
+                              reader.onerror = () => resolve("");
+                              reader.readAsDataURL(file);
                             }
+                          );
+                          if (!previewUrl) {
+                            Toast.error(`图片「${file.name}」读取失败`);
+                            return;
+                          }
+                          const { width, height } = await new Promise<{
+                            width: number;
+                            height: number;
+                          }>((resolve) => {
+                            const img = new Image();
+                            img.onload = () =>
+                              resolve({
+                                width: img.naturalWidth,
+                                height: img.naturalHeight,
+                              });
+                            img.onerror = () =>
+                              resolve({ width: 0, height: 0 });
+                            img.src = previewUrl;
+                          });
+                          await this.sendMediaAndWait(
+                            new ImageContent(file, previewUrl, width, height)
+                          );
+                        };
+
+                        // ── 辅助：发送单个非图片文件 ──────────────
+                        const sendFileAttachment = async (file: File) => {
+                          const name = file.name || "unknown";
+                          const dotIndex = name.lastIndexOf(".");
+                          const ext =
+                            dotIndex > 0 ? name.substring(dotIndex + 1) : "";
+                          await this.sendMediaAndWait(
+                            new FileContent(file, name, ext, file.size)
+                          );
+                        };
+
+                        // ── 辅助：构建带 mention 的文本 MessageContent ──────────────
+                        const buildTextContent = (
+                          blockText: string,
+                          blockMention?: MentionModel
+                        ) => {
+                          const msgContent = new MessageText(blockText);
+                          if (blockMention) {
+                            const mn = new Mention();
+                            mn.all = blockMention.all;
+                            mn.uids = blockMention.uids;
+                            msgContent.mention = mn;
+                            if (
+                              blockMention.entities &&
+                              blockMention.entities.length > 0
+                            ) {
+                              const entities = blockMention.entities;
+                              if (!msgContent.contentObj)
+                                msgContent.contentObj = {};
+                              if (!msgContent.contentObj.mention)
+                                msgContent.contentObj.mention = {};
+                              msgContent.contentObj.mention.entities = entities;
+                              const originalEncode =
+                                msgContent.encode.bind(msgContent);
+                              msgContent.encode = () => {
+                                try {
+                                  const bytes = originalEncode();
+                                  const str = new TextDecoder().decode(bytes);
+                                  const obj = JSON.parse(str);
+                                  if (!obj.mention) obj.mention = {};
+                                  obj.mention.entities = entities;
+                                  return new TextEncoder().encode(
+                                    JSON.stringify(obj)
+                                  );
+                                } catch (e) {
+                                  console.warn(
+                                    "[Mention] encode override failed",
+                                    e
+                                  );
+                                  return originalEncode();
+                                }
+                              };
+                            }
+                          }
+                          return msgContent;
+                        };
+
+                        // ── 第一阶段：发送顶部附件区的文件（优先级最高） ──────────────
+                        const topFilesToSend = topFiles || [];
+                        for (const { file } of topFilesToSend) {
+                          try {
+                            if (
+                              file.type &&
+                              file.type.startsWith("image/")
+                            ) {
+                              await sendImageFile(file);
+                            } else {
+                              await sendFileAttachment(file);
+                            }
+                          } catch (err) {
+                            Toast.error(`文件「${file.name}」发送失败`);
                           }
                         }
 
-                        // 文字（有内容才发，await 保证在附件全部发完后才发）
-                        if (text && text.trim() !== "") {
-                          await this.sendMessage(content);
+                        // ── 第二阶段：按编辑器文档顺序发送内容块（文本段和粘贴图片交替） ──
+                        if (editorBlocks && editorBlocks.length > 0) {
+                          let isFirstTextBlock = true;
+                          for (const block of editorBlocks) {
+                            try {
+                              if (block.type === "text") {
+                                const msgContent = buildTextContent(
+                                  block.text,
+                                  block.mention
+                                );
+                                // 第一个文本块携带 reply 信息
+                                if (reply && isFirstTextBlock) {
+                                  msgContent.reply = reply;
+                                  reply = undefined;
+                                }
+                                isFirstTextBlock = false;
+                                await this.sendTextAndWaitAck(msgContent);
+                              } else if (block.type === "image") {
+                                await sendImageFile(block.file);
+                              } else if (block.type === "file") {
+                                await sendFileAttachment(block.file);
+                              }
+                            } catch (err) {
+                              console.error('[Conversation] editorBlock send failed:', err);
+                              Toast.error("消息发送失败");
+                            }
+                          }
+                          // 如果 reply 还没被消费（没有文本块），附加到一条空白消息
+                          if (reply) {
+                            const emptyContent = new MessageText("");
+                            emptyContent.reply = reply;
+                            await this.sendTextAndWaitAck(emptyContent);
+                          }
+                        } else {
+                          // fallback：无 editorBlocks 时走旧逻辑（纯文本）
+                          if (text && text.trim() !== "") {
+                            const msgContent = buildTextContent(text, mention);
+                            if (reply) {
+                              msgContent.reply = reply;
+                            }
+                            await this.sendTextAndWaitAck(msgContent);
+                          } else if (reply) {
+                            const emptyContent = new MessageText("");
+                            emptyContent.reply = reply;
+                            await this.sendTextAndWaitAck(emptyContent);
+                          }
                         }
 
                       }}
