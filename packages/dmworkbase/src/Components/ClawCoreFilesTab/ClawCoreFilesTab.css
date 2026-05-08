@@ -7,6 +7,8 @@
   display: flex;
   flex-direction: column;
   width: 100%;
+  height: 100%; /* 填满父容器（.claw-info-content 减去 padding 后的剩余空间） */
+  overflow: hidden; /* 防止内容撑开，让内部 FileViewer 处理滚动 */
 }
 
 /* ── Loading State ── */

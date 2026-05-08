@@ -114,10 +114,9 @@
   min-height: 0; /* 允许 flex 子元素收缩 */
 }
 
-/* 核心文件 Tab 特殊处理：不需要外层 padding，让 FileViewer 完全接管空间 */
+/* 核心文件 Tab 特殊处理：防止双层滚动 */
 .claw-info-content:has(.claw-core-files-tab) {
-  padding: 0;
-  overflow: hidden; /* 防止双层滚动，让内部 FileViewer 处理 */
+  overflow: hidden; /* 让 FileViewer 内部处理滚动 */
 }
 
 /* Session Tab */
