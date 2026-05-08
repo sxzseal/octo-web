@@ -106,6 +106,8 @@ export default class BotDetailModal extends Component<BotDetailModalProps, BotDe
         try {
             // 用 user detail API 获取完整信息（包含 follow）
             const data = await WKApp.apiClient.get(`users/${requestedUid}`);
+            console.log('[BotDetailModal] API 完整响应:', JSON.stringify(data, null, 2));
+            console.log('[BotDetailModal] octopush_status 字段:', data.octopush_status);
             if (isStale()) return;
             this.setState({
                 loading: false,
@@ -125,6 +127,8 @@ export default class BotDetailModal extends Component<BotDetailModalProps, BotDe
                 const channelInfo = await WKSDK.shared().channelManager.fetchChannelInfo(
                     new Channel(requestedUid, ChannelTypePerson)
                 );
+                console.log('[BotDetailModal] Fallback channelInfo:', JSON.stringify(channelInfo?.orgData, null, 2));
+                console.log('[BotDetailModal] Fallback octopush_status:', channelInfo?.orgData?.octopush_status);
                 if (isStale()) return;
                 this.setState({
                     loading: false,
