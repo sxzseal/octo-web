@@ -90,3 +90,11 @@ export { isSafeUrl } from './Utils/security'
 // 等包外组件在「按当前查看 Space 相对渲染」时复用，避免各自复制逻辑漂移。
 export { resolveExternalForViewer } from './Utils/externalViewer'
 export type { ExternalViewerInput, ExternalViewerResult } from './Utils/externalViewer'
+
+// Claw components
+export { default as ClawOverviewTab } from './Components/ClawOverviewTab'
+export type { ClawOverviewTabProps, RuntimeInfo } from './Components/ClawOverviewTab'
+export { default as ClawConfigItem } from './Components/ClawConfigItem'
+export type { ClawConfigItemProps } from './Components/ClawConfigItem'
+export { default as ClawHealthCheckItem } from './Components/ClawHealthCheckItem'
+export type { ClawHealthCheckItemProps, HealthStatus } from './Components/ClawHealthCheckItem'

@@ -1,0 +1,113 @@
+.claw-overview-tab {
+  padding: 32px;
+  background: #fff;
+  overflow-y: auto;
+  height: 100%;
+}
+
+.claw-overview-tab__loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: rgba(0, 0, 0, 0.45);
+  font-size: 14px;
+}
+
+/* Config Card */
+.config-card {
+  border-radius: 16px;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  background: #fff;
+  padding: 24px;
+  margin-bottom: 16px;
+}
+
+.config-card__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+}
+
+.config-card__title {
+  font-size: 14px;
+  font-weight: 600;
+  color: rgba(0, 0, 0, 0.8);
+  margin: 0;
+}
+
+.config-card__grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 24px;
+}
+
+/* Health Card */
+.health-card {
+  border-radius: 16px;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  background: #fff;
+  padding: 24px;
+}
+
+.health-card__header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.health-card__title {
+  font-size: 14px;
+  font-weight: 600;
+  color: rgba(0, 0, 0, 0.8);
+  margin: 0;
+}
+
+.health-card__summary {
+  font-size: 12px;
+  color: rgba(0, 0, 0, 0.45);
+}
+
+.health-card__recheck-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  border-radius: 100px;
+  padding: 4px 12px;
+  font-size: 12px;
+  color: #7171ee;
+  background: transparent;
+  cursor: pointer;
+  transition: border-color 0.15s;
+  margin-left: auto;
+}
+
+.health-card__recheck-btn:hover {
+  border-color: rgba(113, 113, 238, 0.4);
+}
+
+.health-card__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+/* Responsive */
+@media (max-width: 1024px) {
+  .config-card__grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 640px) {
+  .claw-overview-tab {
+    padding: 16px;
+  }
+
+  .config-card__grid {
+    grid-template-columns: 1fr;
+  }
+}
