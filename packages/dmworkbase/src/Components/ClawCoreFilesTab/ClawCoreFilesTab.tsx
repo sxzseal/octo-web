@@ -89,7 +89,10 @@ export default function ClawCoreFilesTab({ botId, height = '100%' }: ClawCoreFil
             <line x1="12" y1="16" x2="12.01" y2="16" />
           </svg>
           <div className="error-text">{error}</div>
-          <button className="retry-button" onClick={loadFileGroups}>
+          <button 
+            className="retry-button" 
+            onClick={() => loadFileGroups({ cancelled: false })}
+          >
             重试
           </button>
         </div>

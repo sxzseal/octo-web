@@ -85,6 +85,10 @@ export function useAgentCard(
 
   // refetch 使用相同的 loadData，但创建新的 signal
   const refetch = useCallback(async () => {
+    // 先取消旧请求
+    if (cancelRef.current) {
+      cancelRef.current.cancelled = true;
+    }
     const signal = { cancelled: false };
     cancelRef.current = signal;
     await loadData(signal);

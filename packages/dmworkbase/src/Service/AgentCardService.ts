@@ -6,7 +6,7 @@ import type {
   SessionInfo,
   CoreFile,
   MemoryFile,
-} from '../../../dmworkcontacts/src/api/types';
+} from '@octo/contacts';
 
 /**
  * AgentCardService
@@ -37,7 +37,11 @@ export interface FileContent {
   content: string;
 }
 
-/** Agent Card 响应（兼容别名，实际使用 AgentCardData） */
+/** 
+ * Agent Card 数据（向后兼容别名）
+ * 注意：dmworkcontacts/api/types 中的 AgentCardResponse 是 HTTP 响应封装 { code, message, data }
+ * 这里的 AgentCardResponse 指的是数据载荷本身（即 AgentCardData）
+ */
 export type AgentCardResponse = AgentCardData;
 
 /** Session 别名（兼容旧代码） */
