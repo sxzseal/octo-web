@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Spin, Empty } from "@douyinfe/semi-ui";
+import { IconClose } from "@douyinfe/semi-icons";
 import WKModal from "../WKModal";
 import ClawSessionItem from "../ClawSessionItem";
 import ClawOverviewTab from "../ClawOverviewTab/ClawOverviewTab";
@@ -218,8 +219,18 @@ export default function ClawInfoModal({ botId, botName, visible, onClose }: Claw
       title={null}
       size="full"
       className="claw-info-modal"
+      options={{ closable: false }}
     >
       <div className="claw-info-container">
+        {/* 自定义关闭按钮 */}
+        <button
+          className="claw-info-close-btn"
+          onClick={onClose}
+          aria-label="关闭"
+          data-testid="claw-info-close"
+        >
+          <IconClose />
+        </button>
         {/* Header */}
         <div className="claw-info-header">
           <div className="claw-info-title-row">
@@ -307,7 +318,7 @@ export default function ClawInfoModal({ botId, botName, visible, onClose }: Claw
           )}
           {activeTab === "files" && (
             <div id="panel-files" role="tabpanel" aria-labelledby="tab-files">
-              <ClawCoreFilesTab botId={botId} height="100%" />
+              <ClawCoreFilesTab botId={botId} agentCardData={data} height="100%" />
             </div>
           )}
         </div>

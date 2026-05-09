@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import FileViewer from '../FileViewer/FileViewer';
 import '../FileViewer/FileViewer.css';
 import type { FileGroup, FileContent } from '../FileViewer/FileViewer';
-import AgentCardService from '../../Service/AgentCardService';
+import AgentCardService, { type AgentCardData } from '../../Service/AgentCardService';
 import './ClawCoreFilesTab.css';
 
 export interface ClawCoreFilesTabProps {
@@ -10,6 +10,8 @@ export interface ClawCoreFilesTabProps {
   botId: string;
   /** 容器高度（默认 "100%"） */
   height?: string;
+  /** Agent Card 数据（可选，传入时优先使用，避免重复请求） */
+  agentCardData?: AgentCardData | null;
 }
 
 /**
@@ -20,10 +22,14 @@ export interface ClawCoreFilesTabProps {
  * 
  * @example
  * ```tsx
+ * // 独立使用（自己加载数据）
  * <ClawCoreFilesTab botId="01913a2b3c4d5e6f7890abcd_bot" />
+ * 
+ * // 复用已加载数据（推荐，避免重复请求）
+ * <ClawCoreFilesTab botId="01913a2b3c4d5e6f7890abcd_bot" agentCardData={data} />
  * ```
  */
-export default function ClawCoreFilesTab({ botId, height = '100%' }: ClawCoreFilesTabProps) {
+export default function ClawCoreFilesTab({ botId, height = '100%', agentCardData }: ClawCoreFilesTabProps) {
   const [fileGroups, setFileGroups] = useState<FileGroup[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -33,8 +39,17 @@ export default function ClawCoreFilesTab({ botId, height = '100%' }: ClawCoreFil
     setError(null);
 
     try {
+      // 优先使用传入的 agentCardData（避免重复请求）
+      if (agentCardData) {
+        if (signal?.cancelled) return;
+        const groups = AgentCardService.buildFileGroups(agentCardData);
+        setFileGroups(groups);
+        return;
+      }
+
+      // 没有传入数据时才发起请求（独立使用场景）
       const agentCard = await AgentCardService.getAgentCard(botId);
-      if (signal?.cancelled) return; // 如果已取消，忽略结果
+      if (signal?.cancelled) return;
       const groups = AgentCardService.buildFileGroups(agentCard);
       setFileGroups(groups);
     } catch (err) {
@@ -46,7 +61,7 @@ export default function ClawCoreFilesTab({ botId, height = '100%' }: ClawCoreFil
         setLoading(false);
       }
     }
-  }, [botId]);
+  }, [botId, agentCardData]);
 
   useEffect(() => {
     const signal = { cancelled: false };
