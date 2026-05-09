@@ -2,6 +2,7 @@
 import type { MatterDetail, MatterStatus } from '../../bridge/types';
 import { getMatter, transitionMatter } from '../../api/todoApi';
 import { Toast } from '../../utils/toast';
+import UserName from '../../ui/UserName';
 import './index.css';
 
 export interface MatterDetailPanelProps {
@@ -140,13 +141,36 @@ export default function MatterDetailPanel({ channelId, channelType, matterId, on
           </div>
         </div>
         <h2 className="wk-mp-head__title">{matter.title}</h2>
-        <div className="wk-mp-head__creator">
-          <span className="wk-mp-head__creator-label">创建: {matter.creator_id.slice(0, 8)}</span>
+        <div className="wk-mp-head__people">
+          {/* 创建人 */}
+          <div className="wk-mp-head__person">
+            <span className="wk-mp-head__avatar">{/* 首字占位 */}</span>
+            <UserName uid={matter.creator_id} className="wk-mp-head__person-name" />
+            <span className="wk-mp-head__person-role">创建人</span>
+          </div>
+          {/* 负责人 */}
           {assignees.length > 0 && (
-            <span> · 负责: {assignees.map((a) => a.user_id.slice(0, 8)).join(', ')}</span>
+            <div className="wk-mp-head__person">
+              <span className="wk-mp-head__avatar-group">
+                {assignees.map((a) => (
+                  <span key={a.user_id} className="wk-mp-head__avatar">{/* 占位 */}</span>
+                ))}
+              </span>
+              <span className="wk-mp-head__person-name">
+                {assignees.map((a, i) => (
+                  <span key={a.user_id}>
+                    {i > 0 && '、'}
+                    <UserName uid={a.user_id} />
+                  </span>
+                ))}
+              </span>
+              <span className="wk-mp-head__person-role">负责人</span>
+            </div>
           )}
-          {matter.source_name && <span> · #{matter.source_name}</span>}
         </div>
+        {matter.source_name && (
+          <div className="wk-mp-head__source">#{matter.source_name}</div>
+        )}
       </div>
 
       {/* 主要目标 */}

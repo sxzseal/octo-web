@@ -891,3 +891,63 @@
   font-size: var(--wk-text-size-xs);
   color: var(--wk-text-tertiary);
 }
+
+/* ─── Head People (创建人 / 负责人) ───────────────────── */
+
+.wk-mp-head__people {
+  margin-top: var(--wk-sp-3);
+  display: flex;
+  align-items: center;
+  gap: var(--wk-sp-4);
+  flex-wrap: wrap;
+  font-size: var(--wk-text-size-xs);
+  color: var(--wk-text-tertiary);
+}
+
+.wk-mp-head__person {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--wk-sp-1-5);
+}
+
+.wk-mp-head__person-name {
+  color: var(--wk-text-secondary);
+  font-weight: 500;
+}
+
+.wk-mp-head__person-role {
+  color: var(--wk-text-tertiary);
+}
+
+.wk-mp-head__avatar-group {
+  display: inline-flex;
+  align-items: center;
+}
+
+.wk-mp-head__avatar {
+  width: 16px;
+  height: 16px;
+  border-radius: var(--wk-r-circle);
+  background: var(--wk-color-info);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 7px;
+  font-weight: 600;
+  color: white;
+}
+
+.wk-mp-head__avatar-group .wk-mp-head__avatar {
+  margin-left: -6px;
+  border: 1.5px solid var(--wk-bg-surface);
+}
+
+.wk-mp-head__avatar-group .wk-mp-head__avatar:first-child {
+  margin-left: 0;
+}
+
+.wk-mp-head__source {
+  margin-top: var(--wk-sp-2);
+  font-size: var(--wk-text-size-xs);
+  color: var(--wk-text-tertiary);
+}
