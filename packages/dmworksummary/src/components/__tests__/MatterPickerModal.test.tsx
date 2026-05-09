@@ -214,4 +214,11 @@ describe('MatterPickerModal', () => {
     render(<MatterPickerModal visible={false} onSelect={onSelect} onCancel={onCancel} />);
     expect(screen.queryByTestId('modal')).not.toBeInTheDocument();
   });
+
+  it('shows error toast when load fails', async () => {
+    const { Toast } = await import('@douyinfe/semi-ui');
+    mockListMatters.mockRejectedValueOnce(new Error('Network error'));
+    await openModal();
+    expect(Toast.error).toHaveBeenCalledWith('Network error');
+  });
 });
