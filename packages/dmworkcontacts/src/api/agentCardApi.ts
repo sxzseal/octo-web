@@ -2,10 +2,9 @@
  * Agent Card API 服务
  * 
  * 对接 agent-card-server HTTP 接口
- * 当前使用 Mock 数据模拟 A/B/D 三种 OctoPush 状态
+ * 统一使用 APIClient（与 AgentCardService 保持一致）
  */
 
-import axios, { type AxiosError } from 'axios';
 import { WKApp } from '@octo/base';
 import type {
   AgentCardResponse,
@@ -17,44 +16,18 @@ import type {
 import { getMockAgentCard, mockFileContents } from './mockData';
 
 /**
- * Isolated axios instance for agent-card-server API.
- * Must NOT inherit axios.defaults.baseURL
- */
-const agentCardAxios = axios.create({ baseURL: '' });
-
-// Inject auth headers via interceptor
-agentCardAxios.interceptors.request.use((config) => {
-  const token = WKApp.loginInfo.token;
-  if (token) {
-    config.headers['Token'] = token; // 注意：agent-card-server 使用 "Token" header
-  }
-  return config;
-});
-
-// Handle 401 — trigger logout on expired token
-agentCardAxios.interceptors.response.use(undefined, (err: AxiosError) => {
-  if (err?.response?.status === 401) {
-    WKApp.shared.logout();
-  }
-  return Promise.reject(err);
-});
-
-/**
  * Extract server error message from axios error response
  */
 function extractErrorMessage(err: unknown): string {
-  const axiosErr = err as AxiosError<ApiErrorResponse>;
-  const msg = axiosErr?.response?.data?.message;
+  const msg = (err as any)?.response?.data?.message;
   const raw = msg || (err instanceof Error ? err.message : 'Request failed');
   return raw.length > 200 ? raw.slice(0, 200) + '…' : raw;
 }
 
 /**
- * Base path for agent-card-server API
- * 环境变量控制 Mock 模式
+ * Mock 模式开关（环境变量控制）
  */
 const USE_MOCK = import.meta.env.VITE_AGENT_CARD_MOCK === 'true';
-const CARD_BASE_URL = import.meta.env.VITE_AGENT_CARD_BASE_URL || '/agent-card/api/v1';
 
 /**
  * GET /api/v1/agent-cards/:bot_id — 获取 Agent Card
@@ -80,10 +53,10 @@ export async function getAgentCard(botId: string): Promise<AgentCardData> {
     });
   }
 
-  // 真实 API 调用
+  // 真实 API 调用（统一使用 APIClient）
   try {
-    const resp = await agentCardAxios.get<AgentCardResponse>(
-      `${CARD_BASE_URL}/agent-cards/${botId}`,
+    const resp = await WKApp.apiClient.get<AgentCardResponse>(
+      `/agent-cards/${botId}`,
     );
     if (resp.data.code === 0) {
       return resp.data.data;
@@ -143,10 +116,10 @@ export async function getAgentCardFile(
     });
   }
 
-  // 真实 API 调用
+  // 真实 API 调用（统一使用 APIClient）
   try {
-    const resp = await agentCardAxios.get<FileContentResponse>(
-      `${CARD_BASE_URL}/agent-cards/${botId}/files/${fileName}`,
+    const resp = await WKApp.apiClient.get<FileContentResponse>(
+      `/agent-cards/${botId}/files/${fileName}`,
     );
     if (resp.data.code === 0) {
       return resp.data.data;
