@@ -523,6 +523,7 @@ export default function MatterDetailPanel({
                         channelId={ch.channel_id}
                         channelType={ch.channel_type}
                         fallback={ch.channel_name}
+                        blur={!isMember}
                       />
                     </span>
                     {!isMember && <NotMemberBadge />}
@@ -1191,12 +1192,30 @@ function ChannelNameLabel({
   channelId,
   channelType,
   fallback,
+  blur,
 }: {
   channelId: string;
   channelType: number;
   fallback?: string;
+  /**
+   * 未加入群时传 true: 用固定 4 字符占位 + CSS 模糊展示, 防止
+   * 名字长度本身泄漏信息。占位选 U+2588 FULL BLOCK, 视觉上明确是
+   * 被遮罩的内容。
+   */
+  blur?: boolean;
 }) {
   const live = useChannelName(channelId, channelType);
+  if (blur) {
+    return (
+      <span
+        className="wk-mp-channels__card-name--blur"
+        title="你不在该群, 群名已隐藏"
+        aria-label="群名已隐藏"
+      >
+        ████
+      </span>
+    );
+  }
   const display = live || fallback || channelId.slice(0, 8);
   return <>{display}</>;
 }

@@ -516,6 +516,17 @@ textarea.wk-mp-goal__text--editing {
   color: var(--wk-text-primary, #18181b);
 }
 
+/* 未加入群时的群名占位: 4 个 U+2588 块字符 + CSS blur, 双保险
+   防止内容可读 + 名字长度泄漏。配合右侧 "不在群" 徽章一起展示, 
+   让用户明确 "我没权限" 又不会对 "是哪个群" 产生误判 */
+.wk-mp-channels__card-name--blur {
+  display: inline-block;
+  filter: blur(3px);
+  user-select: none;
+  cursor: help;
+  letter-spacing: 0.05em;
+}
+
 /* 未加入群的 "不在群" 小徽章 (对齐原型 v19 ChannelDigestItem 右侧标签): 
    灰底 + 边框 + 小锁图标 + "不在群" 文字。跟 card-name 在同一行,
    让用户一眼看出 "是这个群, 但我没权限" */
