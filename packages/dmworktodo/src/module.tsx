@@ -399,6 +399,7 @@ function GlobalMatterModal() {
     }
     Toast.success("事项已创建");
     setOpen(false);
+    WKApp.mittBus.emit("wk:exit-multiple-mode");
   };
 
   return (
@@ -665,6 +666,7 @@ function GlobalSmartCreateModal() {
       onConfirm={async (req) => {
         await createMatter(req);
         Toast.success("事项已创建");
+        WKApp.mittBus.emit("wk:exit-multiple-mode");
       }}
       channel={channel}
     />
