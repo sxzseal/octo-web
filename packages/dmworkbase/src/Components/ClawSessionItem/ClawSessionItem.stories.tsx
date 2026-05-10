@@ -43,6 +43,7 @@ export const Default: Story = {
       ctxMax: 1000000,
       sessionId: "sess_octo_7f3a2b18e",
       lastMsg: "帮我用糗米写一份 OctoPush 的 V0.0.3 发布公告",
+      lastActiveAt: "2026-05-10T06:30:00Z",
     },
   },
 };
@@ -65,6 +66,7 @@ export const Running: Story = {
       ctxMax: 1000000,
       sessionId: "sess_local_cli_2a7",
       lastMsg: "帮我检查下本地 git 仓库的未提交文件，按目录分类列出来",
+      lastActiveAt: "2026-05-10T07:15:00Z",
     },
   },
 };
@@ -87,6 +89,7 @@ export const HighContext: Story = {
       ctxMax: 1000000,
       sessionId: "sess_disc_d7f3a2b18e",
       lastMsg: "关于OctoPush的原型，有几个小问题需要修改一下…",
+    lastActiveAt: "2026-05-10T07:00:00Z",
     },
   },
 };
@@ -108,6 +111,7 @@ export const Failed: Story = {
       ctxMax: 200000,
       sessionId: "sess_octo_task_f1a7",
       lastMsg: "执行数据导入任务",
+    lastActiveAt: "2026-05-10T07:00:00Z",
     },
   },
 };
@@ -129,6 +133,7 @@ export const Killed: Story = {
       ctxMax: 200000,
       sessionId: "sess_local_job_k2b9",
       lastMsg: "处理大文件批量转换",
+    lastActiveAt: "2026-05-10T07:00:00Z",
     },
   },
 };
@@ -150,6 +155,7 @@ export const Timeout: Story = {
       ctxMax: 200000,
       sessionId: "sess_disc_sync_t3c8",
       lastMsg: "同步远程数据库",
+    lastActiveAt: "2026-05-10T07:00:00Z",
     },
   },
 };
@@ -171,6 +177,7 @@ export const Feishu: Story = {
       ctxMax: 200000,
       sessionId: "sess_fs_f3c9a7118b",
       lastMsg: "明天的周报帮我整理下，记得把 DMWork 进展写进去",
+    lastActiveAt: "2026-05-10T07:00:00Z",
     },
   },
 };
@@ -192,6 +199,7 @@ export const OnlyPeerName: Story = {
       ctxMax: 200000,
       sessionId: "sess_local_unknown_u7a3",
       lastMsg: "测试消息",
+    lastActiveAt: "2026-05-10T07:00:00Z",
     },
   },
 };
@@ -213,6 +221,7 @@ export const Slack: Story = {
       ctxMax: 200000,
       sessionId: "sess_sl_2b89a14e7",
       lastMsg: "部署到 staging 时注意改下连接池大小",
+    lastActiveAt: "2026-05-10T07:00:00Z",
     },
   },
 };
@@ -234,6 +243,7 @@ export const WebUI: Story = {
       ctxMax: 200000,
       sessionId: "sess_web_a118fe27c4",
       lastMsg: "/status",
+    lastActiveAt: "2026-05-10T07:00:00Z",
     },
   },
 };
@@ -257,6 +267,7 @@ export const MultipleCards: Story = {
           ctxMax: 1000000,
           sessionId: "sess_octo_7f3a2b18e",
           lastMsg: "帮我用糗米写一份 OctoPush 的 V0.0.3 发布公告",
+        lastActiveAt: "2026-05-10T07:00:00Z",
         }}
       />
       <ClawSessionItem
@@ -272,6 +283,7 @@ export const MultipleCards: Story = {
           ctxMax: 1000000,
           sessionId: "sess_disc_d7f3a2b18e",
           lastMsg: "关于OctoPush的原型，有几个小问题需要修改一下…",
+        lastActiveAt: "2026-05-10T07:00:00Z",
         }}
       />
       <ClawSessionItem
@@ -287,6 +299,7 @@ export const MultipleCards: Story = {
           ctxMax: 1000000,
           sessionId: "sess_octo_bf_33aa2",
           lastMsg: "/start",
+        lastActiveAt: "2026-05-10T07:00:00Z",
         }}
       />
       <ClawSessionItem
@@ -302,6 +315,7 @@ export const MultipleCards: Story = {
           ctxMax: 200000,
           sessionId: "sess_local_task_f7a2",
           lastMsg: "导入 CSV 文件到数据库",
+        lastActiveAt: "2026-05-10T07:00:00Z",
         }}
       />
       <ClawSessionItem
@@ -317,6 +331,7 @@ export const MultipleCards: Story = {
           ctxMax: 200000,
           sessionId: "sess_disc_timeout_t9c3",
           lastMsg: "同步远程 API 数据",
+        lastActiveAt: "2026-05-10T07:00:00Z",
         }}
       />
     </div>

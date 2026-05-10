@@ -90,19 +90,48 @@
 }
 
 .claw-info-meta__status[data-status="running"] {
-  color: #16a34a;
+  color: var(--wk-color-success);
 }
 
 .claw-info-meta__status[data-status="running"] .claw-info-meta__dot {
-  background: #22c55e;
+  background: var(--wk-color-success);
 }
 
 .claw-info-meta__status[data-status="idle"] {
-  color: #d97706;
+  color: var(--wk-color-warning);
 }
 
 .claw-info-meta__status[data-status="idle"] .claw-info-meta__dot {
-  background: #f59e0b;
+  background: var(--wk-color-warning);
+}
+
+/* 上报时间指示器 */
+.claw-info-meta__report-time {
+  display: flex;
+  align-items: center;
+  cursor: help;
+  transition: opacity 0.15s ease;
+}
+
+.claw-info-meta__report-time:hover {
+  opacity: 0.7;
+}
+
+.claw-info-meta__report-time-icon {
+  margin-right: 4px;
+}
+
+/* 上报时间新鲜度颜色 */
+.claw-info-meta__report-time[data-freshness="green"] {
+  color: var(--wk-color-success);
+}
+
+.claw-info-meta__report-time[data-freshness="orange"] {
+  color: var(--wk-color-warning);
+}
+
+.claw-info-meta__report-time[data-freshness="red"] {
+  color: var(--wk-color-danger);
 }
 
 /* Tabs */

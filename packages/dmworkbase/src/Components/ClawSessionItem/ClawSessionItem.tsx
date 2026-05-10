@@ -1,6 +1,23 @@
 import React, { useState } from "react";
 import "./ClawSessionItem.css";
 
+/**
+ * 格式化 ISO 8601 时间为 "2026-05-10 12:30:00"
+ */
+function formatDateTime(isoString: string): string {
+  const date = new Date(isoString);
+  if (Number.isNaN(date.getTime())) {
+    return "—";
+  }
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  const hours = String(date.getHours()).padStart(2, "0");
+  const minutes = String(date.getMinutes()).padStart(2, "0");
+  const seconds = String(date.getSeconds()).padStart(2, "0");
+  return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+}
+
 export interface ClawSessionItemProps {
   /** Session 数据 */
   session: {
@@ -28,6 +45,8 @@ export interface ClawSessionItemProps {
     sessionId: string;
     /** 最近用户消息 */
     lastMsg: string;
+    /** 最后活跃时间（ISO 8601） */
+    lastActiveAt: string;
   };
 }
 
@@ -55,6 +74,7 @@ export default function ClawSessionItem({ session }: ClawSessionItemProps) {
     ctxMax,
     sessionId,
     lastMsg,
+    lastActiveAt,
   } = session;
 
   // 计算上下文占用百分比
@@ -179,6 +199,17 @@ export default function ClawSessionItem({ session }: ClawSessionItemProps) {
                 data-testid="claw-session-model"
               >
                 {model}
+              </span>
+            </div>
+
+            {/* 最近活跃时间 */}
+            <div className="wk-session-field">
+              <span className="wk-session-field__label">最近活跃时间</span>
+              <span
+                className="wk-session-field__value"
+                data-testid="claw-session-last-active"
+              >
+                {formatDateTime(lastActiveAt)}
               </span>
             </div>
 

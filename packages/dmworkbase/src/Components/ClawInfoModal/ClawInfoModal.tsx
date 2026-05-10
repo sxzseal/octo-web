@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
-import { Spin, Empty } from "@douyinfe/semi-ui";
+import { Spin, Empty, Tooltip } from "@douyinfe/semi-ui";
 import { IconClose } from "@douyinfe/semi-icons";
+import { Clock } from "lucide-react";
 import WKModal from "../WKModal";
 import ClawSessionItem from "../ClawSessionItem";
 import ClawOverviewTab from "../ClawOverviewTab/ClawOverviewTab";
@@ -32,6 +33,66 @@ export interface SessionData {
   ctxMax: number;
   sessionId: string;
   lastMsg: string;
+  lastActiveAt: string;
+}
+
+/**
+ * 格式化 ISO 8601 时间为 "2026-05-10 12:30:00"
+ */
+function formatDateTime(isoString: string): string {
+  const date = new Date(isoString);
+  if (Number.isNaN(date.getTime())) {
+    return "—";
+  }
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  const hours = String(date.getHours()).padStart(2, "0");
+  const minutes = String(date.getMinutes()).padStart(2, "0");
+  const seconds = String(date.getSeconds()).padStart(2, "0");
+  return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+}
+
+/**
+ * 计算上报时间的新鲜度
+ * @returns "green" | "orange" | "red"
+ */
+function getReportFreshness(lastReportAt: string): "green" | "orange" | "red" {
+  const now = Date.now();
+  const reportTime = new Date(lastReportAt).getTime();
+  
+  if (Number.isNaN(reportTime)) {
+    return "red"; // 无效时间默认红色
+  }
+  
+  const diffMs = now - reportTime;
+  const diffHours = diffMs / (1000 * 60 * 60);
+
+  if (diffHours < 2) return "green";
+  if (diffHours < 6) return "orange";
+  return "red";
+}
+
+/**
+ * 计算相对时间文本（如"2小时前"）
+ */
+function getRelativeTime(isoString: string): string {
+  const now = Date.now();
+  const reportTime = new Date(isoString).getTime();
+  
+  if (Number.isNaN(reportTime)) {
+    return "未知";
+  }
+  
+  const diffMs = now - reportTime;
+  const diffMinutes = Math.floor(diffMs / (1000 * 60));
+  const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+
+  if (diffMinutes < 1) return "刚刚";
+  if (diffMinutes < 60) return `${diffMinutes}分钟前`;
+  if (diffHours < 24) return `${diffHours}小时前`;
+  return `${diffDays}天前`;
 }
 
 /**
@@ -131,6 +192,7 @@ export default function ClawInfoModal({ botId, botName, visible, onClose }: Claw
       ctxMax: s.context_total,
       sessionId: s.session_id,
       lastMsg: s.last_user_message,
+      lastActiveAt: s.last_active_at,
     };
   };
 
@@ -172,7 +234,7 @@ export default function ClawInfoModal({ botId, botName, visible, onClose }: Claw
         <div className="claw-session-toolbar">
           <span className="claw-session-count">
             <span className="claw-session-count__running">{runningCount} running</span>
-            <span> · 共 {total} 个（最近 1 小时）</span>
+            <span> · 共 {total} 个</span>
           </span>
         </div>
 
@@ -204,7 +266,7 @@ export default function ClawInfoModal({ botId, botName, visible, onClose }: Claw
                 <circle cx="40" cy="24" r="2" fill="#D1D5DB" />
               </svg>
             }
-            description="最近 1 小时内没有活跃的会话，有新对话产生后会出现在这里"
+            description="暂无活跃的会话，有新对话产生后会出现在这里"
             style={{ padding: "60px 24px" }}
           />
         )}
@@ -252,6 +314,24 @@ export default function ClawInfoModal({ botId, botName, visible, onClose }: Claw
                     ? "空闲"
                     : "已关闭"}
                 </span>
+                {data?.last_report_at && (
+                  <>
+                    <span className="claw-info-meta__sep">·</span>
+                    <Tooltip
+                      content={`${getRelativeTime(data.last_report_at)}上报`}
+                      position="bottom"
+                    >
+                      <span
+                        className="claw-info-meta__report-time"
+                        data-freshness={getReportFreshness(data.last_report_at)}
+                        data-testid="claw-report-time"
+                      >
+                        <Clock size={14} className="claw-info-meta__report-time-icon" />
+                        {formatDateTime(data.last_report_at)}
+                      </span>
+                    </Tooltip>
+                  </>
+                )}
               </div>
             </div>
           </div>

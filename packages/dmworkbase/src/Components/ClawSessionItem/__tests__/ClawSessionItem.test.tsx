@@ -17,6 +17,7 @@ describe("ClawSessionItem", () => {
     ctxMax: 1000000,
     sessionId: "sess_octo_7f3a2b18e",
     lastMsg: "帮我用糗米写一份 OctoPush 的 V0.0.3 发布公告",
+    lastActiveAt: "2026-05-10T06:30:00Z",
   };
 
   describe("AC-5: 展示对话方、模型、上下文、最近消息", () => {
@@ -46,6 +47,19 @@ describe("ClawSessionItem", () => {
       expect(screen.getByTestId("claw-context-bar-text")).toHaveTextContent(
         "48.2K / 1000K (5%)"
       );
+    });
+
+    it("应该正确展示最近活跃时间", () => {
+      render(<ClawSessionItem session={mockSession} />);
+
+      // 点击头部展开
+      const head = screen.getByTestId("claw-session-head");
+      fireEvent.click(head);
+
+      // 验证最近活跃时间
+      const lastActiveElement = screen.getByTestId("claw-session-last-active");
+      expect(lastActiveElement).toBeInTheDocument();
+      expect(lastActiveElement).toHaveTextContent("2026-05-10 06:30:00");
     });
 
     it("应该显示正确的渠道标签", () => {
