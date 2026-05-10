@@ -560,9 +560,15 @@ export default function MatterDetailPanel({
                   </div>
                   {expandedTimelines.has(ch.channel_id) &&
                     (() => {
+                      // 按 source_channel_id 匹配 (这是真实 IM group_no,
+                      // 跟 matter_channel.channel_id 同一份数据)。
+                      // timeline.channel_id 是 matter_channels 表的 UUID,
+                      // 跟外层 ch.channel_id (真实群号) 类型完全不同,
+                      // 曾经有同名字段误以为可以直接比对 (PR #xxx 修复)。
                       const chEntries = timeline.filter(
                         (e) =>
-                          e.channel_id === ch.channel_id || !e.channel_id,
+                          e.source_channel_id === ch.channel_id ||
+                          (!e.source_channel_id && !e.channel_id),
                       );
                       if (timelineLoading && chEntries.length === 0) {
                         return (
@@ -618,20 +624,23 @@ export default function MatterDetailPanel({
               <TimelinePanel
                 entries={timeline}
                 onShowAnchor={(entry, ev) => {
-                  // 改变记录 tab 下每条 entry 可能属于不同 channel,
-                  // 用 matter.channels 按 entry.channel_id 反查 channel_name
-                  if (!entry.channel_id || entry.channel_type === undefined) {
-                    return;
-                  }
+                  // 变更记录 tab 下每条 entry 可能属于不同 channel。
+                  // IM 接口要的是真实群号 (32 hex), 在 timeline 的
+                  // source_channel_id 字段; entry.channel_id 是
+                  // matter_channels 表 id (UUID), 不能传给 IM。
+                  // channel_type 是 entry.channel_type (跟 source 一致)。
+                  const groupNo = entry.source_channel_id;
+                  const chType = entry.channel_type;
+                  if (!groupNo || chType === undefined) return;
                   const ch = channels.find(
-                    (c) => c.channel_id === entry.channel_id,
+                    (c) => c.channel_id === groupNo,
                   );
                   const rect = ev.currentTarget.getBoundingClientRect();
                   setAnchor({
-                    channelId: entry.channel_id,
-                    channelType: entry.channel_type,
+                    channelId: groupNo,
+                    channelType: chType,
                     channelName:
-                      ch?.channel_name || entry.channel_id.slice(0, 8),
+                      ch?.channel_name || groupNo.slice(0, 8),
                     messageIds: entry.source_msgs || [],
                     ...computeAnchorPosition(rect),
                   });
