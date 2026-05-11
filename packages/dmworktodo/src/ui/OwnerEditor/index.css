@@ -68,6 +68,11 @@
   line-height: 1;
 }
 
+.wk-owner-editor__names-more {
+  color: var(--wk-text-tertiary, #6b7075);
+  font-weight: 400;
+}
+
 /* ─── Dropdown ─────────────────────────────────────── */
 .wk-owner-editor__dropdown {
   position: absolute;
