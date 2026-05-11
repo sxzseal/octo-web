@@ -1205,27 +1205,7 @@ function ChannelMoreMenu({
             </svg>
             查看群聊
           </button>
-          <button
-            type="button"
-            className="wk-mp-ch-more__item wk-mp-ch-more__item--danger"
-            onClick={() => {
-              setOpen(false);
-              onUnlink();
-            }}
-          >
-            <svg
-              width="11"
-              height="11"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-            >
-              <line x1="18" y1="6" x2="6" y2="18" />
-              <line x1="6" y1="6" x2="18" y2="18" />
-            </svg>
-            取消关联
-          </button>
+          {/* 取消关联暂时隐藏，后续产品确认后恢复 */}
         </div>
       )}
     </span>
