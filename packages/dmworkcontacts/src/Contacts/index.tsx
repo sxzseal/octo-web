@@ -765,6 +765,7 @@ export default class ContactsList extends Component<any, ContactsState> {
                         visible={this.state.userInfoVisible}
                         onCancel={() => this.setState({ userInfoVisible: false })}
                         className="wk-base-modal-userinfo wk-base-modal"
+                        options={{ closable: false }}
                     >
                         {this.state.userInfoUid && (
                             <UserInfo
