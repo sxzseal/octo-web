@@ -106,6 +106,7 @@ export default class ContactsModule implements IModule {
         const channel = (param.channel ?? { channelID: "", channelType: 0 }) as any;
         const defaultCategoryId = param.defaultCategoryId as string | undefined;
         const onSuccess = param.onSuccess as (() => void) | undefined;
+        const keepSidebarTab = param.keepSidebarTab as boolean | undefined;
         const div = document.createElement("div");
         document.body.appendChild(div);
 
@@ -122,6 +123,7 @@ export default class ContactsModule implements IModule {
             autoShow={true}
             defaultCategoryId={defaultCategoryId}
             onSuccess={onSuccess}
+            keepSidebarTab={keepSidebarTab}
           />,
           div
         );

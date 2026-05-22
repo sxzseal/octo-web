@@ -29,7 +29,10 @@ const CreateCategoryModal: React.FC<CreateCategoryModalProps> = ({
         }
     }, [visible])
 
-    const isDuplicate = existingNames.includes(value.trim())
+    // loading 期间(父层 onConfirm 进行中)不参与重复校验:此时分类可能已建成
+    // 并出现在 existingNames 里,但用户输入框里的 value 还没被清空 ——
+    // 否则会让"该分组名已存在"在 modal 关掉前闪一下。
+    const isDuplicate = !loading && existingNames.includes(value.trim())
     const isEmpty = value.trim() === ""
     const isDisabled = isEmpty || isDuplicate || loading
 

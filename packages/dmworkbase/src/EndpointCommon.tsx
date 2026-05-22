@@ -282,11 +282,12 @@ export class EndpointCommon {
     );
   }
 
-  organizationalLayer(channel: Channel | null, options?: { defaultCategoryId?: string; onSuccess?: () => void }): void {
+  organizationalLayer(channel: Channel | null, options?: { defaultCategoryId?: string; onSuccess?: () => void; keepSidebarTab?: boolean }): void {
     return EndpointManager.shared.invoke(EndpointCategory.organizationalLayer, {
       channel: channel,
       defaultCategoryId: options?.defaultCategoryId,
       onSuccess: options?.onSuccess,
+      keepSidebarTab: options?.keepSidebarTab,
     });
   }
 

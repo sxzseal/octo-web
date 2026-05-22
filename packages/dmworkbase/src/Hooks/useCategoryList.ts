@@ -7,7 +7,7 @@ export interface UseCategoryListResult {
     isLoading: boolean
     error: string | null
     reload: () => void
-    createCategory: (name: string) => Promise<void>
+    createCategory: (name: string) => Promise<CategoryItem>
     renameCategory: (categoryId: string, name: string) => Promise<void>
     deleteCategory: (categoryId: string) => Promise<void>
     sortCategories: (categoryIds: string[]) => Promise<void>
@@ -43,8 +43,9 @@ export function useCategoryList(): UseCategoryListResult {
 
     const createCategory = async (name: string) => {
         if (!spaceId) throw new Error("未选中 Space")
-        await CategoryService.create(spaceId, { name })
+        const created = await CategoryService.create(spaceId, { name })
         await load()
+        return created
     }
 
     const renameCategory = async (categoryId: string, name: string) => {

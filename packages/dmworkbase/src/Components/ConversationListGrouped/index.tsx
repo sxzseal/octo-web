@@ -10,6 +10,7 @@ import { ConversationWrap } from "../../Service/Model"
 import ConversationList from "../ConversationList"
 import ConversationListWithCategory from "../ConversationListWithCategory"
 import ContextMenus, { ContextMenusContext, ContextMenusData } from "../ContextMenus"
+import type { NewCategoryTarget } from "../ChatConversationList"
 import {
     DndContext,
     DragOverlay,
@@ -73,7 +74,11 @@ export interface ConversationListGroupedProps {
     onDeleteCategory: (id: string) => Promise<void> | void
     onSortCategories: (ids: string[]) => Promise<void>
     onMoveGroupToCategory: (groupNo: string, categoryId: string) => Promise<void>
-    onOpenCreateCategory: () => void
+    /**
+     * 打开"新建分组" modal。target 表示当时右键的现场;父层(ChatConversationList)据此
+     * 把分类建出后顺手把右键选中项归入新分类。无 target = 顶部 + 入口/纯建空分类。
+     */
+    onOpenCreateCategory: (target?: NewCategoryTarget) => void
     onStartGroup?: () => void
     onCreateGroupInCategory?: (categoryId: string) => void
     /** 取消关注后的回调（用于刷新列表） */
@@ -372,7 +377,10 @@ const ConversationListGrouped: React.FC<ConversationListGroupedProps> = ({
                     onClick: () => onMoveGroupToCategory(groupNo, cat.category_id),
                 }))
             moveToChildren.push({ separator: true } as ContextMenusData)
-            moveToChildren.push({ title: '+ 新建分组', onClick: onOpenCreateCategory })
+            moveToChildren.push({
+                title: '+ 新建分组',
+                onClick: () => onOpenCreateCategory({ kind: 'moveGroupToNewCategory', groupNo }),
+            })
 
             const moveToItem: ContextMenusData = {
                 title: '移到分组',
@@ -410,7 +418,12 @@ const ConversationListGrouped: React.FC<ConversationListGroupedProps> = ({
                     },
                 }))
             moveToChildrenDm.push({ separator: true } as ContextMenusData)
-            moveToChildrenDm.push({ title: '+ 新建分组', onClick: onOpenCreateCategory })
+            moveToChildrenDm.push({
+                title: '+ 新建分组',
+                // DM 的"新分组"语义 = 用新分类 followDM,与 followConvToCategory
+                // 对 ChannelTypePerson 分支等价(都走 FollowService.followDM)。
+                onClick: () => onOpenCreateCategory({ kind: 'followToNewCategory', conv }),
+            })
             menus.push({
                 title: '移到分组',
                 icon: "M2 9V5a2 2 0 0 1 2-2h7l5 5v11a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2v-4 M12 3v5h5 M9 15l3 3 3-3 M12 12v6",

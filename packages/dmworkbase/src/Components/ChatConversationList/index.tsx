@@ -48,6 +48,19 @@ export interface ChatConversationListProps {
     onGroupCreated?: () => void
 }
 
+// 「+ 新建分组」入口在三个右键场景共用同一个 modal。建分类成功后,要把当时
+// 右键的会话(添加到关注)或群(移到分组)一并归入新分类,否则就是 bug:用户
+// 以为操作连贯,实际只建了空分类。modal 是无 conv 上下文的全局组件,通过这
+// 个 state 把上下文从右键现场带到 onConfirm。
+//
+// NewCategoryTarget = 非 null 的 PendingAction;子组件(如 ConversationListGrouped)
+// 通过 onOpenCreateCategory(target?) 把右键现场带过来,顶部 + 入口 target=undefined
+// 即可走"建空分类"的路径。
+export type NewCategoryTarget =
+    | { kind: 'followToNewCategory'; conv: ConversationWrap }
+    | { kind: 'moveGroupToNewCategory'; groupNo: string }
+type PendingAction = NewCategoryTarget | null
+
 const ChatConversationList: React.FC<ChatConversationListProps> = ({
     conversations,
     filter,
@@ -167,10 +180,16 @@ const ChatConversationList: React.FC<ChatConversationListProps> = ({
 
     const [createModalVisible, setCreateModalVisible] = useState(false)
 
-    // 暴露「打开新建分组 Modal」给外层（如顶部 + 按钮）
+    const [pendingAction, setPendingAction] = useState<PendingAction>(null)
+
+    // 暴露「打开新建分组 Modal」给外层（如顶部 + 按钮）。
+    // 顶部入口无右键上下文,必须先清 pendingAction,避免上次右键残留被误归入新分类。
     React.useEffect(() => {
         if (onOpenCreateCategoryRef) {
-            onOpenCreateCategoryRef.current = () => setCreateModalVisible(true)
+            onOpenCreateCategoryRef.current = () => {
+                setPendingAction(null)
+                setCreateModalVisible(true)
+            }
         }
         return () => {
             if (onOpenCreateCategoryRef) {
@@ -188,6 +207,28 @@ const ChatConversationList: React.FC<ChatConversationListProps> = ({
         const now = Date.now()
         return conversations.filter(conv => isVisibleInRecentTab(conv, now))
     }, [conversations, hideInactiveGroups])
+
+    // 按 conv.channelType 把会话归入指定分类。三种 channel 走三套写操作:
+    // - 子区:父群先 refollow + moveCategory,再 followThread(子区不能脱离父群单独分组)
+    // - 群:refollow + moveCategory
+    // - DM:followDM 带 category_id 一步到位
+    // "添加到关注 → 已有分组"和"添加到关注 → + 新建分组"两条路径都用这一份。
+    const followConvToCategory = async (conv: ConversationWrap, categoryId: string) => {
+        const channel = conv.channel
+        if (channel.channelType === ChannelTypeCommunityTopic) {
+            const parentGroupNo = conv.channelInfo?.orgData?.parentGroupNo
+                || parseThreadChannelId(channel.channelID)?.groupNo
+            if (!parentGroupNo) throw new Error('无法解析父频道 groupNo')
+            await FollowService.refollowChannel({ group_no: parentGroupNo })
+            await moveGroupToCategory(parentGroupNo, categoryId)
+            await FollowService.followThread({ thread_channel_id: channel.channelID })
+        } else if (channel.channelType === ChannelTypeGroup) {
+            await FollowService.refollowChannel({ group_no: channel.channelID })
+            await moveGroupToCategory(channel.channelID, categoryId)
+        } else if (channel.channelType === ChannelTypePerson) {
+            await FollowService.followDM({ peer_uid: channel.channelID, category_id: categoryId })
+        }
+    }
 
     // 构建额外的右键菜单项
     // - 「移到分组」子菜单（仅关注 Tab 的群聊）
@@ -256,14 +297,8 @@ const ChatConversationList: React.FC<ChatConversationListProps> = ({
                             .map(cat => ({
                                 title: cat.name,
                                 onClick: async () => {
-                                    if (!parentGroupNo) {
-                                        console.error('关注子区失败: 无法解析父频道 groupNo', channel.channelID)
-                                        return
-                                    }
                                     try {
-                                        await FollowService.refollowChannel({ group_no: parentGroupNo })
-                                        await moveGroupToCategory(parentGroupNo, cat.category_id)
-                                        await FollowService.followThread({ thread_channel_id: channel.channelID })
+                                        await followConvToCategory(conv, cat.category_id)
                                         reloadAll()
                                     } catch (err) {
                                         console.error('关注子区失败', err)
@@ -273,7 +308,10 @@ const ChatConversationList: React.FC<ChatConversationListProps> = ({
                         categoryItems.push({ separator: true } as ContextMenusData)
                         categoryItems.push({
                             title: '+ 新建分组',
-                            onClick: () => setCreateModalVisible(true)
+                            onClick: () => {
+                                setPendingAction({ kind: 'followToNewCategory', conv })
+                                setCreateModalVisible(true)
+                            }
                         })
 
                         menus.push({
@@ -289,13 +327,7 @@ const ChatConversationList: React.FC<ChatConversationListProps> = ({
                             title: cat.name,
                             onClick: async () => {
                                 try {
-                                    if (channel.channelType === ChannelTypeGroup) {
-                                        await FollowService.refollowChannel({ group_no: channel.channelID })
-                                        // 移到指定分组
-                                        await moveGroupToCategory(channel.channelID, cat.category_id)
-                                    } else if (channel.channelType === ChannelTypePerson) {
-                                        await FollowService.followDM({ peer_uid: channel.channelID, category_id: cat.category_id })
-                                    }
+                                    await followConvToCategory(conv, cat.category_id)
                                     reloadAll()
                                 } catch (err) {
                                     console.error('添加到关注失败', err)
@@ -305,7 +337,10 @@ const ChatConversationList: React.FC<ChatConversationListProps> = ({
                     categoryItems.push({ separator: true } as ContextMenusData)
                     categoryItems.push({
                         title: '+ 新建分组',
-                        onClick: () => setCreateModalVisible(true)
+                        onClick: () => {
+                            setPendingAction({ kind: 'followToNewCategory', conv })
+                            setCreateModalVisible(true)
+                        }
                     })
 
                     menus.push({
@@ -316,28 +351,8 @@ const ChatConversationList: React.FC<ChatConversationListProps> = ({
             }
         }
 
-        // 关注 Tab 的群聊显示「移到分组」（保留原有逻辑）
-        if (filter === 'group' && conv.channel.channelType === ChannelTypeGroup && categories.length > 0) {
-            const groupNo = conv.channel.channelID
-            const currentCategoryId = categories.find(
-                cat => (cat.groups || []).some(g => g.group_no === groupNo)
-            )?.category_id
-
-            const moveItems: ContextMenusData[] = categories
-                .filter(cat => !cat.is_default && isValidCategoryItem(cat))
-                .map(cat => ({
-                    title: cat.name,
-                    checked: currentCategoryId === cat.category_id,
-                    onClick: () => handleMoveGroupToCategory(groupNo, cat.category_id),
-                }))
-            moveItems.push({ separator: true } as ContextMenusData)
-            moveItems.push({ title: '+ 新建分组', onClick: () => setCreateModalVisible(true) })
-
-            menus.push({
-                title: '移到分组',
-                children: moveItems
-            })
-        }
+        // filter === 'group'(关注 Tab) 走 ConversationListGrouped 自建右键菜单,
+        // 通过下方 onOpenCreateCategory(target) 把现场带回这里,不在此处处理。
 
         return menus
     }
@@ -365,11 +380,17 @@ const ChatConversationList: React.FC<ChatConversationListProps> = ({
                     onDeleteCategory={handleDeleteCategory}
                     onSortCategories={sortCategories}
                     onMoveGroupToCategory={handleMoveGroupToCategory}
-                    onOpenCreateCategory={() => setCreateModalVisible(true)}
+                    onOpenCreateCategory={(target?: NewCategoryTarget) => {
+                        // target 由 ConversationListGrouped 右键"+ 新建分组"传入
+                        // (移到分组 / 添加到关注的分支);顶部 + 按钮不带 target,清空即可。
+                        setPendingAction(target ?? null)
+                        setCreateModalVisible(true)
+                    }}
                     onStartGroup={() => {
                         WKApp.endpoints.organizationalLayer(null, {
+                            keepSidebarTab: true,
                             onSuccess: () => {
-                                reload()
+                                reloadAll()
                                 onGroupCreated?.()
                             }
                         })
@@ -377,8 +398,9 @@ const ChatConversationList: React.FC<ChatConversationListProps> = ({
                     onCreateGroupInCategory={(categoryId: string) => {
                         WKApp.endpoints.organizationalLayer(null, {
                             defaultCategoryId: categoryId,
+                            keepSidebarTab: true,
                             onSuccess: () => {
-                                reload()
+                                reloadAll()
                                 onGroupCreated?.()
                             }
                         })
@@ -402,10 +424,38 @@ const ChatConversationList: React.FC<ChatConversationListProps> = ({
                 visible={createModalVisible}
                 existingNames={existingCategoryNames}
                 onConfirm={async (name) => {
-                    await createCategory(name)
+                    const action = pendingAction
+                    try {
+                        const created = await createCategory(name)
+                        const newCategoryId = created.category_id
+                        // 顶部 + 按钮入口 action 为 null,只建空分类即可。
+                        if (newCategoryId && action) {
+                            try {
+                                if (action.kind === 'followToNewCategory') {
+                                    await followConvToCategory(action.conv, newCategoryId)
+                                } else if (action.kind === 'moveGroupToNewCategory') {
+                                    await handleMoveGroupToCategory(action.groupNo, newCategoryId)
+                                }
+                            } catch (err) {
+                                // 分类已建出来,不阻塞 modal 关闭;打日志让用户重试关注操作
+                                console.error('归入新分组失败', err)
+                            }
+                        }
+                        reloadAll()
+                        // 只有 createCategory 成功才关 modal。失败时让异常继续上抛,
+                        // 由 CreateCategoryModal 自身 catch 显示"创建失败,请重试"。
+                        setPendingAction(null)
+                        setCreateModalVisible(false)
+                    } catch (err) {
+                        // 失败也清理右键上下文,避免下次打开时挂着上次的 pending
+                        setPendingAction(null)
+                        throw err
+                    }
+                }}
+                onCancel={() => {
+                    setPendingAction(null)
                     setCreateModalVisible(false)
                 }}
-                onCancel={() => setCreateModalVisible(false)}
             />
         </>
     )

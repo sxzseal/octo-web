@@ -410,14 +410,26 @@ export class ChatVM extends ProviderListener {
         this.loading = true
         this.notifyListener()
 
+        // 快照本次请求对应的 Space,sync 回来后比对 —— 快速 A→B→C 切换时,
+        // B 的回包可能晚于 C 的回包到达;如果直接写入会把 C 的 cache 覆盖成 B 的
+        // (甚至空数组,见 dmworkdatasource/module.ts 的 stale guard)。
+        const requestSpaceId = WKApp.shared.currentSpaceId
+
         // 先拉取数据，避免清空列表导致 UI 闪烁（fix #266）
         const conversations = await WKSDK.shared().conversationManager.sync({})
 
-        // 拉取成功后再清空+替换（切换 Space 时清空 SDK 内部缓存，避免旧 Space 会话残留）
-        WKSDK.shared().conversationManager.conversations = []
+        // 回来已经不是本次请求对应的 Space —— 当前 Space 自有更新一次 sync,
+        // 直接放弃本次结果。loading 留给新一次 sync 收尾,避免和 loading=false 冲突。
+        if (WKApp.shared.currentSpaceId !== requestSpaceId) {
+            return
+        }
+
+        // _pendingSpaceConversations 是 ChatVM 自己的延迟队列,跟 SDK cache 无关,
+        // 切 Space 时清掉避免旧 Space 排队中的 incoming 落入新 Space 视图。
         this._pendingSpaceConversations.clear()
 
         const conversationWraps = new Array<ConversationWrap>()
+        const filteredForSdk = new Array<Conversation>()
         if (conversations && conversations.length > 0) {
             for (const conversation of conversations) {
                 // Space 过滤：复用共享函数（含 channelSpaceMap 缓存）
@@ -426,8 +438,13 @@ export class ChatVM extends ProviderListener {
                 }
                 if (shouldSkipPersonConversationForSpace(conversation)) continue
                 conversationWraps.push(new ConversationWrap(conversation))
+                filteredForSdk.push(conversation)
             }
         }
+        // 将过滤后的会话回填到 SDK 全局缓存，保证其它读取者（合并转发选择器、
+        // todo 等）在切换 Space 后能立刻读到当前 Space 的最近会话/子区，
+        // 而不是看到上一行被清空的空数组。
+        WKSDK.shared().conversationManager.conversations = filteredForSdk
         this.conversations = conversationWraps
         this.loading = false
 
@@ -435,6 +452,9 @@ export class ChatVM extends ProviderListener {
 
         this.notifyListener()
         WKApp.menus.refresh() // Fix #3: 切换 Space 后刷新 badge
+        // 通知一次性读取 conversationManager.conversations 的消费者（合并转发等）
+        // 缓存已经回填,可以重新 load 了。
+        WKApp.mittBus.emit('conversation-list-refreshed')
     }
 
     async reloadRequestConversationList() {

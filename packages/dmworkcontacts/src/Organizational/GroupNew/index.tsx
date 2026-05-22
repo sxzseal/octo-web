@@ -35,6 +35,7 @@ interface IPorpsOrganizationalGroupNew {
   autoShow?: boolean;
   defaultCategoryId?: string;
   onSuccess?: () => void;
+  keepSidebarTab?: boolean;
 }
 
 interface ISateOrganizationalGroupNew {
@@ -468,7 +469,10 @@ export class OrganizationalGroupNew extends Component<
           { categoryId: this.props.defaultCategoryId }
         )
         if (result?.group_no) {
-          WKApp.endpoints.showConversation(new Channel(result.group_no, ChannelTypeGroup))
+          WKApp.endpoints.showConversation(
+            new Channel(result.group_no, ChannelTypeGroup),
+            this.props.keepSidebarTab ? { fromSidebarList: true } : undefined,
+          )
         }
         this.props.onSuccess?.()
       } catch (error: any) {

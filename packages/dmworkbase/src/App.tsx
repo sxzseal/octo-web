@@ -54,6 +54,12 @@ export type MittEvents = {
   'wk:matter-deleted': { matterId: string };
   "summary-space-changed": undefined;
   /**
+   * Chat VM 完成 requestConversationList()（切 Space / 重连后会触发）后广播。
+   * 用于让那些一次性读取 WKSDK.conversationManager.conversations 缓存的消费者
+   * （如合并转发选择器）在缓存被回填后再 load 一次,避免读到清空中间态。
+   */
+  "conversation-list-refreshed": undefined;
+  /**
    * 频道头像发生变化（上传/更新）时广播。订阅者（例如 WKAvatar）可依据 channelID +
    * channelType 匹配后刷新自身缓存的 avatar URL，避免整页刷新。
    */
