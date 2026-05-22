@@ -77,11 +77,13 @@ export type EditorContentBlock =
   | { type: "image"; id: string; file: File }
   | { type: "file"; id: string; file: File };
 
-/**
- * 从编辑器 JSON 中按文档顺序提取有序内容块。
- * attachment 是 inline 节点（嵌套在 paragraph 内部），会把前后文本切割成独立文本段。
- * 连续的纯文本段落合并为一个 text block（用 \n 分隔）。
- */
+const TIPTAP_BLOCK_TYPES = new Set([
+  'paragraph', 'heading', 'blockquote', 'codeBlock',
+  'orderedList', 'bulletList', 'listItem',
+  'table', 'tableRow', 'tableCell', 'tableHeader',
+  'horizontalRule',
+]);
+
 function extractOrderedBlocks(
   editorInstance: any,
   attachmentFilesMap: Map<string, File>
@@ -91,21 +93,8 @@ function extractOrderedBlocks(
   if (!json.content) return [];
 
   const blocks: EditorContentBlock[] = [];
-  let pendingTextParts: string[] = []; // 当前累积的文本片段（跨行用 \n 连接）
+  let pendingTextParts: string[] = [];
 
-  // 从 inline 节点中提取文本（text / mention / hardBreak）
-  function inlineToText(node: any): string {
-    if (node.type === "text") {
-      return node.text || "";
-    } else if (node.type === "mention") {
-      return `@[${node.attrs.id}:${node.attrs.label}]`;
-    } else if (node.type === "hardBreak") {
-      return "\n";
-    }
-    return "";
-  }
-
-  // 把累积的 pendingTextParts 冲刷为一个 text block
   function flushText() {
     const joined = stripInvisibleChars(pendingTextParts.join(""));
     if (joined.trim() !== "") {
@@ -115,60 +104,48 @@ function extractOrderedBlocks(
     pendingTextParts = [];
   }
 
-  for (let blockIdx = 0; blockIdx < json.content.length; blockIdx++) {
-    const topNode = json.content[blockIdx];
-
-    // 顶层如果直接是 attachment（理论上不会，但防御性处理）
-    if (topNode.type === "attachment" && topNode.attrs) {
-      const file = attachmentFilesMap.get(topNode.attrs.id);
+  function processNode(node: any): void {
+    if (node.type === "attachment" && node.attrs) {
+      const file = attachmentFilesMap.get(node.attrs.id);
       if (file) {
         flushText();
         const blockType = file.type.startsWith("image/") ? "image" : "file";
-        blocks.push({ type: blockType, id: topNode.attrs.id, file });
+        blocks.push({ type: blockType, id: node.attrs.id, file });
       }
-      continue;
+      return;
     }
 
-    // paragraph / heading 等块级节点：遍历其 inline content
-    const children = topNode.content || [];
-    const hasAttachment = children.some((c: any) => c.type === "attachment");
+    if (node.type === "text") {
+      pendingTextParts.push(node.text || "");
+      return;
+    }
+    if (node.type === "mention") {
+      pendingTextParts.push(`@[${node.attrs.id}:${node.attrs.label}]`);
+      return;
+    }
+    if (node.type === "hardBreak") {
+      pendingTextParts.push("\n");
+      return;
+    }
 
-    if (!hasAttachment) {
-      // 整段都是纯文本，累积
-      let lineText = "";
-      for (const child of children) {
-        lineText += inlineToText(child);
-      }
-      // 段落间用 \n 分隔
-      if (pendingTextParts.length > 0) {
-        pendingTextParts.push("\n");
-      }
-      pendingTextParts.push(lineText);
-    } else {
-      // 段落内有 attachment，需要拆分：text...attachment...text...
-      // 先加段落换行分隔（如果前面有累积文本）
-      if (pendingTextParts.length > 0) {
-        pendingTextParts.push("\n");
-      }
-
-      for (const child of children) {
-        if (child.type === "attachment" && child.attrs) {
-          const file = attachmentFilesMap.get(child.attrs.id);
-          if (file) {
-            // 遇到 attachment，先冲刷前面累积的文本
-            flushText();
-            const blockType = file.type.startsWith("image/") ? "image" : "file";
-            blocks.push({ type: blockType, id: child.attrs.id, file });
-          }
-        } else {
-          // 普通 inline 节点（text / mention / hardBreak）
-          pendingTextParts.push(inlineToText(child));
+    if (node.content) {
+      for (let i = 0; i < node.content.length; i++) {
+        const child = node.content[i];
+        if (i > 0 && TIPTAP_BLOCK_TYPES.has(child.type)) {
+          pendingTextParts.push("\n");
         }
+        processNode(child);
       }
     }
   }
 
-  // 冲刷最后残余的文本
+  for (let blockIdx = 0; blockIdx < json.content.length; blockIdx++) {
+    if (blockIdx > 0) {
+      pendingTextParts.push("\n");
+    }
+    processNode(json.content[blockIdx]);
+  }
+
   flushText();
 
   return blocks;
@@ -437,7 +414,6 @@ function parseMentionMarkers(
 // 保持 membersRef 在模块级别供 formatMentionTextV2 使用
 let membersRef: React.MutableRefObject<Array<Subscriber> | undefined>;
 
-// 从 Tiptap JSON 提取 mentions
 function extractMentionsFromEditor(editor: any): string {
   const json = editor.getJSON();
   let result = "";
@@ -446,13 +422,16 @@ function extractMentionsFromEditor(editor: any): string {
     if (node.type === "text") {
       result += node.text;
     } else if (node.type === "mention") {
-      const uid = node.attrs.id;
-      const label = node.attrs.label;
-      result += `@[${uid}:${label}]`;
+      result += `@[${node.attrs.id}:${node.attrs.label}]`;
     } else if (node.type === "hardBreak") {
       result += "\n";
     } else if (node.content) {
-      node.content.forEach(traverse);
+      node.content.forEach((child: any, idx: number) => {
+        if (idx > 0 && TIPTAP_BLOCK_TYPES.has(child.type)) {
+          result += "\n";
+        }
+        traverse(child);
+      });
     }
   }
 
