@@ -37,6 +37,20 @@ export const TextAndImages: Story = {
   },
 };
 
+export const MentionAndLink: Story = {
+  args: {
+    blocks: [
+      {
+        id: "t1",
+        type: "text",
+        content:
+          "文字\n@哈 https://github.com/Mininglamp-OSS/octo-web/issues/355\n测试测试",
+        mentions: [{ name: "@哈", uid: "ha" }],
+      },
+    ],
+  },
+};
+
 export const TextAndFile: Story = {
   args: {
     blocks: [

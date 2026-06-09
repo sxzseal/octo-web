@@ -14,6 +14,7 @@ import "katex/dist/katex.min.css";
 import "./markdown.css";
 import WKApp from "../../App";
 import { isSafeUrl } from "../../Utils/security";
+import { linkifySafeUrls } from "../../Utils/linkify";
 import { downloadFile } from "../../Utils/download";
 import { t } from "../../i18n";
 import { getMentionRenderState } from "./mentionRenderState";
@@ -168,6 +169,21 @@ const plainRehypePlugins: any[] = [[rehypeSanitize, sanitizeSchema]];
  */
 function escapeMarkdown(raw: string): string {
   return raw.replace(/[\\`*_{}[\]()#+\-.!>|~]/g, "\\$&");
+}
+
+function escapeMarkdownLinkDestination(href: string): string {
+  return href.replace(/\\/g, "%5C").replace(/>/g, "%3E");
+}
+
+function escapeMarkdownPreservingSafeLinks(raw: string): string {
+  return linkifySafeUrls(raw)
+    .map((segment) => {
+      if (segment.type === "text") return escapeMarkdown(segment.content);
+      return `[${escapeMarkdown(
+        segment.text
+      )}](<${escapeMarkdownLinkDestination(segment.href)}>)`;
+    })
+    .join("");
 }
 
 /**
@@ -394,7 +410,10 @@ const MarkdownContent: React.FC<MarkdownContentProps> = ({
   enableMarkdown = true,
 }) => {
   const normalized = useMemo(
-    () => (enableMarkdown ? normalizeContent(content) : escapeMarkdown(content)),
+    () =>
+      enableMarkdown
+        ? normalizeContent(content)
+        : escapeMarkdownPreservingSafeLinks(content),
     [content, enableMarkdown]
   );
 
