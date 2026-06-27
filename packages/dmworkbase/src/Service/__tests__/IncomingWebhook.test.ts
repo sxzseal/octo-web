@@ -3,6 +3,7 @@ import {
     IncomingWebhookStatus,
     MENTION_UIDS_MAX,
     buildIncomingWebhookUrl,
+    buildWebhookAdapterExamples,
     buildWebhookCurlExample,
     buildWebhookUpsertReq,
     buildWebhookUrlRows,
@@ -443,6 +444,136 @@ describe("buildWebhookUrlRows", () => {
 
     it("既无 url 也无 urls（退化态）→ 空数组", () => {
         expect(buildWebhookUrlRows({ url: "" }, apiURL, origin)).toEqual([]);
+    });
+});
+
+describe("buildWebhookAdapterExamples (#475)", () => {
+    const apiURL = "/api/v1/";
+    const origin = "https://host.example";
+    const full = (rel: string) => `https://host.example/api/v1${rel}`;
+
+    const example = (over: Record<string, unknown> = {}) => ({
+        key: "github",
+        title: "GitHub 事件",
+        description: "把 Payload URL 登记到仓库 Webhook 设置。",
+        url: "/v1/incoming-webhooks/iwh_a/t/github",
+        content_type: "application/json",
+        auth: { type: "url_token" },
+        steps: ["进入仓库 → Settings → Webhooks", "填入 Payload URL", "保存"],
+        ...over,
+    });
+
+    it("缺失 adapter_examples（老后端）→ 空数组（调用方据此走兜底）", () => {
+        expect(buildWebhookAdapterExamples({}, apiURL, origin)).toEqual([]);
+        expect(buildWebhookAdapterExamples({ adapter_examples: [] }, apiURL, origin)).toEqual([]);
+    });
+
+    it("相对 url 经短别名改写 + base 拼接，文案/steps 原样透传", () => {
+        const rows = buildWebhookAdapterExamples(
+            { adapter_examples: [example()] as never },
+            apiURL,
+            origin
+        );
+        expect(rows).toHaveLength(1);
+        expect(rows[0]).toEqual({
+            key: "github",
+            title: "GitHub 事件",
+            description: "把 Payload URL 登记到仓库 Webhook 设置。",
+            url: full("/webhooks/iwh_a/t/github"),
+            contentType: "application/json",
+            auth: { type: "url_token" },
+            steps: ["进入仓库 → Settings → Webhooks", "填入 Payload URL", "保存"],
+        });
+    });
+
+    it("保留服务端给的 GitLab header 鉴权信息（前端不写死 header 名）", () => {
+        const rows = buildWebhookAdapterExamples(
+            {
+                adapter_examples: [
+                    example({
+                        key: "gitlab",
+                        url: "/v1/incoming-webhooks/iwh_a/t/gitlab",
+                        auth: {
+                            type: "url_token_and_header",
+                            header: "X-Gitlab-Token",
+                            value_source: "token",
+                        },
+                    }),
+                ] as never,
+            },
+            apiURL,
+            origin
+        );
+        expect(rows[0].auth).toEqual({
+            type: "url_token_and_header",
+            header: "X-Gitlab-Token",
+            value_source: "token",
+        });
+        expect(rows[0].url).toBe(full("/webhooks/iwh_a/t/gitlab"));
+    });
+
+    it("未知 key 不被过滤（后端新增适配器无需前端发版）", () => {
+        const rows = buildWebhookAdapterExamples(
+            {
+                adapter_examples: [
+                    example({ key: "slack", url: "/v1/incoming-webhooks/iwh_a/t/slack" }),
+                ] as never,
+            },
+            apiURL,
+            origin
+        );
+        expect(rows.map((r) => r.key)).toEqual(["slack"]);
+    });
+
+    it("丢弃无 key / 无 url 的脏条目，steps 丢空行，文案 trim", () => {
+        const rows = buildWebhookAdapterExamples(
+            {
+                adapter_examples: [
+                    example({ key: "" }),
+                    example({ url: "" }),
+                    example({
+                        title: "  GitHub  ",
+                        steps: ["  a  ", "", "  b  "],
+                    }),
+                ] as never,
+            },
+            apiURL,
+            origin
+        );
+        expect(rows).toHaveLength(1);
+        expect(rows[0].title).toBe("GitHub");
+        expect(rows[0].steps).toEqual(["a", "b"]);
+    });
+
+    it("非字符串字段（数字/对象）不抛错，按缺省降级而非崩溃", () => {
+        // 弹窗 render 时调用，脏数据若让 .trim() / toShortWebhookAlias 抛错，
+        // 一次性 token 弹窗会整体崩掉、token 取不回——这里钉死「降级不抛错」。
+        const run = () =>
+            buildWebhookAdapterExamples(
+                {
+                    adapter_examples: [
+                        // url 为数字：不得在 toShortWebhookAlias 上抛错；无可用 url → 被过滤。
+                        example({ key: "bad-url", url: 123 }),
+                        // title/description/steps 含非字符串：trim 不得抛错，非串项按空处理。
+                        example({
+                            key: "github",
+                            title: 42,
+                            description: { html: "x" },
+                            steps: ["  ok  ", 7, null, "  done  "],
+                            auth: "not-an-object",
+                        }),
+                    ] as never,
+                },
+                apiURL,
+                origin
+            );
+        expect(run).not.toThrow();
+        const rows = run();
+        expect(rows.map((r) => r.key)).toEqual(["github"]);
+        expect(rows[0].title).toBe("");
+        expect(rows[0].description).toBe("");
+        expect(rows[0].steps).toEqual(["ok", "done"]);
+        expect(rows[0].auth).toEqual({ type: "" });
     });
 });
 
