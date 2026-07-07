@@ -344,6 +344,199 @@ describe('DocsHome navigation (split-pane)', () => {
   })
 })
 
+describe('DocsHome — reloads the list when the current Space switches', () => {
+  // Regression (XIN-410): switching Space did NOT refresh the document list. `space` was derived
+  // directly from the mutable `WKApp.shared.currentSpaceId`, which is not React state — reassigning
+  // it on a switch never re-rendered DocsHome, so the list kept showing the old Space's docs until a
+  // manual reload. DocsHome now subscribes to the host `space-changed` bus and re-reads the id.
+  const listGets = (wk: ReturnType<typeof createMockWKApp>) =>
+    wk.apiClient.calls.filter((c) => c.method === 'get' && c.url.startsWith('/docs?'))
+
+  it('re-fetches the list for the new Space when space-changed fires', async () => {
+    const wk = createMockWKApp()
+    wk.shared.currentSpaceId = 'space-a'
+    setWKApp(wk)
+    wk.apiClient.responder = (method, url) => {
+      if (method === 'get' && url.startsWith('/docs')) {
+        return { data: { total: 0, items: [] }, status: 200 }
+      }
+      return { data: {}, status: 200 }
+    }
+
+    render(<DocsHome />)
+    // Initial load queries the first Space.
+    await waitFor(() => expect(listGets(wk).length).toBe(1))
+    expect(listGets(wk)[0].url).toContain('spaceId=space-a')
+
+    // The host switches Space: it mutates currentSpaceId then broadcasts space-changed.
+    wk.shared.currentSpaceId = 'space-b'
+    wk.mockMittBus.emitSpaceChanged({ space_id: 'space-b' })
+
+    // The list re-fetches — now scoped to the new Space.
+    await waitFor(() => expect(listGets(wk).length).toBe(2))
+    expect(listGets(wk).at(-1)!.url).toContain('spaceId=space-b')
+  })
+
+  it('re-fetches exactly once per switch (no duplicate-request storm)', async () => {
+    const wk = createMockWKApp()
+    wk.shared.currentSpaceId = 'space-a'
+    setWKApp(wk)
+    wk.apiClient.responder = (method, url) => {
+      if (method === 'get' && url.startsWith('/docs')) {
+        return { data: { total: 0, items: [] }, status: 200 }
+      }
+      return { data: {}, status: 200 }
+    }
+
+    render(<DocsHome />)
+    await waitFor(() => expect(listGets(wk).length).toBe(1))
+
+    wk.shared.currentSpaceId = 'space-b'
+    wk.mockMittBus.emitSpaceChanged({ space_id: 'space-b' })
+    await waitFor(() => expect(listGets(wk).length).toBe(2))
+
+    // A redundant broadcast for the SAME space must not trigger another fetch.
+    wk.mockMittBus.emitSpaceChanged({ space_id: 'space-b' })
+    await new Promise((r) => setTimeout(r, 20))
+    expect(listGets(wk).length).toBe(2)
+  })
+
+  it('unsubscribes from the bus on unmount (no leaked listener)', async () => {
+    const wk = createMockWKApp()
+    wk.shared.currentSpaceId = 'space-a'
+    setWKApp(wk)
+    wk.apiClient.responder = (method, url) => {
+      if (method === 'get' && url.startsWith('/docs')) {
+        return { data: { total: 0, items: [] }, status: 200 }
+      }
+      return { data: {}, status: 200 }
+    }
+
+    const { unmount } = render(<DocsHome />)
+    await waitFor(() => expect(wk.mockMittBus.spaceChangedListenerCount()).toBe(1))
+    unmount()
+    expect(wk.mockMittBus.spaceChangedListenerCount()).toBe(0)
+  })
+})
+
+describe('DocsHome — a Space switch reconciles the open selection back to the list (P0)', () => {
+  // Regression (XIN-448): switching Space bumped `space` but left `selectedDocId`, the persisted
+  // `octo.docs.target`, and the URL pointing at the doc opened under the PREVIOUS Space. That
+  // rebuilt EditorShell with the OLD docId under the NEW space — a cross-Space collab session
+  // (octo:<newSpace>:<folder>:<oldDoc>), a data-isolation leak — and a refresh restored the old
+  // Space's doc from the persisted target. A switch must reconcile the selection back to the
+  // list of the new Space (same primitive as the explicit "back to list").
+  it('clears selectedDocId, the persisted target, and the URL doc addressing when the Space switches', async () => {
+    // A doc is open under the first Space (persisted target mounts it inline on first paint).
+    window.sessionStorage.setItem(
+      TARGET_KEY,
+      JSON.stringify({ space: 'space-a', folder: 'f_default', doc: 'd_open' }),
+    )
+    const wk = createMockWKApp()
+    wk.shared.currentSpaceId = 'space-a'
+    setWKApp(wk)
+    wk.apiClient.responder = (method, url) => {
+      if (method === 'get' && url.startsWith('/docs')) {
+        return { data: { total: 0, items: [] }, status: 200 }
+      }
+      return { data: {}, status: 200 }
+    }
+
+    render(<DocsHome />)
+    // The editor for the doc opened under space-a is mounted.
+    expect(screen.getByTestId('editor-shell')).toBeTruthy()
+    expect(screen.getByTestId('editor-doc').textContent).toBe('d_open')
+
+    // Host switches Space: mutate currentSpaceId then broadcast.
+    wk.shared.currentSpaceId = 'space-b'
+    wk.mockMittBus.emitSpaceChanged({ space_id: 'space-b' })
+
+    // The old doc must NOT stay mounted under the new Space — selection is reset to the list.
+    await waitFor(() => expect(screen.queryByTestId('editor-shell')).toBeNull())
+    // The persisted target is cleared so a refresh does not restore the previous Space's doc.
+    expect(window.sessionStorage.getItem(TARGET_KEY)).toBeNull()
+    // The URL is mirrored back to the list (doc addressing dropped), never a full navigation.
+    expect(assignSpy).not.toHaveBeenCalled()
+    expect(String(replaceStateSpy.mock.calls.at(-1)![2])).not.toContain('doc=')
+  })
+
+  it('does not reconcile (nor refetch) on a redundant same-Space broadcast while a doc is open', async () => {
+    window.sessionStorage.setItem(
+      TARGET_KEY,
+      JSON.stringify({ space: 'space-a', folder: 'f_default', doc: 'd_open' }),
+    )
+    const wk = createMockWKApp()
+    wk.shared.currentSpaceId = 'space-a'
+    setWKApp(wk)
+    wk.apiClient.responder = (method, url) => {
+      if (method === 'get' && url.startsWith('/docs')) {
+        return { data: { total: 0, items: [] }, status: 200 }
+      }
+      return { data: {}, status: 200 }
+    }
+
+    render(<DocsHome />)
+    expect(screen.getByTestId('editor-shell')).toBeTruthy()
+
+    // A redundant broadcast for the SAME Space must not yank the open doc back to the list.
+    wk.mockMittBus.emitSpaceChanged({ space_id: 'space-a' })
+    await new Promise((r) => setTimeout(r, 20))
+    expect(screen.getByTestId('editor-shell')).toBeTruthy()
+    expect(screen.getByTestId('editor-doc').textContent).toBe('d_open')
+    expect(window.sessionStorage.getItem(TARGET_KEY)).not.toBeNull()
+  })
+})
+
+describe('DocsHome — a stale (out-of-order) list response cannot overwrite the current Space (P0, XIN-417)', () => {
+  // Regression (XIN-417): switching Space fires a fresh listDocs, but the previous Space's request
+  // may still be in flight. Responses settle in network order, not call order, so an OLDER Space's
+  // response can land AFTER the newer one; the unconditional setItems then rendered the old Space's
+  // documents into the new Space's page — the very class of bug this PR fixes. A monotonic
+  // request-sequence guard must drop any response that a newer reload has superseded.
+  it('drops the late old-Space response and keeps the new Space documents rendered', async () => {
+    const wk = createMockWKApp()
+    wk.shared.currentSpaceId = 'space-a'
+    setWKApp(wk)
+
+    // Deferred resolvers keyed by the Space each GET was scoped to, so the test drives the ORDER
+    // responses settle independently of the order the requests were issued (delayed / reordered).
+    const deferred: Record<string, (items: unknown[]) => void> = {}
+    wk.apiClient.responder = (method, url) => {
+      if (method === 'get' && url.startsWith('/docs')) {
+        const spaceId = new URLSearchParams(url.split('?')[1] ?? '').get('spaceId') ?? ''
+        return new Promise((resolve) => {
+          deferred[spaceId] = (items) =>
+            resolve({ data: { total: items.length, items }, status: 200 })
+        })
+      }
+      return { data: {}, status: 200 }
+    }
+
+    render(<DocsHome />)
+    // Initial load for the first Space is in flight (its resolver is registered but not settled).
+    await waitFor(() => expect(deferred['space-a']).toBeTruthy())
+
+    // Host switches Space BEFORE the first request resolves → a second GET starts for space-b.
+    wk.shared.currentSpaceId = 'space-b'
+    wk.mockMittBus.emitSpaceChanged({ space_id: 'space-b' })
+    await waitFor(() => expect(deferred['space-b']).toBeTruthy())
+
+    // Settle the NEWER (space-b) request first so its documents render...
+    deferred['space-b']([{ docId: 'd_b', title: 'Space B Doc', ownerId: 'u_self', role: 'admin' }])
+    await waitFor(() => expect(screen.getByText('Space B Doc')).toBeTruthy())
+
+    // ...then let the OLDER (space-a) request resolve LAST (out of order). Without the guard this
+    // stale setItems would clobber the list with the old Space's doc.
+    deferred['space-a']([{ docId: 'd_a', title: 'Space A Doc', ownerId: 'u_self', role: 'admin' }])
+    // Give the stale promise a chance to (wrongly) apply before asserting.
+    await new Promise((r) => setTimeout(r, 20))
+
+    // The current Space's documents survive; the stale old-Space doc never appears.
+    expect(screen.getByText('Space B Doc')).toBeTruthy()
+    expect(screen.queryByText('Space A Doc')).toBeNull()
+  })
+})
+
 describe('DocsHome — production (routeRight) editor has no header back button (#2)', () => {
   it('pushes the editor without onBack but with onExit (return-on-delete)', async () => {
     window.sessionStorage.setItem(TARGET_KEY, JSON.stringify({ doc: 'd_persist' }))

@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback, useRef } from 'react'
-import { getWKApp, getRouteRight, t } from '../octoweb/index.ts'
+import { getWKApp, getRouteRight, onSpaceChanged, t } from '../octoweb/index.ts'
 import { EditorShell } from '../editor/EditorShell.tsx'
 import '../editor/styles.css'
 import { DEFAULT_DOC_SPACE, DEFAULT_DOC_FOLDER, DEFAULT_DOC_ID } from '../config.ts'
@@ -183,18 +183,39 @@ function DocsList({
   const [error, setError] = useState<string | null>(null)
   const [creating, setCreating] = useState(false)
 
+  // Stale-response guard (XIN-417). Switching Space bumps `space`, which recreates `reload` and
+  // fires a fresh listDocs — but the previous Space's request may still be in flight. listDocs
+  // resolves in network order, not call order, so an older-Space response can land AFTER the
+  // newer one and its unconditional setItems would render the wrong Space's documents into the
+  // current page (exactly the class of bug this PR fixes). We stamp each reload with a monotonic
+  // sequence and only let the LATEST reload's response touch state; superseded responses are
+  // dropped. A ref (not state) so it survives re-renders without itself triggering one.
+  const reloadSeq = useRef(0)
+
   const reload = useCallback(() => {
+    const seq = ++reloadSeq.current
     setLoading(true)
     setError(null)
     listDocs({ spaceId: space || undefined, folderId: folder || undefined, sort: 'updatedAt:desc' })
-      .then((res) => setItems(res?.items ?? []))
+      .then((res) => {
+        // A newer reload has superseded this one (e.g. the Space changed again while this
+        // request was in flight) — drop the stale response so it can't overwrite the current list.
+        if (seq !== reloadSeq.current) return
+        setItems(res?.items ?? [])
+      })
       .catch((err) => {
+        if (seq !== reloadSeq.current) return
         // Don't swallow the failure: surface it so a first-load error is diagnosable
         // (and offer a retry below) instead of a silently sticky error state.
         console.error('[docs] list failed', err)
         setError(t('docs.state.error'))
       })
-      .finally(() => setLoading(false))
+      .finally(() => {
+        // Keep the spinner up until the latest reload settles; a stale request finishing first
+        // must not clear loading while the current one is still pending.
+        if (seq !== reloadSeq.current) return
+        setLoading(false)
+      })
   }, [space, folder])
 
   useEffect(reload, [reload])
@@ -336,8 +357,18 @@ export function DocsHome() {
   // error-boundary screen, so default to '' and let the editor/list resolve identity from
   // the collab-token round-trip instead of crashing first paint.
   const uid = wk.loginInfo?.uid ?? ''
-  const space = wk.shared?.currentSpaceId || DEFAULT_DOC_SPACE
+  // The active Space. `wk.shared.currentSpaceId` is a plain mutable field on the host WKApp, NOT
+  // React state — reassigning it when the user switches Space does not re-render this component,
+  // so deriving `space` inline left the list stuck on the old Space's docs until a manual reload
+  // (XIN-410). Mirror it into state and re-read it whenever the host broadcasts `space-changed`
+  // (see the effect below) so the switch flows through to reload/useMemberNames.
+  const [space, setSpace] = useState<string>(() => wk.shared?.currentSpaceId || DEFAULT_DOC_SPACE)
   const folder = DEFAULT_DOC_FOLDER
+
+  // The Space this component last reconciled to. The space-changed handler reads it to tell a
+  // real switch from a redundant same-Space broadcast; only a real switch reconciles/refetches.
+  // setSpace is only ever called from that handler, so this ref is the authoritative previous id.
+  const spaceRef = useRef(space)
 
   // Initial selection from URL deep-link / persisted target (so a shared `/docs?doc=` or a
   // refresh opens that doc in the right pane on first paint).
@@ -396,6 +427,32 @@ export function DocsHome() {
       }
     }
   }, [routeRight, buildEmptyState])
+
+  // Subscribe to the host's Space-switch broadcast. On a switch the host mutates currentSpaceId
+  // then emits `space-changed`; we re-read the id into state AND reconcile the open selection.
+  //
+  // Reconciliation (XIN-448): a switch must not carry the doc opened under the PREVIOUS Space
+  // into the new one. Left as-is, buildEditor(selectedDocId) would rebuild EditorShell with the
+  // OLD docId under the NEW space → a cross-Space collab session (octo:<newSpace>:<folder>:
+  // <oldDoc>), a data-isolation leak — and the persisted `octo.docs.target` would restore the
+  // old Space's doc on refresh. We reuse the existing "back to list" primitive so the switch
+  // lands on the new Space's list (clears selectedDocId + the persisted target + mirrors the URL).
+  //
+  // Only a REAL switch reconciles: spaceRef gates redundant same-Space broadcasts, so one switch =
+  // one reload and a duplicate broadcast is a no-op (no request storm, no doc yanked to the list).
+  // The effect runs once (empty deps): getWKApp() is the stable singleton and backToList is
+  // referentially stable (deps: the singleton routeRight + the []-stable buildEmptyState), so the
+  // subscription never captures a stale reconciler and the onSpaceChanged cleanup stays intact.
+  useEffect(() => {
+    return onSpaceChanged(() => {
+      const next = getWKApp().shared?.currentSpaceId || DEFAULT_DOC_SPACE
+      if (next === spaceRef.current) return
+      spaceRef.current = next
+      setSpace(next)
+      backToList()
+    })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   // Called after a successful delete (now from the editor detail page, Problem 4). If the deleted
   // doc is the one open in the right pane, return to the empty/list state (which also resets the
