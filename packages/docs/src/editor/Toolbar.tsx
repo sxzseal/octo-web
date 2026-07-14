@@ -11,6 +11,7 @@ import { pickerEmojis } from './emoji.ts'
 import { promptAndInsertMath } from './mathInsert.ts'
 import { sanitizeLinkHref } from './sanitize.ts'
 import { CALLOUT_VARIANTS, type CalloutVariant } from './Callout.ts'
+import { INDENT_MAX_LEVEL } from './ParagraphIndent.ts'
 import { TableGridPicker } from './TableControls.tsx'
 import { capturePaintMarks, applyPaintMarks } from './formatPainter.ts'
 import { HIGHLIGHT_COLORS, TEXT_COLORS } from './colorPalette.ts'
@@ -49,6 +50,17 @@ const IconAlignRight = () => (
 const IconAlignJustify = () => (
   <svg className="octo-tb-icon" viewBox="0 0 24 24" aria-hidden="true">
     <path d="M3 5h18v2H3V5zm0 4h18v2H3V9zm0 4h18v2H3v-2zm0 4h18v2H3v-2z" />
+  </svg>
+)
+// Indent buttons (SCHEMA_VERSION 18): lines with a right/left chevron marking the indent direction.
+const IconIndentIncrease = () => (
+  <svg className="octo-tb-icon" viewBox="0 0 24 24" aria-hidden="true">
+    <path d="M3 5h18v2H3V5zm8 4h10v2H11V9zm0 4h10v2H11v-2zm-8 4h18v2H3v-2zm.4-8.8L7 12l-3.6 2.8V6.2z" />
+  </svg>
+)
+const IconIndentDecrease = () => (
+  <svg className="octo-tb-icon" viewBox="0 0 24 24" aria-hidden="true">
+    <path d="M3 5h18v2H3V5zm8 4h10v2H11V9zm0 4h10v2H11v-2zm-8 4h18v2H3v-2zM6.6 6.2v7.6L3 11l3.6-2.8z" />
   </svg>
 )
 
@@ -888,6 +900,59 @@ function ParagraphSpacingSelect({ editor, edge }: { editor: Editor; edge: 'befor
   )
 }
 
+/** Current indent level at the selection (max of the active paragraph / heading), tracked so the
+ * indent buttons re-render whenever it changes.
+ *
+ * useEditorTick keys its re-render snapshot only off the selection (from:to), but increaseIndent /
+ * decreaseIndent rewrite a node ATTRIBUTE and leave the caret put — so a selection-only
+ * subscription leaves the decrease button's disabled state stale: it stayed greyed after an
+ * increase (the level went 0→1 but the button never re-enabled) and stayed lit after a
+ * decrease-to-0. Keying the snapshot off the level itself — the same fix useFindState applies for
+ * the find counter — re-renders the buttons exactly when the indent level actually changes. */
+function useIndentLevel(editor: Editor): number {
+  return useSyncExternalStore(
+    (cb) => {
+      editor.on('transaction', cb)
+      editor.on('selectionUpdate', cb)
+      return () => {
+        editor.off('transaction', cb)
+        editor.off('selectionUpdate', cb)
+      }
+    },
+    () =>
+      Math.max(
+        Number(editor.getAttributes('paragraph').indent) || 0,
+        Number(editor.getAttributes('heading').indent) || 0,
+      ),
+  )
+}
+
+/** Indent buttons (SCHEMA_VERSION 18): increase / decrease indent on the active heading + paragraph.
+ * List items keep their own Tab/Shift-Tab sink/lift behavior (owned by the list extensions). Both
+ * buttons key their disabled state off the current selection's indent level (useIndentLevel) so
+ * they mirror the command boundaries and re-render as the level changes: decrease is disabled at 0
+ * (nothing left to un-indent) and increase is disabled at INDENT_MAX_LEVEL (the clamp ceiling), so
+ * each boundary is visible as well as a command no-op — symmetric in both directions. */
+function IndentControls({ editor }: { editor: Editor }) {
+  const current = useIndentLevel(editor)
+  return (
+    <>
+      <Btn
+        label={<IconIndentDecrease />}
+        title={t('docs.toolbar.indentDecrease')}
+        disabled={current <= 0}
+        onClick={() => editor.chain().focus().decreaseIndent().run()}
+      />
+      <Btn
+        label={<IconIndentIncrease />}
+        title={t('docs.toolbar.indentIncrease')}
+        disabled={current >= INDENT_MAX_LEVEL}
+        onClick={() => editor.chain().focus().increaseIndent().run()}
+      />
+    </>
+  )
+}
+
 /** Emoji picker (SCHEMA_VERSION 9): a scrollable grid that inserts via the emoji node's setEmoji.
  * Search filters the full curated set; the grid renders an initial window and grows on scroll so
  * the ~1900-glyph set never mounts eagerly. */
@@ -1378,6 +1443,7 @@ export function Toolbar({ editor }: { editor: Editor }) {
       {LINE_SPACING_ENABLED && <LineHeightSelect editor={editor} />}
       {LINE_SPACING_ENABLED && <ParagraphSpacingSelect editor={editor} edge="before" />}
       {LINE_SPACING_ENABLED && <ParagraphSpacingSelect editor={editor} edge="after" />}
+      <IndentControls editor={editor} />
       <span className="octo-tb-sep" />
       <ListMenu editor={editor} />
       <Btn label={<IconQuote />} title={t('docs.toolbar.quote')} active={editor.isActive('blockquote')} onClick={() => editor.chain().focus().toggleBlockquote().run()} />
