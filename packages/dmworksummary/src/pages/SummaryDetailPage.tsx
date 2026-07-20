@@ -10,8 +10,8 @@ import {
     Popconfirm,
 } from "@douyinfe/semi-ui";
 import { IconEdit, IconMore, IconSend, IconClock, IconTick, IconClose, IconInfoCircle, IconHistory, IconUser, IconPlus, IconMinusCircle, IconExit } from "@douyinfe/semi-icons";
-import { Channel, ChannelTypeGroup, ChannelTypePerson, MessageText, WKSDK } from "wukongimjssdk";
-import { I18nContext, t } from "@octo/base";
+import { Channel, MessageText } from "wukongimjssdk";
+import { I18nContext, t, ForwardService, interpretForwardResult } from "@octo/base";
 import WKApp from "@octo/base/src/App";
 import VoiceInputButton from "@octo/base/src/Components/VoiceInputButton";
 import type { ReplaceMode, SelectionRange } from "@octo/base/src/Components/VoiceInputButton";
@@ -1856,41 +1856,28 @@ export default class SummaryDetailPage extends Component<SummaryDetailPageProps,
         WKApp.shared.baseContext.showConversationSelect(async (channels: Channel[]) => {
             const cleanContent = (detail?.result?.content ?? '').replace(/\[\d+\]/g, '').replace(/  +/g, ' ').trim();
             const chunks = splitSummaryText(cleanContent);
-            const errors: string[] = [];
 
-            for (const ch of channels) {
-                try {
-                    for (let i = 0; i < chunks.length; i++) {
-                        const msg = new MessageText(chunks[i]);
+            // 长文分块 → 同 channel 内 serial 保序 + interMessageDelayMs 节流；
+            // 跨 channel 也走 serial（保持与原实现一致的顺序体验）。
+            // 原先手写的 space_id monkey-patch 由 ForwardService 内部
+            // wrapSendContentForInjection + opts.spaceId 代替。
+            const result = await ForwardService.send(
+                channels,
+                () => chunks.map((c) => new MessageText(c)),
+                {
+                    channelMode: "serial",
+                    messageMode: "serial",
+                    interMessageDelayMs: INTER_MESSAGE_DELAY_MS,
+                    spaceId: WKApp.shared.currentSpaceId,
+                },
+            );
 
-                        // Inject space_id for person channels (matching ConversationVM.sendMessage pattern)
-                        const spaceId = WKApp.shared.currentSpaceId;
-                        if (spaceId && ch.channelType === ChannelTypePerson) {
-                            const originalEncodeJSON = msg.encodeJSON.bind(msg);
-                            msg.encodeJSON = () => {
-                                const obj = originalEncodeJSON();
-                                obj.space_id = spaceId;
-                                return obj;
-                            };
-                            msg.contentObj = { ...(msg.contentObj || {}), space_id: spaceId };
-                        }
-
-                        await WKSDK.shared().chatManager.send(msg, ch);
-                        if (i < chunks.length - 1) {
-                            await new Promise((r) => setTimeout(r, INTER_MESSAGE_DELAY_MS));
-                        }
-                    }
-                } catch {
-                    errors.push(ch.channelID);
-                }
-            }
-
-            if (errors.length > 0) {
-                if (errors.length === channels.length) {
-                    Toast.error(t("summary.detail.forwardFailed"));
-                } else {
-                    Toast.error(t("summary.detail.partialForwardFailed", { values: { failed: errors.length, total: channels.length } }));
-                }
+            // 分母保持 channels 数（scope='targets'），不改动用户可见的 Toast 语义。
+            const state = interpretForwardResult(result, "targets");
+            if (state.kind === "all-failed") {
+                Toast.error(t("summary.detail.forwardFailed"));
+            } else if (state.kind === "partial") {
+                Toast.error(t("summary.detail.partialForwardFailed", { values: { failed: state.failed, total: state.total } }));
             } else {
                 Toast.success(t("summary.detail.forwarded"));
             }
