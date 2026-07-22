@@ -506,6 +506,10 @@ const MessageInput: React.FC<MessageInputProps> = (props) => {
         horizontalRule: false,
         codeBlock: false,
         strike: false,
+        // StarterKit 3.x 内置 Link 扩展的 linkifyjs 会把 xxx.md / README.md
+        // 识别为 .md 顶级域名并补成超链接（issue #870）。输入框只保留纯文本，
+        // 链接由消息渲染层的 markdown 解析生成。
+        link: false,
       }),
       Placeholder.configure({
         placeholder,
