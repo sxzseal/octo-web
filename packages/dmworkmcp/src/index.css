@@ -602,6 +602,20 @@
   white-space: pre;
 }
 
+/* Token placeholder highlight: the <把这里换成你的 Token> substring inside a
+ * QuickStart snippet needs to visually announce "swap me before use". Uses
+ * the semantic warning tokens so light / dark themes track the shared palette
+ * (see packages/dmworkbase/src/theme/semantic.css). */
+.wk-mcp-code__token {
+  background: var(--wk-color-warning-bg);
+  color: var(--wk-color-warning);
+  padding: 0 4px;
+  border-radius: var(--wk-r-xs);
+  font-weight: var(--wk-font-medium);
+  outline: 1px dashed var(--wk-color-warning);
+  outline-offset: 0;
+}
+
 .wk-mcp-code__copy {
   position: absolute;
   top: var(--wk-sp-2);
@@ -1133,6 +1147,45 @@
   color: var(--wk-text-primary);
   font-weight: var(--wk-font-medium);
   box-shadow: 0 1px 2px var(--wk-black-alpha-05);
+}
+
+/* ── Create-mode toggle (manual / JSON import) — issue #867 ─────────────── */
+.wk-mcp-form-mode {
+  margin-bottom: var(--wk-sp-4);
+}
+
+/* ── JSON import panel (issue #867) ─────────────────────────────────────── */
+.wk-mcp-import-panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--wk-sp-3);
+}
+
+.wk-mcp-import-panel__desc {
+  color: var(--wk-text-secondary);
+  font-size: var(--wk-text-size-sm);
+  line-height: 1.6;
+}
+
+.wk-mcp-import-panel__error {
+  color: var(--wk-color-danger);
+  font-size: var(--wk-text-size-sm);
+  background: var(--wk-color-danger-bg);
+  padding: var(--wk-sp-2) var(--wk-sp-3);
+  border-radius: var(--wk-r-sm);
+}
+
+.wk-mcp-import-panel__warnings {
+  list-style: disc;
+  padding-left: var(--wk-sp-4);
+  margin: 0;
+  color: var(--wk-color-warning);
+  font-size: var(--wk-text-size-sm);
+}
+
+.wk-mcp-import-panel__actions {
+  display: flex;
+  justify-content: flex-end;
 }
 
 /* ── Advanced expandable panel (env / headers) ──────────────────────────── */

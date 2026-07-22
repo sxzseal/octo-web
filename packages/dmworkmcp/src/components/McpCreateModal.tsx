@@ -15,6 +15,7 @@ import {
   isSecretKey,
   slugifyServerName,
 } from "../utils/constants";
+import { parseImportJSON } from "../utils/importJson";
 import type {
   CreateMcpParams,
   McpDetail,
@@ -377,6 +378,12 @@ const McpCreateModal: React.FC<McpCreateModalProps> = ({
   // Once the user hand-edits the slug we stop auto-deriving it from the name.
   const [slugTouched, setSlugTouched] = useState(false);
 
+  // Create-mode toggle (issue #867): manual = existing wizard, json = paste an
+  // mcpServers / server.json snippet to seed the form. Edit mode always stays
+  // in manual — JSON import is a create-time seeding aid, not an edit affordance.
+  const [createMode, setCreateMode] = useState<"manual" | "json">("manual");
+  const [jsonRaw, setJsonRaw] = useState("");
+
   const iconInputRef = useRef<HTMLInputElement>(null);
 
   const isEdit = !!editing;
@@ -390,7 +397,7 @@ const McpCreateModal: React.FC<McpCreateModalProps> = ({
     if (editing) {
       const seed = detailToForm(editing);
       setForm(seed);
-      setArgsRaw((seed.args ?? []).join(" "));
+      setArgsRaw((seed.args ?? []).join("\n"));
       setEnvRaw(serializeKV(seed.env, "="));
       setHeadersRaw(serializeKV(seed.headers, ": "));
       const hasAdvanced =
@@ -412,6 +419,9 @@ const McpCreateModal: React.FC<McpCreateModalProps> = ({
     setIconFile(null);
     setIconPreview("");
     setStep(0);
+    // JSON import mode + textarea reset. Edit sessions never enter JSON mode.
+    setCreateMode("manual");
+    setJsonRaw("");
   }, [visible, editing]);
 
   // Object-URL preview lifecycle: create on file pick, revoke on replace/unmount
@@ -444,6 +454,8 @@ const McpCreateModal: React.FC<McpCreateModalProps> = ({
     setIconPreview("");
     setSlugTouched(false);
     setStep(0);
+    setCreateMode("manual");
+    setJsonRaw("");
   };
 
   /** Name edit also seeds the slug while the user hasn't hand-edited it, so the
@@ -531,7 +543,7 @@ const McpCreateModal: React.FC<McpCreateModalProps> = ({
       : {
           transport: form.transport,
           command: form.command,
-          args: argsRaw.trim() ? argsRaw.trim().split(/\s+/) : [],
+          args: argsRaw.split(/\r?\n/).map((s) => s.trim()).filter(Boolean),
           env: parseKV(envRaw, "="),
         };
     setProbing(true);
@@ -591,8 +603,8 @@ const McpCreateModal: React.FC<McpCreateModalProps> = ({
       // stdio → command required (args optional, per user confirmation).
       if (!(form.command ?? "").trim())
         return { key: "mcp.create.commandRequired" };
-      // Per-arg length (args are whitespace-split tokens).
-      const args = argsRaw.trim() ? argsRaw.trim().split(/\s+/) : [];
+      // Per-arg length (args are one-per-line tokens).
+      const args = argsRaw.split(/\r?\n/).map((s) => s.trim()).filter(Boolean);
       if (args.some((a) => a.length > MAXLEN.arg))
         return { key: "mcp.create.argTooLong", values: { max: MAXLEN.arg } };
     }
@@ -638,11 +650,18 @@ const McpCreateModal: React.FC<McpCreateModalProps> = ({
       slug: slugifyServerName(
         (form.slug ?? "").trim() ? form.slug! : form.name
       ),
-      args: argsRaw.trim() ? argsRaw.trim().split(/\s+/) : [],
+      args: argsRaw.split(/\r?\n/).map((s) => s.trim()).filter(Boolean),
       // Substitute the shared sentinel for any blank token-like env / header so
       // an empty secret is accepted instead of tripping `secret_leaked` on the
       // backend (mcp-v1.md §5). A user-typed real token is left as-is and the
       // backend surfaces the mistake.
+      //
+      // We do NOT gate env/headers on transport here — validate() already
+      // enforces coherent state (stdio requires command, remote requires url),
+      // and gating at submit was found to silently wipe legacy records whose
+      // wire data doesn't match the current transport strictly. Cross-transport
+      // pollution from JSON import is handled at import time (handleApplyImport
+      // only populates the buffer that matches the imported transport).
       env: applySecretSentinel(parseKV(envRaw, "=")) ?? {},
       headers: applySecretSentinel(parseKV(headersRaw, ":")) ?? {},
       tools: form.tools.filter((t) => t.name.trim()),
@@ -768,6 +787,111 @@ const McpCreateModal: React.FC<McpCreateModalProps> = ({
     { key: "docs", label: t("mcp.create.stepDocs") },
   ];
 
+  // ── JSON import (issue #867) ──────────────────────────────────────────
+  // Live-parse the textarea on every keystroke so error / preview /
+  // warnings update inline. Empty input keeps the panel clean (no
+  // "please paste" error shown until the user actually tries to apply).
+  const jsonParseResult = useMemo(
+    () => (jsonRaw.trim() ? parseImportJSON(jsonRaw) : null),
+    [jsonRaw]
+  );
+
+  /** Which parsed fields will actually be written to the form when the user
+   *  clicks "Parse and fill". We only fill EMPTY fields so toggling modes
+   *  never clobbers work the user has already done in the wizard. Transport is
+   *  always applied — it's a small enum and switching it is the point of a
+   *  JSON seed. */
+  const importPreviewFlags = useMemo(() => {
+    if (!jsonParseResult || jsonParseResult.error) return null;
+    const f = jsonParseResult.fields;
+    return {
+      name: !!(f.name && !form.name.trim()),
+      // slug: skip when the user has hand-edited (slugTouched) OR when a
+      // non-empty auto-derived slug already exists — otherwise a JSON import
+      // silently clobbers the slug the user was content with.
+      slug: !!(
+        f.slug &&
+        !slugTouched &&
+        !(form.slug ?? "").trim()
+      ),
+      // Transport only counts when it actually differs from the current form
+      // value — otherwise every valid JSON would keep the Apply button enabled
+      // and the "Filled N field(s)" toast would overstate no-op re-applies.
+      transport: !!(f.transport && f.transport !== form.transport),
+      command: !!(f.command && !(form.command ?? "").trim()),
+      args: !!(f.args && f.args.length > 0 && !argsRaw.trim()),
+      envKeys: !!(f.envKeys && f.envKeys.length > 0 && !envRaw.trim()),
+      url: !!(f.url && !(form.url ?? "").trim()),
+      headerKeys: !!(f.headerKeys && f.headerKeys.length > 0 && !headersRaw.trim()),
+    };
+  }, [jsonParseResult, form, argsRaw, envRaw, headersRaw, slugTouched]);
+
+  const importPreviewCount = importPreviewFlags
+    ? Object.values(importPreviewFlags).filter(Boolean).length
+    : 0;
+
+  const handleApplyImport = () => {
+    if (!jsonParseResult || jsonParseResult.error || !importPreviewFlags) {
+      return;
+    }
+    const f = jsonParseResult.fields;
+    // Clamp against the per-field MAXLENs so a wrapper key / command / url
+    // longer than the input's cap can't sneak past the character-by-character
+    // maxLength enforcement (which only limits KEYING, not initial values).
+    // Args are validated per-item at submit; JSON has no MAXLEN, so those
+    // don't need clamping here.
+    const clamp = (s: string | undefined, max: number) =>
+      s == null ? s : s.length > max ? s.slice(0, max) : s;
+    setForm((prev) => ({
+      ...prev,
+      name: importPreviewFlags.name ? clamp(f.name!, MAXLEN.name)! : prev.name,
+      slug: importPreviewFlags.slug ? clamp(f.slug!, MAXLEN.name)! : prev.slug,
+      transport: importPreviewFlags.transport ? f.transport! : prev.transport,
+      command: importPreviewFlags.command
+        ? clamp(f.command!, MAXLEN.command)!
+        : prev.command,
+      url: importPreviewFlags.url ? clamp(f.url!, MAXLEN.url)! : prev.url,
+    }));
+    // Writing slug counts as an explicit user decision — pin slugTouched so a
+    // subsequent name edit in handleNameChange doesn't silently re-derive slug
+    // from the display name and clobber the imported one.
+    if (importPreviewFlags.slug) setSlugTouched(true);
+    // args: one-per-line so args that legitimately contain spaces (e.g.
+    // `--config "a b"`) round-trip through the argsRaw buffer without being
+    // re-tokenized on the whitespace-split at submit.
+    if (importPreviewFlags.args) setArgsRaw(f.args!.join("\n"));
+    // env / headers: only populate the buffer that matches the imported
+    // transport. Filling both would leave stale content in the buffer the
+    // active transport doesn't render, and although submit no longer gates
+    // on transport, populating the wrong buffer confuses the "advanced
+    // panel auto-opens" heuristic below and can send unintended fields on
+    // subsequent manual transport flips.
+    //
+    // Emit `KEY=` / `KEY: ` lines with empty values so the user only needs
+    // to fill secrets — not re-type the keys.
+    const importedTransport = f.transport ?? form.transport;
+    const importedIsRemote =
+      importedTransport === "streamable-http" || importedTransport === "sse";
+    if (importPreviewFlags.envKeys && !importedIsRemote) {
+      setEnvRaw(f.envKeys!.map((k) => `${k}=`).join("\n"));
+      setAdvancedOpen(true);
+    }
+    if (importPreviewFlags.headerKeys && importedIsRemote) {
+      setHeadersRaw(f.headerKeys!.map((k) => `${k}: `).join("\n"));
+      setAdvancedOpen(true);
+    }
+    Toast.success(
+      t("mcp.create.import.applied", { values: { count: importPreviewCount } })
+    );
+    setCreateMode("manual");
+    setStep(0);
+  };
+
+  const modeSegments = [
+    { value: "manual" as const, label: t("mcp.create.modeManual") },
+    { value: "json" as const, label: t("mcp.create.modeJson") },
+  ];
+
   return (
     <WKModal
       visible={visible}
@@ -777,6 +901,7 @@ const McpCreateModal: React.FC<McpCreateModalProps> = ({
       bodyStyle={{ maxHeight: "78vh", overflowY: "auto" }}
       title={isEdit ? t("mcp.edit.title") : t("mcp.create.title")}
       footer={
+        createMode === "json" ? null : (
         <div className="wk-mcp-form-footer">
           <div>
             {step > 0 && (
@@ -801,9 +926,65 @@ const McpCreateModal: React.FC<McpCreateModalProps> = ({
             )}
           </div>
         </div>
+        )
       }
     >
       <div className="wk-mcp-form">
+        {!isEdit && (
+          <div className="wk-mcp-form-mode">
+            <Segments
+              full
+              value={createMode}
+              options={modeSegments}
+              onChange={(v) => setCreateMode(v)}
+            />
+          </div>
+        )}
+
+        {createMode === "json" && (
+          <div className="wk-mcp-import-panel">
+            <div className="wk-mcp-import-panel__desc">
+              {t("mcp.create.import.desc")}
+            </div>
+            <TextArea
+              value={jsonRaw}
+              onChange={setJsonRaw}
+              rows={10}
+              spellCheck={false}
+              placeholder={t("mcp.create.import.placeholder")}
+              style={{ fontFamily: "var(--wk-font-mono, monospace)" }}
+            />
+            {jsonParseResult?.error && (
+              <div className="wk-mcp-import-panel__error">
+                {t(jsonParseResult.error)}
+              </div>
+            )}
+            {jsonParseResult && !jsonParseResult.error &&
+              jsonParseResult.warnings.length > 0 && (
+                <ul className="wk-mcp-import-panel__warnings">
+                  {jsonParseResult.warnings.map((w) => (
+                    <li key={w}>{t(w)}</li>
+                  ))}
+                </ul>
+              )}
+            <div className="wk-mcp-import-panel__actions">
+              <WKButton
+                variant="primary"
+                disabled={
+                  !jsonParseResult ||
+                  !!jsonParseResult.error ||
+                  importPreviewCount === 0
+                }
+                onClick={handleApplyImport}
+              >
+                {t("mcp.create.import.apply")}
+              </WKButton>
+            </div>
+          </div>
+        )}
+
+        {createMode === "manual" && (
+          <>
         <div className="wk-mcp-form-steps">
           {stepDefs.map((s, i) => (
             <React.Fragment key={s.key}>
@@ -996,9 +1177,11 @@ const McpCreateModal: React.FC<McpCreateModalProps> = ({
                     label={t("mcp.create.args")}
                     hint={t("mcp.create.argsHint")}
                   >
-                    <WKInput
+                    <TextArea
                       value={argsRaw}
                       onChange={setArgsRaw}
+                      rows={3}
+                      autosize={{ minRows: 2, maxRows: 6 }}
                       placeholder={t("mcp.create.argsPlaceholder")}
                     />
                   </Field>
@@ -1259,6 +1442,8 @@ const McpCreateModal: React.FC<McpCreateModalProps> = ({
               />
             </Section>
           </>
+        )}
+        </>
         )}
       </div>
     </WKModal>

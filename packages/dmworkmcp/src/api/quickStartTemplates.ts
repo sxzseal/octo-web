@@ -200,7 +200,15 @@ function buildPrompt(qs: McpQuickStart): string {
       auth,
     });
   }
-  const args = (qs.args ?? []).join(" ");
+  // Shell-quote any arg containing whitespace so an arg like `--config "a b"`
+  // survives copy-paste out of the natural-language prompt tab without being
+  // re-tokenized by whichever shell the agent runs. The JSON tab preserves
+  // token boundaries via a real array; this string form has to encode them.
+  const args = (qs.args ?? [])
+    .map((a) =>
+      /\s/.test(a) ? `"${a.replace(/(["\\])/g, "\\$1")}"` : a
+    )
+    .join(" ");
   const env =
     qs.env && Object.keys(qs.env).length > 0
       ? texts.envLabel +

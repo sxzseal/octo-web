@@ -166,8 +166,8 @@
     "command": "启动命令",
     "commandPlaceholder": "例如 npx",
     "args": "命令参数",
-    "argsPlaceholder": "以空格分隔，例如 -y @modelcontextprotocol/server-xxx",
-    "argsHint": "多个参数用空格分隔",
+    "argsPlaceholder": "一行一个参数\n-y\n@modelcontextprotocol/server-xxx",
+    "argsHint": "每行一个参数，行内前后空白会被自动去除；空行会被忽略",
     "env": "环境变量",
     "envPlaceholder": "每行一个 KEY=VALUE",
     "envHint": "格式：KEY=VALUE，每行一个",
@@ -220,6 +220,29 @@
     },
     "toolsEmpty": "尚未获取工具，可点击「试连 / 获取工具列表」自动探测，或手动补充。",
     "toolsHint": "点击「试连 / 获取工具列表」，探测远端服务并同步工具清单。",
+    "modeManual": "手动填写",
+    "modeJson": "从 JSON 导入",
+    "import": {
+      "desc": "粘贴 Claude Desktop / Cursor 的 mcpServers 配置或 server.json 片段，快速填充下方表单。环境变量与 Header 的值不会导入，需在下一步手动补齐。",
+      "placeholder": "{\n  \"mcpServers\": {\n    \"github\": {\n      \"command\": \"npx\",\n      \"args\": [\"-y\", \"@modelcontextprotocol/server-github\"],\n      \"env\": { \"GITHUB_PERSONAL_ACCESS_TOKEN\": \"<YOUR_TOKEN>\" }\n    }\n  }\n}",
+      "apply": "解析并填充",
+      "applied": "已填充 {{count}} 个字段",
+      "warning": {
+        "multipleServers": "检测到多个 MCP 配置，仅导入第一条。",
+        "envValuesDropped": "环境变量的值已忽略，请在下一步重新填写。",
+        "headerValuesDropped": "Header 的值已忽略，请在下一步重新填写。"
+      },
+      "error": {
+        "empty": "请粘贴 JSON 内容",
+        "invalidJson": "JSON 格式不合法",
+        "notObject": "JSON 根节点必须是对象",
+        "mcpServersInvalid": "mcpServers 字段必须是对象",
+        "mcpServersEmpty": "mcpServers 为空",
+        "serverConfigInvalid": "MCP 配置结构不正确",
+        "noRecognizedFields": "未识别到 name / command / url 字段",
+        "unknownFormat": "无法识别的 JSON 结构，请检查是否为 mcpServers 或 server.json"
+      }
+    },
     "submit": "提交",
     "success": "创建成功",
     "failed": "创建失败"

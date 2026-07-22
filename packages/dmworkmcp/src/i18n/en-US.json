@@ -166,8 +166,8 @@
     "command": "Launch command",
     "commandPlaceholder": "e.g. npx",
     "args": "Command args",
-    "argsPlaceholder": "Space-separated, e.g. -y @modelcontextprotocol/server-xxx",
-    "argsHint": "Separate args with spaces",
+    "argsPlaceholder": "One argument per line\n-y\n@modelcontextprotocol/server-xxx",
+    "argsHint": "One argument per line; leading/trailing whitespace is trimmed and blank lines are ignored",
     "env": "Environment variables",
     "envPlaceholder": "One KEY=VALUE per line",
     "envHint": "Format: KEY=VALUE, one per line",
@@ -220,6 +220,29 @@
     },
     "toolsEmpty": "No tools yet. Click \"Test / fetch tools\" to probe automatically, or add them manually.",
     "toolsHint": "Click \"Test / fetch tools\" to probe the remote server and sync its tool list.",
+    "modeManual": "Fill manually",
+    "modeJson": "Import from JSON",
+    "import": {
+      "desc": "Paste an mcpServers config from Claude Desktop / Cursor or a server.json snippet. Env and header VALUES are not imported — you'll fill them in the next step.",
+      "placeholder": "{\n  \"mcpServers\": {\n    \"github\": {\n      \"command\": \"npx\",\n      \"args\": [\"-y\", \"@modelcontextprotocol/server-github\"],\n      \"env\": { \"GITHUB_PERSONAL_ACCESS_TOKEN\": \"<YOUR_TOKEN>\" }\n    }\n  }\n}",
+      "apply": "Parse and fill",
+      "applied": "Filled {{count}} field(s)",
+      "warning": {
+        "multipleServers": "Multiple MCP configs detected; only the first was imported.",
+        "envValuesDropped": "Env values were ignored — please fill them in the next step.",
+        "headerValuesDropped": "Header values were ignored — please fill them in the next step."
+      },
+      "error": {
+        "empty": "Please paste some JSON",
+        "invalidJson": "Invalid JSON syntax",
+        "notObject": "Top-level JSON must be an object",
+        "mcpServersInvalid": "`mcpServers` must be an object",
+        "mcpServersEmpty": "`mcpServers` is empty",
+        "serverConfigInvalid": "Server config shape is invalid",
+        "noRecognizedFields": "None of name / command / url found",
+        "unknownFormat": "Unrecognized JSON structure — expected mcpServers or server.json"
+      }
+    },
     "submit": "Submit",
     "success": "Created",
     "failed": "Create failed"

@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import { WKModal, WKButton, t } from "@octo/base";
 import { Toast, Spin } from "@douyinfe/semi-ui";
 import { deleteMcp, fetchMcpDetail } from "../api/mcpService";
-import { buildQuickStartTabs } from "../api/quickStartTemplates";
+import { buildQuickStartTabs, TOKEN_PLACEHOLDER } from "../api/quickStartTemplates";
 import type { McpDetail, McpQuickStart } from "../types/mcp";
 import { IconGlyph } from "../utils/icon";
 import { SourceBadge } from "./McpCard";
@@ -22,9 +22,9 @@ interface McpDetailModalProps {
 }
 
 /**
- * The ⚡快速接入 block. Three tabs (提示词 / 命令行 / JSON) are all generated
- * from the structured `quickStart` payload; the token position always renders
- * as the `<把这里换成你的 Token>` placeholder. Default tab = 提示词.
+ * The ⚡快速接入 block. Two tabs (提示词 / JSON) are generated from the
+ * structured `quickStart` payload; the token position always renders as the
+ * `<把这里换成你的 Token>` placeholder. Default tab = 提示词.
  */
 const QuickAccess: React.FC<{ quickStart: McpQuickStart }> = ({
   quickStart,
@@ -42,6 +42,29 @@ const QuickAccess: React.FC<{ quickStart: McpQuickStart }> = ({
       Toast.error(t("mcp.detail.copyFailed"));
     }
   };
+
+  /** Split the snippet on TOKEN_PLACEHOLDER so each occurrence renders as a
+   *  visually distinct <mark>. Users pasting the snippet elsewhere have to
+   *  hand-swap this literal for a real secret; highlighting the exact
+   *  span the token lives in makes that step un-missable. */
+  const renderedContent = useMemo(() => {
+    const text = current?.content ?? "";
+    if (!text) return null;
+    const parts = text.split(TOKEN_PLACEHOLDER);
+    if (parts.length === 1) return text;
+    const nodes: React.ReactNode[] = [];
+    parts.forEach((part, idx) => {
+      if (idx > 0) {
+        nodes.push(
+          <mark key={`t-${idx}`} className="wk-mcp-code__token">
+            {TOKEN_PLACEHOLDER}
+          </mark>
+        );
+      }
+      if (part) nodes.push(part);
+    });
+    return nodes;
+  }, [current?.content]);
 
   return (
     <div className="wk-mcp-qa">
@@ -67,7 +90,7 @@ const QuickAccess: React.FC<{ quickStart: McpQuickStart }> = ({
             {t("mcp.detail.copy")}
           </WKButton>
         </div>
-        <pre className="wk-mcp-code__pre">{current?.content}</pre>
+        <pre className="wk-mcp-code__pre">{renderedContent}</pre>
       </div>
       <div className="wk-mcp-qa__hint">{t("mcp.detail.tokenHint")}</div>
     </div>
