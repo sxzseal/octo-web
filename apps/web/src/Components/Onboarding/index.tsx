@@ -415,31 +415,23 @@ export const Onboarding: React.FC<OnboardingProps> = ({
 
   if (showIntro) {
     return (
-      <>
-        <div
-          ref={dialogRef}
-          className={`wk-onboarding-overlay wk-onboarding-overlay-intro${
-            introLeaving ? " is-intro-leaving" : ""
-          }`}
-          role="dialog"
-          aria-modal="true"
-          aria-hidden={isIntroSkipTransitionTarget ? true : undefined}
-          aria-label={t("app.onboarding.dialog.introAria")}
-          tabIndex={-1}
-          onKeyDown={handleDialogKeyDown}
-        >
-          <OnboardingIntro
-            onContinue={handleIntroContinue}
-            onSkip={handleIntroSkip}
-          />
-        </div>
-        {isIntroSkipTransitionTarget ? (
-          <div
-            className="wk-onboarding-overlay wk-onboarding-skip-transition-target"
-            aria-hidden="true"
-          />
-        ) : null}
-      </>
+      <div
+        ref={dialogRef}
+        className={`wk-onboarding-overlay wk-onboarding-overlay-intro${
+          introLeaving ? " is-intro-leaving" : ""
+        }${isIntroSkipTransitionTarget ? " is-skip-transition-target" : ""}`}
+        role="dialog"
+        aria-modal="true"
+        aria-hidden={isIntroSkipTransitionTarget ? true : undefined}
+        aria-label={t("app.onboarding.dialog.introAria")}
+        tabIndex={-1}
+        onKeyDown={handleDialogKeyDown}
+      >
+        <OnboardingIntro
+          onContinue={handleIntroContinue}
+          onSkip={handleIntroSkip}
+        />
+      </div>
     );
   }
 
